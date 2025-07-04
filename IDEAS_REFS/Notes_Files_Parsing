@@ -1,0 +1,7 @@
+Notes on the files
+
+The delimiter is comma (",") and the numbers have apostrophes before, so to read we need to modify the <quote = "\""> argument in read_csv (First try if its works).
+
+https://readr.tidyverse.org/reference/read_delim.html
+
+

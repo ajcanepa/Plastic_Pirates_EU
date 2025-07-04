@@ -1,0 +1,92 @@
+file_name,sampling_group,(meta)data_field,unit,format,values,info
+Riverbank_data,general,file source,NA,string,text,name of original data file
+Riverbank_data,general,DatasetID,NA,string,text; acronym of country and unique number,"unique ID of the dataset, as acronym of the country followed by a unique number (submission ID of Plastic Pirates website)"
+Riverbank_data,general,CountryResponsible,NA,string,text,country of partner institute responsible for the dataset
+Riverbank_data,general,ResearchInstituteResponsible,NA,string,text,Plastic Pirates partner institute(s) responsible for the dataset
+Riverbank_data,general,PersonResponsible,NA,string,text,expert(s) responsible for the dataset
+Riverbank_data,general,PersonContact,NA,string,text,email of the expert(s)
+Riverbank_data,general,GeneralCommentDataset,NA,string,text,information about the dataset or sampling
+Riverbank_data,general,SamplingCampaign,NA,string,season and year,Plastic Pirates sampling campaign for which the data were collected (this could be different than the actual year in which the sampling was done)
+Riverbank_data,general,SamplingYear,NA,date,YYYY,year in which the data were collected
+Riverbank_data,general,SamplingTeamName,NA,string,text,name of the student group collecting the data
+Riverbank_data,general,SamplingInstitution,NA,string,text,name of the institute of the student group
+Riverbank_data,general,SamplingAttempted,NA,binary,"0, 1",sampling has been attempted (1) or not (0)
+Riverbank_data,general,DatasetReasonDisqualified,NA,string,text,reason why the dataset has been disqualified
+Riverbank_data,general,DatasetQualified,NA,binary,"0, 1",data are considered as qualified (1) or not (0)
+Riverbank_data,general,SamplingOnlineOnWebsite,NA,binary,"0, 1",data have been uploaded to the Plastic Pirates website (1) or not (0)
+Riverbank_data,general,SamplingDate,NA,date,YYYY-MM-DD (ISO 8601),date of sampling by students
+Riverbank_data,general,SamplingCoordinatesLatitude,degrees,number,decimal number,latitude of sampling location
+Riverbank_data,general,SamplingCoordinatesLongitude,degrees,number,decimal number,longitude of sampling location
+Riverbank_data,general,SamplingPlace,NA,string,text,closest place to the sampling location
+Riverbank_data,general,SamplingRegion,NA,string,text,region the sampling location belongs to
+Riverbank_data,general,SamplingRiver,NA,string,text,name of river or stream sampled
+Riverbank_data,general,SamplingRiverSystem,NA,string,text,name of river system the river or stream belongs to
+Riverbank_data,general,SamplingParticipants,NA,number,number,number of students that have sampled
+Riverbank_data,general,SamplingComment,NA,string,text,more information on the sampling
+Riverbank_data,A,RiversideLitterCircles_AttemptedSampling,NA,binary,"0, 1","sampling for group A (riverbank, circles) has been attempted (1) or not (0)"
+Riverbank_data,A,RiversideLitterCircles_DisqualifiedReason,NA,string,text,reason why the riverbank macrolitter data of group A has been disqualified
+Riverbank_data,A,RiversideLitterCircles_Qualified,NA,binary,"0, 1",riverbank macrolitter data of group A are considered as qualified (1) or not (0)
+Riverbank_data,A,RiversideLitterCircles_Results_NumberOfStationsSampled,NA,number,number (0-9),number of stations (circles) sampled
+Riverbank_data,A,RiversideLitterCircles_Results_NumberOfStationsWithLitterFindings,NA,number,number (0-9),number of stations sampled and with litter findings
+Riverbank_data,A,RiversideLitterCircles_Results_PaperTotal,NA,number,number,total count of items in this category for all stations sampled
+Riverbank_data,A,RiversideLitterCircles_Results_CigarettesTotal,NA,number,number,total count of items in this category for all stations sampled
+Riverbank_data,A,RiversideLitterCircles_Results_PlasticTotal,NA,number,number,total count of items in this category for all stations sampled
+Riverbank_data,A,RiversideLitterCircles_Results_MetalTotal,NA,number,number,total count of items in this category for all stations sampled
+Riverbank_data,A,RiversideLitterCircles_Results_GlassTotal,NA,number,number,total count of items in this category for all stations sampled
+Riverbank_data,A,RiversideLitterCircles_Results_FoodLeftoverTotal,NA,number,number,total count of items in this category for all stations sampled
+Riverbank_data,A,RiversideLitterCircles_Results_OtherTotal,NA,number,number,total count of items in this category for all stations sampled
+Riverbank_data,A,RiversideLitterCircles_Results_OverallTotal,NA,number,number,total count of items in all categories and for all stations sampled
+Riverbank_data,A,RiversideLitterCircles_Results_AveragePerM2,average count per square metre,number,number,average count of items per unit of area for all categories and all stations sampled
+Riverbank_data,A,RiversideLitterCircles_ResultsComment,NA,string,text,more information on the sampling of group A
+Riverbank_data,B,RiversideWasteVariety_AttemptedSampling,NA,binary,"0, 1","sampling for group B (riverbank, waste variety) has been attempted (1) or not (0)"
+Riverbank_data,B,RiversideWasteVariety_DisqualifiedReason,NA,string,text,reason why the riverbank macrolitter data of group B has been disqualified
+Riverbank_data,B,RiversideWasteVariety_Qualified,NA,binary,"0, 1",riverbank macrolitter data of group B are considered as qualified (1) or not (0)
+Riverbank_data,B,RiversideWasteVariety_Results_PlasticBags,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_PlasticBottles,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_PlasticLids,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_TakeawayFastFood,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_PlasticCutleryPlates,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_PlasticPackagingSweets,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_CottonBuds,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_WetWipesSanitaryProducts,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_Polystyrene,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_SingleUsePlasticTotal,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_SmallPlasticPieces<2.5cm,NA,number,number,total count of items in this category (plastic items smaller than 2.5 centimetres)
+Riverbank_data,B,RiversideWasteVariety_Results_OtherUnidentifiablePlastic,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_MetalBeverageCans,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_BottleCaps,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_AluminiumFoil,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_OtherUnidentifiableMetal,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_GlassBottles,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_GlassPieces,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_OtherUnidentifiableGlass,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_CigaretteButts,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_Paper,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_Textiles,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_Rubber,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_Balloons,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_OtherUnidentifiableWaste,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_LocalWaste,NA,number,number,total count of items in this category
+Riverbank_data,B,RiversideWasteVariety_Results_TotalNumber(incl.SUP),NA,number,number,total count of items in all categories together
+Riverbank_data,B,RiversideWasteVariety_Results_ProportionSingleUsePlastic,%,number,number,proportion of the total count of items that could be identified as single use plastic
+Riverbank_data,B,RiversideWasteVariety_Results_LengthOfRiverbankSearchedM,metres,number,number,length of the riverbank searched for group B
+Riverbank_data,B,RiversideWasteVariety_Results_WidthOfRiverbankSearchedM,metres,number,number,width of the riverbank searched for group B
+Riverbank_data,B,RiversideWasteVariety_Results_WeightPlasticWasteKG,kilograms,number,number,total weight of all plastic litter items found for group B
+Riverbank_data,B,RiversideWasteVariety_Results_WeightAllWasteKG,kilograms,number,number,total weight of all litter items found for group B
+Riverbank_data,B,RiversideWasteVariety_Results_ResultsComment,NA,string,text,more information on the sampling of group B
+Riverbank_data,D,ReporterTeam_AttemptedSampling,NA,binary,"0, 1",sampling for group D has been attempted (1) or not (0)
+Riverbank_data,D,ReporterTeam_DisqualifiedReason,NA,string,text,reason why the data of group D has been disqualified
+Riverbank_data,D,ReporterTeam_Qualified,NA,binary,"0, 1",data of group D are considered as qualified (1) or not (0)
+Riverbank_data,D,ReporterTeam_Results_SourceResidents,NA,string,"no, possibly, yes",possible source of the litter
+Riverbank_data,D,ReporterTeam_Results_SourceVisitors,NA,string,"no, possibly, yes",possible source of the litter
+Riverbank_data,D,ReporterTeam_Results_SourceFlyTippers,NA,string,"no, possibly, yes",possible source of the litter
+Riverbank_data,D,ReporterTeam_Results_SourceIndustry,NA,string,"no, possibly, yes",possible source of the litter
+Riverbank_data,D,ReporterTeam_Results_SourceAgriculture,NA,string,"no, possibly, yes",possible source of the litter
+Riverbank_data,D,ReporterTeam_Results_SourceShipping,NA,string,"no, possibly, yes",possible source of the litter
+Riverbank_data,D,ReporterTeam_Results_SourceFishing,NA,string,"no, possibly, yes",possible source of the litter
+Riverbank_data,D,ReporterTeam_Results_Weather_Rain,NA,binary,"no, yes",weather event has recently happened
+Riverbank_data,D,ReporterTeam_Results_Weather_Storm,NA,binary,"no, yes",weather event has recently happened
+Riverbank_data,D,ReporterTeam_Results_Weather_Heat,NA,binary,"no, yes",weather event has recently happened
+Riverbank_data,D,ReporterTeam_Results_Problems_GroupA,NA,string,text,problems reported during sampling of group A
+Riverbank_data,D,ReporterTeam_Results_Problems_GroupB,NA,string,text,problems reported during sampling of group B
+Riverbank_data,D,ReporterTeam_Results_Problems_BiggestProblems,NA,string,text,biggest problems reported during sampling of all groups

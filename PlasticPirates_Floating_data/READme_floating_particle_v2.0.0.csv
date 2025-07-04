@@ -1,0 +1,83 @@
+file_name,sampling_group,(meta)data_field,unit,format,values,info
+Floating_data,general,file source,NA,string,text,name of original data file
+Floating_data,general,DatasetID,NA,string,text; acronym of country and unique number,"unique ID of the dataset, as acronym of the country followed by a unique number (submission ID of Plastic Pirates website)"
+Floating_data,general,CountryResponsible,NA,string,text,country of partner institute responsible for the dataset
+Floating_data,general,ResearchInstituteResponsible,NA,string,text,Plastic Pirates partner institute(s) responsible for the dataset
+Floating_data,general,PersonResponsible,NA,string,text,expert(s) responsible for the dataset
+Floating_data,general,PersonContact,NA,string,text,email of the expert(s)
+Floating_data,general,GeneralCommentDataset,NA,string,text,information about the dataset or sampling
+Floating_data,general,SamplingCampaign,NA,string,season and year,Plastic Pirates sampling campaign for which the data were collected (this could be different than the actual year in which the sampling was done)
+Floating_data,general,SamplingYear,NA,date,YYYY,year in which the data were collected
+Floating_data,general,SamplingTeamName,NA,string,text,name of the student group collecting the data
+Floating_data,general,SamplingInstitution,NA,string,text,name of the institute of the student group
+Floating_data,general,SamplingAttempted,NA,binary,"0, 1",sampling has been attempted (1) or not (0)
+Floating_data,general,DatasetReasonDisqualified,NA,string,text,reason why the dataset has been disqualified
+Floating_data,general,DatasetQualified,NA,binary,"0, 1",data are considered as qualified (1) or not (0)
+Floating_data,general,SamplingOnlineOnWebsite,NA,binary,"0, 1",data have been uploaded to the Plastic Pirates website (1) or not (0)
+Floating_data,general,SamplingDate,NA,date,YYYY-MM-DD (ISO 8601),date of sampling by students
+Floating_data,general,SamplingCoordinatesLatitude,degrees,number,decimal number,latitude of sampling location
+Floating_data,general,SamplingCoordinatesLongitude,degrees,number,decimal number,longitude of sampling location
+Floating_data,general,SamplingPlace,NA,string,text,closest place to the sampling location
+Floating_data,general,SamplingRegion,NA,string,text,region the sampling location belongs to
+Floating_data,general,SamplingRiver,NA,string,text,name of river or stream sampled
+Floating_data,general,SamplingRiverSystem,NA,string,text,name of river system the river or stream belongs to
+Floating_data,general,SamplingParticipants,NA,number,number,number of students that have sampled
+Floating_data,general,SamplingComment,NA,string,text,more information on the sampling
+Floating_data,D,ReporterTeam_AttemptedSampling,NA,binary,"0, 1",sampling for group D has been attempted (1) or not (0)
+Floating_data,D,ReporterTeam_DisqualifiedReason,NA,string,text,reason why the data of group D has been disqualified
+Floating_data,D,ReporterTeam_Qualified,NA,binary,"0, 1",data of group D are considered as qualified (1) or not (0)
+Floating_data,D,ReporterTeam_Results_SourceResidents,NA,string,"no, possibly, yes",possible source of the litter
+Floating_data,D,ReporterTeam_Results_SourceVisitors,NA,string,"no, possibly, yes",possible source of the litter
+Floating_data,D,ReporterTeam_Results_SourceFlyTippers,NA,string,"no, possibly, yes",possible source of the litter
+Floating_data,D,ReporterTeam_Results_SourceIndustry,NA,string,"no, possibly, yes",possible source of the litter
+Floating_data,D,ReporterTeam_Results_SourceAgriculture,NA,string,"no, possibly, yes",possible source of the litter
+Floating_data,D,ReporterTeam_Results_SourceShipping,NA,string,"no, possibly, yes",possible source of the litter
+Floating_data,D,ReporterTeam_Results_SourceFishing,NA,string,"no, possibly, yes",possible source of the litter
+Floating_data,D,ReporterTeam_Results_Weather_Rain,NA,binary,"no, yes",weather event has recently happened
+Floating_data,D,ReporterTeam_Results_Weather_Storm,NA,binary,"no, yes",weather event has recently happened
+Floating_data,D,ReporterTeam_Results_Weather_Heat,NA,binary,"no, yes",weather event has recently happened
+Floating_data,D,ReporterTeam_Results_Problems_GroupC,NA,string,text,problems reported during sampling of group C
+Floating_data,D,ReporterTeam_Results_Problems_BiggestProblems,NA,string,text,biggest problems reported during sampling of all groups
+Floating_data,C,FloatingMacro_AttemptedSampling,NA,binary,"0, 1",sampling of floating macrolitter of group C has been attempted (1) or not (0)
+Floating_data,C,FloatingMacro_DisqualifiedReason,NA,string,text,reason why the floating macrolitter data have been disqualified
+Floating_data,C,FloatingMacro_Qualified,NA,binary,"0, 1",floating macrolitter data are considered as qualified (1) or not (0)
+Floating_data,C,FloatingMacro_ObservationTimeInMinutes,minutes,number,number,time that the river has been observed for macrolitter
+Floating_data,C,FloatingMacro_RiverWidth,metres,number,number,width of the river
+Floating_data,C,FloatingMacro_ObservedWidth,metres,number,number,width of the river that has been observed for macrolitter
+Floating_data,C,FloatingMacro_AmountOfFloatingMacrolitter,NA,number,number,amount of floating macrolitter reported
+Floating_data,C,FloatingMacro_Comment,NA,string,text,more information
+Floating_data,C,FloatingMicro_AttemptedSampling,NA,binary,"0, 1",sampling of floating meso-/microlitter of group C has been attempted (1) or not (0)
+Floating_data,C,FloatingMicro_DisqualifiedReason,NA,string,text,reason why the floating microlitter data have been disqualified
+Floating_data,C,FloatingMicro_Qualified,NA,binary,"0, 1",floating microlitter data are considered as qualified (1) or not (0)
+Floating_data,C,FloatingMicro_SamplingTimeInMinutes,minutes,number,number,time that sampling net has been in the water
+Floating_data,C,FloatingMicro_AmountOfVERIFIEDMicroplastics,NA,number,number,amount of microplastics found in the sample
+Floating_data,C,FloatingMicro_AmountOfVERIFIEDMesoplastics,NA,number,number,amount of mesoplastics found in the sample
+Floating_data,C,FloatingMicro_Comment,NA,string,text,more information
+Floating_data,C,FloatingFlowVelocity_AttemptedSampling,NA,binary,"0, 1",sampling of flow velocity for group C has been attempted (1) or not (0)
+Floating_data,C,FloatingFlowVelocity_DisqualifiedReason,NA,string,text,reason why the flow velocity data have been disqualified
+Floating_data,C,FloatingFlowVelocity_Qualified,NA,binary,"0, 1",flow velocity data are considered as qualified (1) or not (0)
+Floating_data,C,FloatingFlowVelocity_FirstStick,metres per second,number,number,calculated flow velocity of the water according to the first stick
+Floating_data,C,FloatingFlowVelocity_SecondStick,metres per second,number,number,calculated flow velocity of the water according to the second stick
+Floating_data,C,FloatingFlowVelocity_ThirdStick,metres per second,number,number,calculated flow velocity of the water according to the third stick
+Floating_data,C,FloatingFlowVelocity_Comment,NA,string,text,"more information, sometimes mean flow velocity of the water in metres per second"
+Floating_data,C,FloatingTime_FirstStick,minutes,number,number,travelling time of the first stick in the water
+Floating_data,C,FloatingTime_SecondStick,minutes,number,number,travelling time of the second stick in the water
+Floating_data,C,FloatingTime_ThirdStick,minutes,number,number,travelling time of the third stick in the water
+Floating_data,C,FloatingDistance,metres,number,number,travelling distance of the sticks in the water
+Particle_data,C - lab analysis,file source,NA,string,text,name of original data file
+Particle_data,C - lab analysis,DatasetID,NA,string,text; acronym of country and unique number,"unique ID of the dataset, as acronym of the country followed by a unique number (submission ID of Plastic Pirates website)"
+Particle_data,C - lab analysis,MicroplasticID,NA,string,text,ID of the particle
+Particle_data,C - lab analysis,Scientist,NA,string,text,scientist(s) working on the laboratory analysis
+Particle_data,C - lab analysis,Photo,NA,string,text,name of the picture associated with the particle
+Particle_data,C - lab analysis,Colour,NA,string,"text, standardised to https://vocab.nerc.ac.uk/collection/H04/current/","colour or the particle, standardised to https://vocab.nerc.ac.uk/collection/H04/current/"
+Particle_data,C - lab analysis,SizeMM,millimetres,number,number,size as the longest length of the particle
+Particle_data,C - lab analysis,Type,NA,string,"text, standardised to http://vocab.nerc.ac.uk/collection/H01/current/","type of the particle, standardised to http://vocab.nerc.ac.uk/collection/H01/current/"
+Particle_data,C - lab analysis,FTIR_Plastic,NA,binary,"yes, no","particle is plastic or not, according to the analysis"
+Particle_data,C - lab analysis,"FTIR_Plastic_Probability score >0,4",NA,binary,"yes, no","particle is plastic or not, according to the analysis, with a probability between 0.4 and 0.7"
+Particle_data,C - lab analysis,FTIR_Polymer,NA,string,text,"material type, according to the analysis and as originally described by scientist"
+Particle_data,C - lab analysis,"FTIR_Polymer_Probability score >0,4",NA,string,text,"material type, according to the analysis and as originally described by scientist, with a probability between 0.4 and 0.7"
+Particle_data,C - lab analysis,FTIR_Polymer_full,NA,string,text,full name of the material type
+Particle_data,C - lab analysis,FTIR_Polymer_standardised,NA,string,"text, standardised to https://vocab.nerc.ac.uk/collection/H05/current/","name of the polymer type, standardised to https://vocab.nerc.ac.uk/collection/H05/current/"
+Particle_data,C - lab analysis,Match FTIR %,%,number,number (0-100),degree of similarity between spectrum of particle and reference spectra stored in library
+Particle_data,C - lab analysis,FTIR_MethodUsed,NA,string,text,information on the method used or where to find a method description
+Particle_data,C - lab analysis,Info,NA,string,text,extra information

@@ -1,0 +1,48 @@
+
+
+Protocol for laboratory analysis of litter particles - Austria 2022:
+
+For the microplastic analysis the material inside of the net were carefully taken out of the net. The sample then was weight and sieved (using strainers >5mm and <1mm). The organic material >5mm was looked at closely and brushed off with a natural bristle brush to make sure to loosen particles adhering there from the leaves as well. The particles between 5 and 1mm were looked at under the microscope and organic matter was further separated from other particles. All particles that could not be identified as organic matter under the microscope were put into a petri dish and further analysed with FTIR. All separated categories (organic, plastic objects >5mm, other particles <1mm) were weight again and stored in plastic zip-lock bags. 
+The potential plastic particles were further analysed with the ATR. For the FTIR measures the petri dish was put on a precision scale (0.1mg / 0.01mg readability), the particles weight was measured as negative weight (one particle at the time was taken out and further processed). After weighting the particle was photographed and measured with the ATR. Every particle was measured three times with 32 scans. 10 particles each get stored in a petri dish until the analysis is completed. Then the particles are moved into zip-lock bags (10 particles each again). The length of the particles was determined with the photos as the scale of the camera was documented before starting the process. 
+Usually we use a probability score >400, so we added in sheet "Group C microplastics data" an additional column were we used a probability scorce >400 for the sampling.
+
+Device:
+FTIR= Bruker alpha with platinum head (diamond window)
+
+Databases:
+Bruker Demolib General Library IR
+Bruker BPAD Bruker Optics ATR-Polymer Library
+Sadtler SR
+
+-
+
+Protocol for laboratory analysis of litter particles - Austria 2023:
+
+For the microplastic analysis the material inside of the net were carefully taken out of the net. The sample was then wet sieved (using strainers 5mm, 1mm and 50 μm). The material >5mm was looked at closely to check for any adhering particles. The particles between 5 and 1mm were looked at under the microscope and plastic particles were further separated from other particles. All particles that could not be identified as organic matter under the microscope were put into a petri dish, cleaned with ethanol and dried for 48h at 50°C. The particles were further analysed with FTIR. All separated categories (organic/other, other particles <1mm) were dried and stored in plastic zip-lock bags. 
+The potential plastic particles were further analysed with the ATR. For the FTIR measures the petri dish was put on a precision scale (0.1mg / 0.01mg readability), the particles weight was measured as negative weight (one particle at the time was taken out and further processed). After weighting the particle was photographed and measured with the ATR. Every particle was measured three times with 32 scans. 10 particles each get stored in a petri dish until the analysis is completed. Then the particles are moved into zip-lock bags (10 particles each again). The length of the particles was determined with the photos as the scale of the camera was documented before starting the process. 
+
+Device:
+FTIR= Bruker alpha with platinum head (diamond window)
+
+Databases:
+Bruker Demolib General Library IR
+Bruker BPAD Bruker Optics ATR-Polymer Library
+Sadtler SR
+Tidy Up Database
+
+-
+
+Protocol for laboratory analysis of litter particles - Austria 2024:
+
+For the microplastic analysis the material inside of the net were carefully taken out of the net. The sample was then wet sieved (using strainers 5mm, 1mm and 50 μm). The material >5mm was looked at closely to check for any adhering particles. The particles between 5 and 1mm were looked at under the microscope and plastic particles were further separated from other particles. All particles that could not be identified as organic matter under the microscope were put into a petri dish, cleaned with ethanol and dried for 48h at 50°C. The particles were further analysed with FTIR. All separated categories (organic/other, other particles <1mm) were dried and stored in plastic zip-lock bags. 
+The potential plastic particles were further analysed with the ATR. For the FTIR measures the petri dish was put on a precision scale (0.1mg / 0.01mg readability), the particles weight was measured as negative weight (one particle at the time was taken out and further processed). After weighting the particle was photographed and measured with the ATR. Every particle was measured three times with 32 scans. 10 particles each get stored in a petri dish until the analysis is completed. Then the particles are moved into zip-lock bags (10 particles each again). The length of the particles was determined with the photos as the scale of the camera was documented before starting the process. 
+
+Device:
+FTIR= Bruker alpha with platinum head (diamond window)
+
+Databases:
+Bruker Demolib General Library IR
+Bruker BPAD Bruker Optics ATR-Polymer Library
+Sadtler SR
+Tidy Up Database
+

@@ -1,0 +1,40 @@
+
+Protocol for laboratory analysis of litter particles - Latvia 2023:
+
+Microplastic analysis protocol
+Net contents were carefully removed and inspected. Larger organic debris (leaves etc) were examined visually before discarding. Sample was concentrated on a GF (glass fiber) filter and placed into a glass petri dish for closer observation under microscope. Photos of potential plastic particles were taken and size was measured. Particles for FTIR analysis were placed in a vial. All particles were scanned at least once with 32 scans at a time. Those that did not show a match of more than 80% match with databses were analyzed two more times. If sufficient match was not obtained, those particles were categorized as "UNIDENTIFIED". Particles that were of organic materials were excluded. As fibers were too small for FTIR analysis, they were tested by hot needle method to determine if they are plastic or not.
+
+Device used for polymer analysis: Nicolet iS20 FTIR Spectrometer from ThermoFisher
+
+Polymer databases: 
+Aldrich Condensed Phase Sample Library
+Aldrich Vapor Phase Sample Library
+ATR, Microplastics, 2cm-1
+Georgia State Crime Lab Sample Library
+HR Aldrich Alcohols and Phenols
+HR Aldrich Aldehydes and Ketones
+HR Aldrich Dyes, Indicators, Nitro and Azo Compounds
+HR Aldrich Esters, Lactones, and Anhydrides
+HR Aldrich Hydrocarbons
+HR Aldrich Organometallic, Inorganic, Silanes, Boranes, and Deuterated Compound
+HR Aldrich Phosphorous and Sulfur Compounds
+HR Aldrich Solvents
+HR Hummel Polymer and Additives
+HR Nicolet Sampler Library
+HR Polymer Additives and Plasticizers
+HR Specta IR Demo
+HR Specta Raman Demo
+Hummel Polymer Sample Library
+JPI MP Spectral Database_1
+JPI MP Spectral Database_2
+Natural
+Organics by RAMAN Sample Library
+Plasctic polymers
+Sigma Biological Sample Library
+Sprouse Polymers by ATR
+STJ Spectral Database
+Synthetic fibers
+Thermo Electron ATR Germanium
+Thermo Electron ATR Rubber Zinc Selenide
+User Example Library
+

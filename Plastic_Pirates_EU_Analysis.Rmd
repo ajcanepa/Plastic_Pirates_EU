@@ -1,0 +1,56 @@
+---
+title: "Plastic Pirates EU Analsysis"
+output: html_notebook
+---
+
+# Paper's Skeleton
+The idea is to have two papers
+Questions to be solved
+
+* Calification/descualification rate
+  * We need to analyse the raw data in order to have those sampling events that were qualified and which doesn't (RiversideWasteVariety_AttemptedSampling == 1 and RiversideWasteVariety_Qualified == 1)
+  
+
+## RESEARCH QUESTIONS
+
+# Citizens Description?
+
+# Litter Presence/Absence
+
+# Community-based approach to analyze composition of litter
+
+# Look for explanatory variables inside the dataset from Plastic Pirates.
+
+# Include extra-explanatory variables for all the variables will be nice if something else can take care on this.
+
+# Next meeting before the Workshop on Data Validation/Consolidation and Analysis.
+## Focused in the general aspect of data (Types, Kg, Zones, etc.)
+
+# We have to include the informaton of group D (look at quantitative/semi-quantitative data)
+
+# Data Analysis
+
+## Loading Packages
+
+Loading R packages necessary to perform the __EDA__.
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(DT)
+library(lubridate)
+```
+
+## Data loading
+
+```{r message=FALSE, warning=FALSE}
+# Cargamos los datos incorporando las modificaciones para trabajar con él
+# Cuidado con el nombre de los ríos, hay besòs y bessos.
+Riberbank <- 
+  read.csv(file = "PlasticPirates_Riverbank_data/Riverbank_data_v2.0.0.csv", header = TRUE, sep = ",", na.strings = "na") %>% 
+  mutate(SamplingDate = lubridate::ymd(SamplingDate)) %>% 
+  mutate(across(where(is.character), as.factor))
+
+```
+
