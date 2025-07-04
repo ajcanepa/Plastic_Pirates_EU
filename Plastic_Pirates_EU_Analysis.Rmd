@@ -44,13 +44,17 @@ library(lubridate)
 
 ## Data loading
 
-```{r message=FALSE, warning=FALSE}
+```{r DataLoading, message=FALSE, warning=FALSE}
 # Cargamos los datos incorporando las modificaciones para trabajar con él
 # Cuidado con el nombre de los ríos, hay besòs y bessos.
 Riberbank <- 
   read.csv(file = "PlasticPirates_Riverbank_data/Riverbank_data_v2.0.0.csv", header = TRUE, sep = ",", na.strings = "na") %>% 
   mutate(SamplingDate = lubridate::ymd(SamplingDate)) %>% 
   mutate(across(where(is.character), as.factor))
+```
 
+```{r EDACountries, message=FALSE, warning=FALSE}
+Riberbank %>% 
+  summarise(Country_total = n_distinct(CountryResponsible))
 ```
 
