@@ -19,7 +19,7 @@ Questions to be solved
 
 # Community-based approach to analyze composition of litter
 
-# Look for explanatory variables inside the dataset from Plastic Pirates.
+# Look for explanatory variables inside the dataset from Plastic Pirates. (se está dejando para después)
 
 # Include extra-explanatory variables for all the variables will be nice if something else can take care on this.
 
@@ -56,5 +56,12 @@ Riberbank <-
 ```{r EDACountries, message=FALSE, warning=FALSE}
 Riberbank %>% 
   summarise(Country_total = n_distinct(CountryResponsible))
+```
+
+```{r}
+Riberbank %>% 
+  #select(SamplingRiver) %>% table() 
+  group_by(CountryResponsible) %>% 
+  summarise(Rivers_total = n_distinct(SamplingRiver))
 ```
 
