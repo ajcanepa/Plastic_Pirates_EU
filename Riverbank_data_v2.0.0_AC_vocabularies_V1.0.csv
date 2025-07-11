@@ -1,0 +1,391 @@
+No,Country,SamplingRiver,Corrected_river,Corrected_river_English,River_basin,Count of SamplingRiver,
+1,austria,ager,Ager,Ager,Danube Basin,3,
+2,austria,alm,Alm,Alm,Danube Basin,1,
+3,austria,"almfluss oö, almtal",Alm,Alm River,Danube Basin,1,
+4,austria,almkanal,Almkanal,Alm Canal,Danube Basin,1,
+5,austria,alter rhein,Alter Rhein,Alter Rhein,Rhine Basin,1,
+6,austria,braunau,Inn,Inn River,Danube Basin,1,
+7,austria,bregenzerach,Bregenzer Ach,Bregenz Ach River,Rhine Basin,2,
+8,austria,donau,Donau,Danube River,Danube Basin,12,
+9,austria,donaukanal,Donaukanal,Danube Canal,Danube Basin,4,
+10,austria,donnersbach,Donnersbach,Donnersbach,Danube Basin,1,
+11,austria,dornbirner ache,Dornbirner Ach,Dornbirner Ach,Rhine Basin,1,
+12,austria,eisbach,Schirningbach,Schirningbach,Danube Basin,1,
+13,austria,enknach / inn,Enknach,Enknach,Danube Basin,1,
+14,austria,enns,Enns,Enns River,Danube Basin,2,
+15,austria,feldaist,Feldaist,Feldaist River,Danube Basin,1,
+16,austria,frutz,Frutz,Frutz,Rhine Basin,1,
+17,austria,gail,Gail,Gail River,Danube Basin,2,
+18,austria,glan,Glan,Glan River,Danube Basin,3,
+19,austria,grafenbach,Grafenbach,Grafenbach,Danube Basin,1,
+20,austria,große rodl,Große Rodl,Rodl River,Danube Basin,1,
+21,austria,gütenbach,Gütenbach,Gütenbach,Danube Basin,1,
+22,austria,halterbach,Halterbach,Halterbach,Danube Basin,2,
+23,austria,hörschinger bach,Hörschinger Bach,Hörschinger Bach,Danube Basin,1,
+24,austria,inn,Inn,Inn River,Danube Basin,6,
+25,austria,isel,Isel,Isel River,Danube Basin,4,
+26,austria,klausbach,Klausbach,Klausbach,Danube Basin,1,
+27,austria,klausenbach,Klausenbach,Klausenbach,Danube Basin,1,
+28,austria,kleine tulln,Kleine Tulln,Little Tulln,Danube Basin,1,
+29,austria,kleine ybbs,Kleine Ybbs,Little Ybbs,Danube Basin,1,
+30,austria,lainsitz,Lainsitz,Lužnice River,Elbe Basin,3,
+31,austria,langwiesenbach,Langwiesenbach,Langwiesen Brook,Danube Basin,1,
+32,austria,lebachbach/fuschler ache,Fuschler Ache,Fuschl Ache,Danube Basin,1,
+33,austria,leitha,Leitha,Leitha River,Danube Basin,1,
+34,austria,liesing,Liesing,Liesing River,Danube Basin,9,
+35,austria,liesingbach,Liesing,Liesing River,Danube Basin,2,
+36,austria,löffelmacherbach,Löffelmacherbach,Löffelmacherbach,Danube Basin,1,
+37,austria,mettmacher ache,Mettmacher Ache,Mettmacher Ache,Danube Basin,1,
+38,austria,mödlingbach,Mödlingbach,Mödlingbach,Danube Basin,2,
+39,austria,mühlbach,Mühlbach,Mühlbach,Danube Basin,1,
+40,austria,"mühlwasser, donau",Mühlwasser (Donau),Mühlwasser,Danube Basin,3,
+41,austria,mur,Mur,Mur River,Danube Basin,11,
+42,austria,neue donau,Neue Donau,New Danube,Danube Basin,5,
+43,austria,pielach,Pielach,Pielach River,Danube Basin,1,
+44,austria,raab,Raab,Raab River,Danube Basin,1,
+45,austria,rosenwasser,Rosenwasser,Heustadelwasser,Danube Basin,1,
+46,austria,safen,Safen,Safen River,Danube Basin,1,
+47,austria,salzach,Salzach,Salzach River,Danube Basin,1,
+48,austria,sattnitz,Sattnitz,Sattnitz River,Danube Basin,3,
+49,austria,schreiberbach,Schreiberbach,Schreiberbach,Danube Basin,1,
+50,austria,schwechat,Schwechat,Schwechat River,Danube Basin,1,
+51,austria,steyr,Steyr,Steyr River,Danube Basin,1,
+52,austria,sulm,Sulm,Sulm River,Danube Basin,2,
+53,austria,thaya,Thaya,Thaya River,Danube Basin,2,
+54,austria,tiebel,Tiebel,Tiebel River,Danube Basin,1,
+55,austria,traisen,Traisen,Traisen River,Danube Basin,1,
+56,austria,traun,Traun,Traun River,Danube Basin,4,
+57,austria,warme fischa,Warme Fischa,Warm Fischa River,Danube Basin,1,
+58,austria,weizbach,Weizbach,Weizbach,Danube Basin,1,
+59,austria,wien(fluss),Wienfluss,Wien River,Danube Basin,1,
+60,austria,wienfluss,Wienfluss,Wien River,Danube Basin,4,
+61,austria,ziller,Ziller,Ziller River,Danube Basin,1,
+62,austria,zwettl,Zwettl River,Zwettl River,Danube Basin,1,
+63,belgium,de dommel,Dommel,Dommel River,Meuse Basin,3,
+64,belgium,de grote nete,Grote Nete,Grote Nete,Scheldt Basin,1,
+65,belgium,de heulebeek,Heulebeek,Heule Brook,Scheldt Basin,2,
+66,belgium,de kleine aa,Kleine Aa,Kleine Aa,Meuse Basin,1,
+67,belgium,de kleine nete,Kleine Nete,Kleine Nete,Scheldt Basin,2,
+68,belgium,de mandel,Mandel,Mandel River,Scheldt Basin,1,
+69,belgium,dender,Dender,Dender River,Scheldt Basin,1,
+70,belgium,dommel,Dommel,Dommel River,Meuse Basin,4,
+71,belgium,durme,Durme,Durme River,Scheldt Basin,1,
+72,belgium,gouwelozedijk,Gouwelozedijk,Gouwelozedijk,Scheldt Basin,1,
+73,belgium,groot schijn,Groot Schijn,Great Schijn River,Scheldt Basin,1,
+74,belgium,houtdok,Houtdok,Hout Dock,Scheldt Basin,1,
+75,belgium,kleine aa,Kleine Aa,Kleine Aa,Meuse Basin,2,
+76,belgium,molenbeek,Molenbeek,Mill Brook,Scheldt Basin,1,
+77,belgium,scheldt,Schelde,Scheldt River,Scheldt Basin,7,
+78,belgium,sluiskreek,Sluiskreek,Lock Creek,Scheldt Basin,1,
+79,belgium,stenensluisvaart,Stenensluisvaart,Stone Lock Canal,Scheldt Basin,1,
+80,belgium,the blankaart,Blankaart,Blankaart (pond/reserve),Yser Basin,1,
+81,belgium,the dommel,Dommel,Dommel River,Meuse Basin,2,
+82,belgium,the duivelsbeek,Duivelsbeek,Duivelsbeek Canal,Scheldt Basin,1,
+83,belgium,the kerkebeek,Kerkebeek,Kerkebeek Canal,Scheldt Basin,1,
+84,belgium,the kleine nete,Kleine Nete,Kleine Nete,Scheldt Basin,1,
+85,belgium,the koolhofput,Koolhofput,Nieuwpoort–Dunkirk Canal,Yser Basin,1,
+86,belgium,the mandel,Mandel,Mandel River,Scheldt Basin,1,
+87,belgium,the moervaart,Moervaart,Moervaart Canal,Scheldt Basin,1,
+88,belgium,the molenvijver,Molenvijver,Molenvijver,Scheldt Basin,1,
+89,belgium,the stenensluisvaart,Stenensluisvaart,Stenensluisvaart,Yser Basin,1,
+90,belgium,the woluwe,Woluwe,Woluwe River,Scheldt Basin,2,
+91,belgium,the yser,IJzer,Yser River,Yser Basin,3,
+92,belgium,yzer,IJzer,Yser River,Yser Basin,4,
+93,belgium,zenne,Zenne,Zenne River,Scheldt Basin,2,
+94,bulgaria,the black sea,NA,NA,NA,10,
+95,germany,aller,Aller,Aller River,Weser Basin,2,
+96,germany,alster,Alster,Alster River,Elbe Basin,1,
+97,germany,altmühl,Altmühl,Altmühl River,Danube Basin,1,
+98,germany,apfelstädt,Apfelstädt,Apfelstädt,Elbe Basin,1,
+99,germany,bode,Bode,Bode River,Elbe Basin,1,
+100,germany,bornheimer bach,Bornheimer Bach,Bornheimer Bach,Rhine Basin,1,
+101,germany,dalke,Dalke,Dalke,Ems Basin,1,
+102,germany,deininghauser bach,Deininghauser Bach,Deininghauser Bach,Rhine Basin,1,
+103,germany,dill,Dill,Dill River,Rhine Basin,2,
+104,germany,döllnitz,Döllnitz,Döllnitz,Elbe Basin,1,
+105,germany,donau,Donau,Danube River,Danube Basin,2,
+106,germany,elbe,Elbe,Elbe River,Elbe Basin,2,
+107,germany,enz,Enz,Enz River,Rhine Basin,2,
+108,germany,freiberger mulde,Freiberger Mulde,Freiberg Mulde River,Elbe Basin,2,
+109,germany,fulda,Fulda,Fulda River,Weser Basin,1,
+110,germany,geeste,Geeste,Geeste River,Weser Basin,1,
+111,germany,geis,Geis,Geis,Rhine Basin,1,
+112,germany,haller,Haller,Haller River,Rhine Basin,1,
+113,germany,hase,Hase,Hase River,Ems Basin,1,
+114,germany,havel,Havel,Havel River,Elbe Basin,2,
+115,germany,hunte,Hunte,Hunte River,Weser Basin,1,
+116,germany,ihme,Ihme,Ihme River,Weser Basin,1,
+117,germany,ilm,Ilm,Ilm River,Elbe Basin,1,
+118,germany,ilmenau,Ilmenau,Ilmenau River,Elbe Basin,1,
+119,germany,inde,Inde,Inde River,Rhine Basin,2,
+120,germany,isar,Isar,Isar River,Danube Basin,3,
+121,germany,kinzig,Kinzig,Kinzig River,Rhine Basin,1,
+122,germany,klöckner hase,Klöckner Hase,Klöckner Hase,Ems Basin,1,
+123,germany,krummes wasser,Krummes Wasser,Crooked Water,Elbe Basin,1,
+124,germany,lahn,Lahn,Lahn River,Rhine Basin,1,
+125,germany,landwehrkanal,Landwehrkanal,Landwehr Canal,Elbe Basin,1,
+126,germany,lauter,Lauter,Lauter River,Rhine Basin,1,
+127,germany,lech,Lech,Lech River,Danube Basin,1,
+128,germany,leine,Leine,Leine River,Weser Basin,3,
+129,germany,loisach,Loisach,Loisach River,Danube Basin,1,
+130,germany,main,Main,Main River,Rhine Basin,2,
+131,germany,mangfall,Mangfall,Mangfall River,Danube Basin,1,
+132,germany,neckar,Neckar,Neckar River,Rhine Basin,1,
+133,germany,nidda,Nidda,Nidda River,Rhine Basin,2,
+134,germany,niers,Niers,Niers River,Meuse Basin,1,
+135,germany,regen,Regen,Regen River,Danube Basin,1,
+136,germany,regnitz,Regnitz,Regnitz River,Rhine Basin,2,
+137,germany,rhein,Rhein,Rhine River,Rhine Basin,5,
+138,germany,rhine,Rhein,Rhine River,Rhine Basin,1,
+139,germany,rhume,Rhume,Rhume River,Weser Basin,1,
+140,germany,ricklinger gauetwater,Ricklinger Gauetwasser,Leine,Weser Basin,1,
+141,germany,ruhr,Ruhr,Ruhr River,Rhine Basin,1,
+142,germany,saale,Saale,Saale River,Elbe Basin,2,
+143,germany,schlangenbach,Schlangenbach,Schlangenbach,Rhine Basin,1,
+144,germany,schutter,Schutter,Schutter River,Danube Basin,1,
+145,germany,schwabach,Schwabach,Schwabach,Rhine Basin,2,
+146,germany,schwentine,Schwentine,Schwentine River,Baltic Sea Basin Basin,1,
+147,germany,seseke,Seseke,Seseke River,Rhine Basin,1,
+148,germany,spree,Spree,Spree River,Elbe Basin,1,
+149,germany,strausberger mühlenfließ,Strausberger Mühlenfließ,Strausberger Mühlenfließ,Elbe Basin,1,
+150,germany,tegeler fließ,Tegeler Fließ,Tegeler Fließ,Elbe Basin,2,
+151,germany,teltowkanal,Teltowkanal,Teltow Canal,Elbe Basin,1,
+152,germany,trave,Trave,Trave River,Baltic Sea Basin Basin,1,
+153,germany,vechte,Vechte,Vechte River,Rhine Basin,1,
+154,germany,warme,Warme,Warme River,Weser Basin,1,
+155,germany,weiße elster,Weiße Elster,White Elster,Elbe Basin,2,
+156,germany,wertach,Wertach,Wertach River,Danube Basin,1,
+157,germany,weser,Weser,Weser River,Weser Basin,1,
+158,germany,wied,Wied,Wied River,Rhine Basin,1,
+159,germany,wiese,Wiese,Wiese River,Rhine Basin,1,
+160,germany,wupper,Wupper,Wupper River,Rhine Basin,1,
+161,germany,zipfelbach,Zipfelbach,Zipfelbach,Rhine Basin,1,River Basin
+162,greece,axios,Axios,Axios, Basin,1,Axios (Vardar)
+163,greece,chalandri stream,Chalandri Stream,Chalandri Stream, Basin,1,Athens Basin
+164,greece,chlalandri stream,Chalandri Stream,Chalandri Stream, Basin,1,Athens Basin
+165,greece,evergetoulas stream,Evergetoulas Stream,Evergetoulas Stream, Basin,1,Lesvos Basin
+166,greece,karampalis (kalentzis),Karampalis,Karampalis Stream, Basin,1,Unknown/local
+167,greece,litheos,Litheos,Litheos, Basin,1,Thessaly Basin
+168,greece,pamisos,Pamisos,Pamisos, Basin,1,Pamisos Basin
+169,greece,pikermi stream,Pikermi Stream,Pikermi Stream, Basin,1,Athens Basin
+170,greece,podoniftis stream,Podoniftis Stream,Podoniftis Stream, Basin,2,Athens Basin
+171,greece,valanaris stream,Valanaris Stream,Valanaris Stream, Basin,2,Unknown/local
+172,hungary,bodrog,Bodrog,Bodrog, Basin,4,Tisza Basin
+173,hungary,danube,Danube,Danube, Basin,3,Danube Basin
+174,hungary,dráva,Dráva,Drava, Basin,1,Danube Basin
+175,hungary,hernád,Hernád,Hernád, Basin,1,Tisza Basin
+176,hungary,kapos,Kapos,Kapos, Basin,1,Danube Basin
+177,hungary,kraszna,Kraszna,Kraszna, Basin,1,Tisza Basin
+178,hungary,rédei-nagy patak,Rédei-Nagy Patak,Rédei-Nagy Stream, Basin,1,Danube Basin
+179,hungary,soroksári duna-ág,Soroksári Duna-ág,Soroksári Danube Branch, Basin,1,Danube Basin
+180,hungary,tisza,Tisza,Tisza, Basin,3,Tisza Basin
+181,italy,alveo torrente mela,Torrente Mela,Mela Stream, Basin,1,Mela Basin
+182,italy,aniene,Aniene,Aniene, Basin,7,Tiber Basin
+183,italy,arno,Arno,Arno, Basin,11,Arno Basin
+184,italy,carabollace,Carabollace,Carabollace, Basin,1,Sicily Basin
+185,italy,esino,Esino,Esino, Basin,1,Esino Basin
+186,italy,fiume brenta,Brenta River,Brenta River, Basin,1,Brenta Basin
+187,italy,fiume esino,Esino River,Esino River, Basin,1,Esino Basin
+188,italy,fiume magazzolo,Magazzolo River,Magazzolo River, Basin,1,Sicily Basin
+189,italy,fiume tevere,Tevere River,Tiber River, Basin,1,Tiber Basin
+190,italy,isonzo,Isonzo,Isonzo, Basin,1,Isonzo Basin
+191,italy,lambro,Lambro,Lambro, Basin,2,Po Basin
+192,italy,magazzolo,Magazzolo,Magazzolo, Basin,1,Sicily Basin
+193,italy,mela,Mela,Mela, Basin,2,Mela Basin
+194,italy,platani,Platani,Platani, Basin,1,Sicily Basin
+195,italy,tevere,Tevere,Tiber River, Basin,22,Tiber Basin
+196,italy,torrente carabollace,Torrente Carabollace,Carabollace Stream, Basin,1,Sicily Basin
+197,italy,torrente mela,Torrente Mela,Mela Stream, Basin,1,Mela Basin
+198,italy,torrente varenna,Torrente Varenna,Varenna Stream, Basin,1,Po Basin
+199,italy,trigno,Trigno,Trigno, Basin,1,Trigno Basin
+200,latvia,abava,Abava,Abava, Basin,1,Abava Basin
+201,latvia,abuls,Abuls,Abuls, Basin,1,Daugava Basin
+202,latvia,ciecere,Ciecere,Ciecere, Basin,1,Venta Basin
+203,latvia,daugava,Daugava,Daugava, Basin,2,Daugava Basin
+204,latvia,donavi?a,Donavi?a,Donavi?a, Basin,1,Daugava Basin
+205,latvia,?ekavi?a,?ekavi?a,Kekavi?a, Basin,1,Daugava Basin
+206,latvia,maiz?te,Maiz?te,Maiz?te, Basin,1,Daugava Basin
+207,latvia,m?rup?te,M?rup?te,Marupe Stream, Basin,1,Daugava Basin
+208,latvia,ogre,Ogre,Ogre, Basin,1,Daugava Basin
+209,latvia,ranka,Ranka,Ranka, Basin,1,Daugava Basin
+210,latvia,r?tsup?te,R?tsup?te,Ratsupite, Basin,1,Daugava Basin
+211,latvia,roja,Roja,Roja, Basin,1,Roja Basin
+212,latvia,salaca,Salaca,Salaca, Basin,1,Salaca Basin
+213,latvia,slocene,Slocene,Slocene, Basin,1,Daugava Basin
+214,latvia,sv?te,Sv?te,Svete, Basin,2,Venta Basin
+215,latvia,vaive,Vaive,Vaive, Basin,1,Daugava Basin
+216,latvia,v?jup?te,V?jup?te,Vejupite, Basin,1,Daugava Basin
+217,lithuania,akmena,Akmena,Akmena, Basin,1,Venta Basin
+218,lithuania,alytupis,Alytupis,Alytupis, Basin,3,Nemunas Basin
+219,lithuania,anykšta,Anykšta,Anykšta, Basin,1,Nemunas Basin
+220,lithuania,apa?ia,Apa?ia,Apa?ia, Basin,1,Nemunas Basin
+221,lithuania,apaš?ia,Apaš?ia,Apaš?ia, Basin,2,Nemunas Basin
+222,lithuania,beržtalis,Beržtalis,Berztalis, Basin,1,Nemunas Basin
+223,lithuania,"cedronas (kedronas, baltupis)","Cedronas (Kedronas, Baltupis)","Cedronas (Kedronas, Baltupis)", Basin,1,Nemunas Basin
+224,lithuania,dan?,Dan?,Dane, Basin,1,Nemunas Basin
+225,lithuania,dubysa,Dubysa,Dubysa, Basin,5,Nemunas Basin
+226,lithuania,duobupis,Duobupis,Duobupis, Basin,1,Nemunas Basin
+227,lithuania,?glupis,?glupis,Eglupis, Basin,1,Nemunas Basin
+228,lithuania,girstupis,Girstupis,Girstupis, Basin,1,Nemunas Basin
+229,lithuania,gynia,Gynia,Gynia, Basin,1,Nemunas Basin
+230,lithuania,jaujupis,Jaujupis,Jaujupis, Basin,1,Nemunas Basin
+231,lithuania,juodup?,Juodup?,Juodupe, Basin,1,Nemunas Basin
+232,lithuania,j?ra,J?ra,Sea (River J?ra), Basin,2,Nemunas Basin
+233,lithuania,kulp?,Kulp?,Kulpe, Basin,1,Nemunas Basin
+234,lithuania,laukup?,Laukup?,Laukupe, Basin,1,Nemunas Basin
+235,lithuania,lazdija (raišupis),Lazdija (Raišupis),Lazdija (Raisupis), Basin,1,Nemunas Basin
+236,lithuania,l?vuo,L?vuo,Levuo, Basin,3,Nemunas Basin
+237,lithuania,marvel?,Marvel?,Marvele, Basin,2,Nemunas Basin
+238,lithuania,merkys,Merkys,Merkys, Basin,1,Nemunas Basin
+239,lithuania,minija,Minija,Minija, Basin,5,Nemunas Basin
+240,lithuania,moluv?n?,Moluv?n?,Moluvenu, Basin,1,Nemunas Basin
+241,lithuania,mus?,Mus?,Muse, Basin,2,Nemunas Basin
+242,lithuania,nemen?ia,Nemen?ia,Nemencha, Basin,1,Nemunas Basin
+243,lithuania,nemunas,Nemunas,Nemunas, Basin,14,Nemunas Basin
+244,lithuania,nemunas ir alytupio upelis,Nemunas and Alytupis Stream,Alytupis Stream, Basin,1,Nemunas Basin
+245,lithuania,neris,Neris,Neris, Basin,18,Nemunas Basin
+246,lithuania,nev?žis,Nev?žis,Nevezis, Basin,8,Nemunas Basin
+247,lithuania,perš?k?,Perš?k?,Perseke, Basin,2,Nemunas Basin
+248,lithuania,plasaup?,Plasaup?,Plasaupe, Basin,1,Nemunas Basin
+249,lithuania,ratny?ia,Ratny?ia,Ratnychia, Basin,2,Nemunas Basin
+250,lithuania,r?ž?,R?ž?,Raze, Basin,2,Nemunas Basin
+251,lithuania,revuona,Revuona,Revuona, Basin,2,Nemunas Basin
+252,lithuania,ringuva,Ringuva,Ringuva, Basin,2,Nemunas Basin
+253,lithuania,rudamina,Rudamina,Rudamina, Basin,1,Nemunas Basin
+254,lithuania,šal?ia,Šal?ia,Salcia, Basin,1,Nemunas Basin
+255,lithuania,šeimena,Šeimena,Seimena, Basin,1,Nemunas Basin
+256,lithuania,šermutas,Šermutas,Sermutas, Basin,1,Nemunas Basin
+257,lithuania,šešup?,Šešup?,Sesupe, Basin,2,Nemunas Basin
+258,lithuania,šlavanta,Šlavanta,Slavanta, Basin,1,Nemunas Basin
+259,lithuania,smeltal?,Smeltal?,Smeltale, Basin,3,Nemunas Basin
+260,lithuania,smiltel?,Smiltel?,Smiltele, Basin,1,Nemunas Basin
+261,lithuania,spernia,Spernia,Spernia, Basin,1,Nemunas Basin
+262,lithuania,str?va,Str?va,Streva, Basin,2,Nemunas Basin
+263,lithuania,suderv?l?,Suderv?l?,Sudervele, Basin,1,Nemunas Basin
+264,lithuania,šušv?,Šušv?,Susve, Basin,2,Nemunas Basin
+265,lithuania,šventoji,Šventoji,Sventoji, Basin,2,Nemunas Basin
+266,lithuania,šyša,Šyša,Sysha, Basin,1,Nemunas Basin
+267,lithuania,varduva,Varduva,Varduva, Basin,1,Nemunas Basin
+268,lithuania,var?n?,Var?n?,Varene, Basin,1,Nemunas Basin
+269,lithuania,varnaka,Varnaka,Varnaka, Basin,1,Nemunas Basin
+270,lithuania,varnel?,Varnel?,Varnela, Basin,1,Nemunas Basin
+271,lithuania,varnut?,Varnut?,Varnute, Basin,1,Nemunas Basin
+272,lithuania,venta,Venta,Venta, Basin,4,Venta Basin
+273,lithuania,vilnel?,Vilnel?,Vilnele, Basin,3,Nemunas Basin
+274,lithuania,vilnia,Vilnia,Vilnia, Basin,3,Nemunas Basin
+275,lithuania,vingut?,Vingut?,Vingute, Basin,1,Nemunas Basin
+276,lithuania,virvy?ia,Virvy?ia,Virvycia, Basin,2,Nemunas Basin
+277,lithuania,vok?,Vok?,Voke, Basin,2,Nemunas Basin
+278,lithuania,vyžuona,Vyžuona,Vyzuona, Basin,1,Nemunas Basin
+279,lithuania,žeimena,Žeimena,Zeimena,Nemunas Basin,1,Nemunas Basin
+280,portugal,afluente da ribeira de odivelas / rio da costa,Ribeira de Odivelas,Odivelas Stream,Tagus Basin,1,Tagus Basin
+281,portugal,"afluente da ribeira de odivelas / rio da costa odivelas, colinas do cruzeiro, ribeiro que passa paralelo à rua pulido valente, traseiras do laboratório germano de sousa",Ribeira de Odivelas,Odivelas Stream,Tagus Basin,1,Tagus Basin
+282,portugal,alfusqueiro,Alfusqueiro,Alfusqueiro River,Vouga Basin,1,Tagus Basin
+283,portugal,carenque,Carenque,Carenque Stream,Tagus Basin,1,Tagus Basin
+284,portugal,foz do rio alcabrichel - praia de porto novo,Rio Alcabrichel,Alcabrichel River,Alcabrichel Basin,1,Coastal Basin
+285,portugal,lagoa de albufeira,Lagoa de Albufeira,Albufeira Lagoon,Tagus Basin,1,Coastal Basin
+286,portugal,lagoa de paramos,Lagoa de Paramos,Paramos Lagoon,Vouga Basin,1,Coastal Basin
+287,portugal,ribeira das bernardas,Ribeira das Bernardas,Bernardas Stream,Ribeiras do Oeste Basin,2,Coastal Basin
+288,portugal,ribeira das jardas,Ribeira das Jardas,Jardas Stream,Tagus and Ribeiras do Oeste Basin,1,Tagus Basin
+289,portugal,ribeira de carenque,Ribeira de Carenque,Carenque Stream,Tagus Basin,2,Coastal Basin
+290,portugal,ribeira de colares,Ribeira de Colares,Colares Stream,Ribeiras do Oeste Basin,2,Tagus Basin
+291,portugal,ribeira de gondim,Ribeira de Gondim,Gondim Stream,Douro Basin,5,Coastal Basin
+292,portugal,ribeira do alportel,Ribeira de Alportel,Alportel Stream,Ribeiras do Algarve Basin,2,Coastal Basin
+293,portugal,ribeira do sor,Ribeira do Sor,Sor Stream,Tagus and Ribeiras do Oeste Basin,1,Tagus Basin
+294,portugal,ribeira do sôr,Ribeira do Sôr,Sor Stream,Tagus and Ribeiras do Oeste Basin,1,Tagus Basin
+295,portugal,ribeiro de gondim,Ribeiro de Gondim,Gondim Brook,Douro Basin,1,Coastal Basin
+296,portugal,ribeiro do gondim,Ribeiro de Gondim,Gondim Brook,Douro Basin,1,Coastal Basin
+297,portugal,rio alcabrichel,Rio Alcabrichel,Alcabrichel River,Tagus Basin,2,Tagus Basin
+298,portugal,rio alfusqueiro,Rio Alfusqueiro,Alfusqueiro River,Vouga Basin,1,Douro Basin
+299,portugal,rio arunca,Rio Arunca,Arunca River,Mondego Basin,2,Coastal Basin
+300,portugal,rio cértima,Rio Cértima,Cértima River,Vouga Basin,1,Coastal Basin
+301,portugal,rio coina,Rio Coina,Coina River,Tagus Basin,3,Tagus Basin
+302,portugal,rio douro,Rio Douro,Douro River,Douro Basin,1,Douro Basin
+303,portugal,rio esteiro,Rio do Esteiro,Esteiro River,Ave Basin,4,Douro Basin
+304,portugal,rio ferreira,Rio Ferreira,Ferreira River,Douro Basin,4,Douro Basin
+305,portugal,rio jamor,Rio Jamor,Jamor River,Tagus Basin,2,Tagus Basin
+306,portugal,rio leça,Rio Leça,Leça River,Douro Basin,3,Douro Basin
+307,portugal,rio marialva,Rio Marialva,Marialva River,Douro Basin,1,Douro Basin
+308,portugal,rio pinhão,Rio Pinhão,Pinhão River,Douro Basin,2,Tagus Basin
+309,portugal,rio tejo,Rio Tejo,Tagus River,Tagus Basin,20,Tagus Basin
+310,portugal,rio tinto,Rio Tinto,Tinto River,Douro Basin,1,Tagus Basin
+311,portugal,rio vizela,Rio Vizela,Vizela River,Douro Basin,1,Tagus Basin
+312,portugal,rio zêzere,Rio Zêzere,Zêzere River,Tagus Basin,1,
+313,portugal,tejo,Tejo,Tagus River,Tagus Basin,3,
+314,portugal,trancão,Trancão,Trancão River,Tagus Basin,1,
+315,portugal,vala de tavarede,Vala de Tavarede,Tavarede Ditch,Mondego Basin,1,
+316,slovenia,drava,Drava,Drava,Danube Basin,3,Danube Basin
+317,slovenia,dravinja,Dravinija,Dravinija,Danube Basin,1,Danube Basin
+318,slovenia,fazan,Fazan,Fazan,Coastal Basin,1,Coastal Basin
+319,slovenia,jelovski potok,Jelovski Potok,Jelovci Stream,Danube Basin,1,Danube Basin
+320,slovenia,ljubljanica,Ljubljanica,Ljubljanica River,Sava Basin,1,Sava Basin
+321,slovenia,mura,Mura,Mura,Danube Basin,2,Danube Basin
+322,slovenia,pesnica,Pesnica,Pesnica,Danube Basin,1,Danube Basin
+323,slovenia,reka,Reka,River,Coastal Basin,5,Coastal Basin
+324,slovenia,rižana,Rižana,Riziana,Coastal Basin,2,Coastal Basin
+325,slovenia,sava,Sava,Sava River,Danube Basin,4,Danube Basin
+326,slovenia,sava dolinka,Sava Dolinka,Sava Dolinka,Danube Basin,1,Danube Basin
+327,slovenia,savinja,Savinja,Savinja,Danube Basin,1,Danube Basin
+328,slovenia,so?a,So?a,Soca,Adriatic Basin,1,
+329,slovenia,sotla,Sotla,Sotla,Danube Basin,1,
+330,slovenia,voglajna,Voglajna,Voglajna,Danube Basin,1,
+331,spain,adaja,Adaja,Adaja,Duero Basin,3,
+332,spain,afluente barranco carraixet,Barranco Carraixet,Carraixet Ravine,Júcar Basin,1,
+333,spain,alcora,Alcora,Alcora,Júcar Basin,1,
+334,spain,anoia,Anoia,Anoia,Llobregat Basin,3,
+335,spain,arandilla,Arandilla,Arandilla,Duero Basin,1,
+336,spain,arlanza,Arlanza,Arlanza,Duero Basin,1,
+337,spain,arlanzón,Arlanzón,Arlanzón,Duero Basin,12,
+338,spain,barranc de carraixet,Barranc de Carraixet,Carraixet Ravine,Júcar Basin,1,
+339,spain,bastareny,Bastareny,Bastareny,Llobregat Basin,2,
+340,spain,besòs,Besòs,Besos,Besòs Basin,2,
+341,spain,bessos,Besòs,Besos,Besòs Basin,1,
+342,spain,brugent,Brugent,Brugent,Llobregat Basin,1,
+343,spain,cardener,Cardener,Cardener,Llobregat Basin,2,
+344,spain,congost,Congost,Congost,Llobregat Basin,3,
+345,spain,ebre,Ebre,Ebro,Ebro Basin,3,
+346,spain,ebro,Ebro,Ebro,Ebro Basin,5,
+347,spain,fluvià,Fluvià,Fluvià,Muga Basin,1,
+348,spain,francolí,Francolí,Francolí,Ebro Basin,2,
+349,spain,freser,Freser,Freser,Ter Basin,2,
+350,spain,garganta de la yedra,Garganta de la Yedra,Yedra Gorge,Ebro Basin,1,
+351,spain,gurri,Gurri,Gurri,Ter Basin,2,
+352,spain,hénar,Hénar,Henar,Duero Basin,1,
+353,spain,la charca de moncada,La Charca de Moncada,Moncada Pond,Coastal Basin,1,
+354,spain,llobregat,Llobregat,Llobregat,Llobregat Basin,6,
+355,spain,noguera ribagorçana,Noguera Ribagorçana,Noguera Ribagorçana,Ebro Basin,1,
+356,spain,ondara,Ondara,Ondara,Ebro Basin,1,
+357,spain,onyar,Onyar,Onyar,Ter Basin,1,
+358,spain,pedroso,Pedroso,Pedroso,Duero Basin,1,
+359,spain,pisuerga,Pisuerga,Pisuerga,Duero Basin,2,
+360,spain,rec clar,Rec Clar,Clear Stream,Coastal Basin,1,
+361,spain,rec del molí,Rec del Molí,Mill Stream,Coastal Basin,1,
+362,spain,rego de cotovil,Rego de Cotovil,Cotovil Stream,Coastal Basin,1,
+363,spain,riera d'arbúcies,Riera d'Arbúcies,Arbúcies Stream,Coastal Basin,1,
+364,spain,riera de caldes,Riera de Caldes,Caldes Stream,Coastal Basin,1,
+365,spain,riera de la bisbal,Riera de la Bisbal,Bisbal Stream,Coastal Basin,3,
+366,spain,riera gavarresa,Riera Gavarresa,Gavarresa Stream,Coastal Basin,1,
+367,spain,ripoll,Ripoll,Ripoll,Llobregat Basin,1,
+368,spain,riu besós,Riu Besòs,Besòs River,Besòs Basin,1,
+369,spain,riu besòs,Riu Besòs,Besòs River,Besòs Basin,2,
+370,spain,riu cardener,Riu Cardener,Cardener River,Llobregat Basin,1,
+371,spain,riu congost,Riu Congost,Congost River,Llobregat Basin,1,
+372,spain,riu ebre,Riu Ebre,Ebro River,Ebro Basin,3,
+373,spain,riu fluvià,Riu Fluvià,Fluvià River,Muga Basin,1,
+374,spain,riu freser,Riu Freser,Freser River,Ter Basin,2,
+375,spain,riu gaià,Riu Gaià,Gaià River,Ebro Basin,1,
+376,spain,riu gurri,Riu Gurri,Gurri River,Ter Basin,2,
+377,spain,riu llobregat,Riu Llobregat,Llobregat River,Llobregat Basin,6,
+378,spain,riu meder,Riu Meder,Meder River,Llobregat Basin,1,
+379,spain,riu onyar,Riu Onyar,Onyar River,Ter Basin,2,
+380,spain,riu ripoll,Riu Ripoll,Ripoll River,Llobregat Basin,1,
+381,spain,riu ter,Riu Ter,Ter River,Ter Basin,15,
+382,spain,riu tordera,Riu Tordera,Tordera River,Besòs Basin,2,
+383,spain,segre,Segre,Segre River,Ebro Basin,1,
+384,spain,ter,Ter,Ter River,Ter Basin,14,
+385,spain,tirón,Tirón,Tirón River,Ebro Basin,2,
+386,spain,tordera,Tordera,Tordera River,Besòs Basin,3,
+387,spain,torrent de folgueroles,Torrent de Folgueroles,Folgueroles Torrent,Ter Basin,1,
+388,spain,torrent de l'aigua,Torrent de l'Aigua,L'Aigua Torrent,Ter Basin,1,
+389,spain,trueba,Trueba,Trueba River,Ebro Basin,3,
+390,spain,vena,Vena,Vena River,Duero Basin,2,
