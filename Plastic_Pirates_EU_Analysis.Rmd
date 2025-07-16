@@ -51,13 +51,19 @@ Riberbank <-
 
 ## RESEARCH QUESTIONS
 
-# Citizens Description?
+### Citizens Description
+
+#### Numer of samplings per year and country
+
+* Table 
 
 ```{r EDACountries, message=FALSE, warning=FALSE}
 Riberbank %>% 
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Num_Sampling = n())
 ```
+* Plot
+
 ```{r EDACountriesPlot, message=FALSE, warning=FALSE}
 Riberbank %>% 
   group_by(CountryResponsible, SamplingYear) %>%
@@ -70,21 +76,78 @@ Riberbank %>%
   mutate(CountryResponsible = reorder(CountryResponsible, -Num_Sampling, sum)) %>%
   ggplot(aes(x = CountryResponsible, y = Num_Sampling, fill = factor(SamplingYear))) +
   geom_bar(stat = "identity", position = "dodge", colour = 'black') +
-  theme_bw() +
+  theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   # Paleta de colores con intensidad creciente hacia 2024
-  scale_fill_manual(values = c("2021" = "#8DEEEE", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")) +
+  scale_fill_manual(values = c("2021" = "#E0FFFF", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
   labs(x = "", 
        y = "Number of samplings campaigns",
        fill = "Sampling Year")
 ```
 
+#### Numer of Rivers sampled per year and country
 
-```{r}
+*  Table
+
+```{r EDARivers, message=FALSE, warning=FALSE}
 Riberbank %>% 
-  #select(SamplingRiver) %>% table() 
-  group_by(CountryResponsible) %>% 
-  summarise(Rivers_total = n_distinct(SamplingRiver))
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Rivers = n_distinct(SamplingRiver))
+```
+* Plot (without numbers)
+
+```{r EDARiversPlot, message=FALSE, warning=FALSE}
+Riberbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
+  # Capitalizar primera letra de cada país
+  mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  # Crear todas las combinaciones posibles de país y año
+  complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) %>%
+  # Ordenar por total acumulado de ríos
+  mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum)) %>%
+  ggplot(aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
+  geom_bar(stat = "identity", position = "stack", colour = 'black') +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  # Paleta de colores con intensidad creciente hacia 2024
+  scale_fill_manual(values = c("2021" = "#E0FFFF", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(x = "", 
+       y = "Number of rivers",
+       fill = "Sampling Year")
+```
+
+* Plot (with numbers)
+
+```{r EDARiversPlotNum, message=FALSE, warning=FALSE}
+# Preparar los datos
+plot_data <- Riberbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
+  # Capitalizar primera letra de cada país
+  mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  # Crear todas las combinaciones posibles de país y año
+  complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) %>%
+  # Ordenar por total acumulado de ríos
+  mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum))
+
+# Crear el gráfico
+ggplot(plot_data, aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
+  geom_bar(stat = "identity", position = "stack", colour = 'black') +
+  # Añadir etiquetas solo para valores superiores a 20
+  geom_text(data = filter(plot_data, Rivers > 8), 
+            aes(label = Rivers), 
+            position = position_stack(vjust = 0.5),
+            color = "white", fontweight = "bold", size = 2.5) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  # Paleta de colores con intensidad creciente hacia 2024
+  scale_fill_manual(values = c("2021" = "#E0FFFF", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(x = "", 
+       y = "Number of rivers",
+       fill = "Sampling Year")
 ```
 
