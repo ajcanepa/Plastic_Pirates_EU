@@ -11,10 +11,6 @@ Questions to be solved
   * We need to analyse the raw data in order to have those sampling events that were qualified and which doesn't (RiversideWasteVariety_AttemptedSampling == 1 and RiversideWasteVariety_Qualified == 1)
   
 
-## RESEARCH QUESTIONS
-
-# Citizens Description?
-
 # Litter Presence/Absence
 
 # Community-based approach to analyze composition of litter
@@ -53,10 +49,37 @@ Riberbank <-
   mutate(across(where(is.character), as.factor))
 ```
 
+## RESEARCH QUESTIONS
+
+# Citizens Description?
+
 ```{r EDACountries, message=FALSE, warning=FALSE}
 Riberbank %>% 
-  summarise(Country_total = n_distinct(CountryResponsible))
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Num_Sampling = n())
 ```
+```{r EDACountriesPlot, message=FALSE, warning=FALSE}
+Riberbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Num_Sampling = n(), .groups = 'drop') %>%
+    # Capitalizar primera letra de cada país
+  mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  # Crear todas las combinaciones posibles de país y año
+  complete(CountryResponsible, SamplingYear, fill = list(Num_Sampling = 0)) %>%
+  # Ordenar por total acumulado
+  mutate(CountryResponsible = reorder(CountryResponsible, -Num_Sampling, sum)) %>%
+  ggplot(aes(x = CountryResponsible, y = Num_Sampling, fill = factor(SamplingYear))) +
+  geom_bar(stat = "identity", position = "dodge", colour = 'black') +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  # Paleta de colores con intensidad creciente hacia 2024
+  scale_fill_manual(values = c("2021" = "#8DEEEE", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(x = "", 
+       y = "Number of samplings campaigns",
+       fill = "Sampling Year")
+```
+
 
 ```{r}
 Riberbank %>% 
