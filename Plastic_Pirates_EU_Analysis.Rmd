@@ -36,6 +36,7 @@ library(readxl)
 library(writexl)
 library(DT)
 library(lubridate)
+library(scales)
 ```
 
 ## Data loading
@@ -43,7 +44,7 @@ library(lubridate)
 ```{r DataLoading, message=FALSE, warning=FALSE}
 # Cargamos los datos incorporando las modificaciones para trabajar con él
 # Cuidado con el nombre de los ríos, hay besòs y bessos.
-Riberbank <- 
+Riverbank <- 
   read.csv(file = "PlasticPirates_Riverbank_data/Riverbank_data_v2.0.0.csv", header = TRUE, sep = ",", na.strings = "na") %>% 
   mutate(SamplingDate = lubridate::ymd(SamplingDate)) %>% 
   mutate(across(where(is.character), as.factor))
@@ -58,14 +59,14 @@ Riberbank <-
 * Table 
 
 ```{r EDACountries, message=FALSE, warning=FALSE}
-Riberbank %>% 
+Riverbank %>% 
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Num_Sampling = n())
 ```
 * Plot
 
 ```{r EDACountriesPlot, message=FALSE, warning=FALSE}
-Riberbank %>% 
+Riverbank %>% 
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Num_Sampling = n(), .groups = 'drop') %>%
     # Capitalizar primera letra de cada país
@@ -91,14 +92,14 @@ Riberbank %>%
 *  Table
 
 ```{r EDARivers, message=FALSE, warning=FALSE}
-Riberbank %>% 
+Riverbank %>% 
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Rivers = n_distinct(SamplingRiver))
 ```
 * Plot (without numbers)
 
 ```{r EDARiversPlot, message=FALSE, warning=FALSE}
-Riberbank %>% 
+Riverbank %>% 
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
   # Capitalizar primera letra de cada país
@@ -123,7 +124,7 @@ Riberbank %>%
 
 ```{r EDARiversPlotNum, message=FALSE, warning=FALSE}
 # Preparar los datos
-plot_data <- Riberbank %>% 
+plot_data <- Riverbank %>% 
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
   # Capitalizar primera letra de cada país
@@ -149,5 +150,115 @@ ggplot(plot_data, aes(x = CountryResponsible, y = Rivers, fill = factor(Sampling
   labs(x = "", 
        y = "Number of rivers",
        fill = "Sampling Year")
+```
+
+### Most common types and quantities of litter per region? (Group B: riverbanks; Group C: floating litter)
+
+#### Group B: Riverside Waste
+
+Statistiscs of the variable `RiversideWasteVariety_AttemptedSampling` to see how many samplings were performed.
+```{r GroupB, warning=FALSE, message=FALSE}
+Riverbank %>% 
+  select(RiversideWasteVariety_AttemptedSampling) %>% 
+  table()
+
+```
+
+To work with the `RiversideWasteVariety_` data, we need to filter the dataset to include only those rows where `RiversideWasteVariety_AttemptedSampling` is 1 (indicating that a sampling was attempted) and `RiversideWasteVariety_Qualified` is also 1 (indicating that the sampling was qualified).
+
+```{r GroupBData, warning=FALSE, message=FALSE}
+Riverbank %>% 
+  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
+```
+##### Percentage of qualified samplings
+
+This represents the percentage of validated data among the total number of sampling beign attempted.
+```{r}
+Riverbank %>%
+  summarise(
+    total_rows = n(),
+    total_valid = sum(
+      RiversideWasteVariety_AttemptedSampling == 1 &
+      RiversideWasteVariety_Qualified == 1,
+      na.rm = TRUE
+    ),
+    pct_valid_total = round((total_valid / total_rows) * 100, digits = 1),
+    pct_valid_percent = paste(round((total_valid / total_rows) * 100, 1), "%", sep = "")
+  )
+```
+
+```{r}
+validated_pct_by_country <- 
+  Riverbank %>% 
+  group_by(CountryResponsible) %>% 
+  summarise(total_rows = n(),
+            total_valid = sum(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
+    `pct_valid_total(%)`        = round((total_valid / total_rows) * 100,1),
+    total_attempts         = sum(RiversideWasteVariety_AttemptedSampling == 1, na.rm = TRUE),
+    valid_among_attempts   = sum(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
+    `pct_valid_among_attempts(%)` = round((valid_among_attempts / total_attempts) * 100,1), .groups = "drop") %>% 
+  mutate(CountryResponsible = str_to_title(CountryResponsible))
+
+validated_pct_by_country
+```
+
+```{r, fig.width= 10}
+Riverbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>% 
+  summarise(
+    n_attempted = sum(RiversideWasteVariety_AttemptedSampling == 1, na.rm = TRUE),
+    n_validated = sum(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
+    pct_validated = if_else(n_attempted > 0, n_validated / n_attempted * 100, 0),
+    .groups = "drop"
+  ) %>% 
+  mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+  complete(CountryResponsible, SamplingYear,
+           fill = list(n_attempted   = 0,
+                       n_validated   = 0,
+                       pct_validated = 0)
+  ) %>% 
+  filter(SamplingYear > 2021)  %>% 
+  mutate(CountryResponsible = reorder(CountryResponsible,-pct_validated, FUN = mean)) %>% 
+  ggplot(aes(
+    x    = CountryResponsible,
+    y    = pct_validated,
+    fill = factor(SamplingYear)
+  )) +
+    geom_col(
+      position = "dodge",
+      colour  = "black"
+    ) +
+  geom_text(aes(label = n_attempted),
+              position = position_dodge(width = 0.9),
+              vjust    = -0.3,
+              size     = 3
+    ) +
+  # geom_text(aes(label = paste0("(", n_attempted, ")")),
+  #           position = position_dodge(width = 0.9),
+  #           vjust    = -0.3,
+  #           size     = 2.8) +
+    scale_fill_manual(
+      values = c(
+        "2021" = "#E0FFFF",
+        "2022" = "#B8D4F0",
+        "2023" = "#4A90E2",
+        "2024" = "#1E3A8A"
+      ),
+      name = "Sampling Year"
+    ) +
+    scale_y_continuous(
+      labels = percent_format(scale = 1),
+      expand = expansion(mult = c(0, 0.05))
+    ) +
+    labs(
+      x     = NULL,
+      y     = "Validated sampling (%)",
+      title = "Percentage of validated records and total sampling per country and year"
+    ) +
+    theme_classic(base_size = 12) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title  = element_text(hjust = 0.5)
+    )
 ```
 
