@@ -156,7 +156,7 @@ ggplot(plot_data, aes(x = CountryResponsible, y = Rivers, fill = factor(Sampling
 
 #### Group B: Riverside Waste
 
-Statistiscs of the variable `RiversideWasteVariety_AttemptedSampling` to see how many samplings were performed.
+Statistics of the variable `RiversideWasteVariety_AttemptedSampling` to see how many samplings were performed.
 ```{r GroupB, warning=FALSE, message=FALSE}
 Riverbank %>% 
   select(RiversideWasteVariety_AttemptedSampling) %>% 
@@ -261,4 +261,49 @@ Riverbank %>%
       plot.title  = element_text(hjust = 0.5)
     )
 ```
+
+##### Most common types/quantities of litter
+
+```{r, warning=FALSE, message=FALSE}
+
+Riverbank %>% 
+  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
+
+```
+Firstly, we will pick up data to answer the question about group B. Only some variables are taken from the general dataset.
+
+```{r, warning=FALSE, message=FALSE}
+# GroupB dataset
+GroupB_data <- 
+  Riverbank %>% 
+  select(DatasetID, CountryResponsible, SamplingCampaign, SamplingYear, SamplingCoordinatesLatitude, SamplingCoordinatesLongitude, SamplingRiverSystem, SamplingParticipants, RiversideWasteVariety_AttemptedSampling, RiversideWasteVariety_Qualified:RiversideWasteVariety_Results_ResultsComment)
+
+```
+
+The, Attributes' names are so complicated to work that I'll remote the preceding information **RiversideWasteVariety_Results_** which is common to all attributes; and finally to work with only the validated `Group B` dataset we create:
+
+```{r, warning=FALSE, message=FALSE}
+# GroupB dataset
+GroupB_data_validated <- 
+  Riverbank %>% 
+  select(DatasetID, CountryResponsible, SamplingCampaign, SamplingYear, SamplingCoordinatesLatitude, SamplingCoordinatesLongitude, SamplingRiverSystem, SamplingParticipants, RiversideWasteVariety_AttemptedSampling, RiversideWasteVariety_Qualified:RiversideWasteVariety_Results_ResultsComment) %>% 
+  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1) %>% 
+  # Primero quitamos `RiversideWasteVariety_Results_`
+  rename_with(
+    .cols = starts_with("RiversideWasteVariety_Results_"),
+    # solo seleccionamos los tipos de residuos
+    .fn = ~ gsub("RiversideWasteVariety_Results_", "", .) # Mantenemos la ultima extensión del nombre
+  )
+
+GroupB_data_validated
+```
+
+```{r}
+summary(GroupB_data_validated)
+```
+
+
+
+
+
 
