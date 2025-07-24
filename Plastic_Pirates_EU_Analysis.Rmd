@@ -297,13 +297,41 @@ GroupB_data_validated <-
 
 GroupB_data_validated
 ```
-
+**CAUTION**!
+There are some `NAs` values in the litter items that are probably incorrect since the groups did find other items. 
 ```{r}
 summary(GroupB_data_validated)
 ```
 
+We will obtain the plot for the most common (average abundance) litter type
+```{r}
+# Average litter type
+Average_litter_type <- 
+  GroupB_data_validated %>% 
+  select(CountryResponsible, SamplingYear, PlasticBags:LocalWaste) %>%  
+  pivot_longer(
+    cols = PlasticBags:LocalWaste,
+    names_to = "Litter_type",
+    values_to = "Abundance") %>% 
+  group_by(Litter_type) %>% 
+  dplyr::summarise(Av_Abundance = mean(Abundance, na.rm = TRUE), 
+                   SE_Abundance = sd(Abundance, na.rm = TRUE)/sqrt(n())) %>% 
+  ggplot(., aes(x = reorder(Litter_type, -Av_Abundance), y = Av_Abundance)) +
+  geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance, ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(limits = c(0, 60), expand = c(0.01,0)) +
+  #geom_text(aes(label = sprintf("%.1f", round(Av_Abundance, digits = 1))), vjust = 1.4, size = 3.5, colour = "white") +
+  labs(x = "", y = "Litter abundance (mean)", title = '', subtitle = "") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
+
+Average_litter_type
+```
 
 
-
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+ggsave(filename = "Average_Waste_Category_GroupB.png", plot = Average_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.6, width = 35, height = 25, units = "cm", dpi = 150, limitsize = FALSE)
+```
 
 
