@@ -37,6 +37,9 @@ library(writexl)
 library(DT)
 library(lubridate)
 library(scales)
+library(vegan)       # decostand(), rda(), adonis2()
+library(factoextra)  # fviz_pca_biplot(), fviz_dend()
+library(randomForest)
 ```
 
 ## Data loading
@@ -388,4 +391,143 @@ Average_litter_type_country
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
 ggsave(filename = "Average_Waste_Category_Country_GroupB.png", plot = Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.5, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
+```
+
+* **Multivariate Perspective**
+
+In order to see if there are significant differences across country in the community composition, we will perform a PERMANOVA test:
+
+```{r PermanovaTest, message=FALSE, warning=FALSE}
+# 3a) PERMANOVA: test if composition differs by Country
+set.seed(42)
+perm1 <- adonis2(dist_mat ~ CountryResponsible, data = meta, 
+                 permutations = 999, by = "margin")
+print(perm1)
+```
+
+So, we conclude that there are significant differences among countries. but What are the items that explains these differences? 
+
+The answer will be addressed by performing a **Multivariate Random Forest**.
+
+```{r MultRandFor, message=FALSE, warning=FALSE}
+# 3b) Multivariate Random Forest:  
+#     predict Country from composition → variable importance
+rf <- randomForest(
+  x      = comm_hel,
+  y      = as.factor(meta$CountryResponsible),
+  ntree  = 500,
+  importance = TRUE
+)
+
+print(rf)
+```
+The estimated error rate (OOB) is high, so conclusion have to be taken with care. Thus, the more important (differential across countries) litter components are:
+
+```{r RFVarImport, message=FALSE, warning=FALSE}
+varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination")
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/Random_Forest_Importance.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination")
+dev.off()
+```
+
+This plot of variable importance importance is telling us:
+
+*  A large `MeanDecreaseAccuracy` (**MDA**) means that, when you break the relationship between that predictor and the response, the model’s accuracy suffers a lot → it’s an important predictor for correct country assignments. 
+  * **MDA** is generally the more reliable gauge of predictive importance, since it directly measures impact on OOB‐accuracy.
+
+* A large `MeanDecreaseGini` (**MDG**) means that X frequently appears in high‑up the tree splits and yields big purity gains → it’s structurally important to partitioning the data. 
+  * **MDG** is faster to compute and tells you which features the trees “prefer” splitting on, but can overweight high–cardinality or continuous variables.
+  
+Finally, we will perform a Principal Component Analysis (PCA) to see correlation among litter items and *possible* associations with countries
+
+```{r PCA, warning=FALSE, message=FALSE}
+# assume your data is in a data.frame called `df`
+# and has at least:
+#   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
+
+# Replace the NA values for 0. --> Probably the default behaviour?
+df <- GroupB_data_validated %>% 
+  select(CountryResponsible, PlasticBags:LocalWaste) %>% 
+  #drop_na()
+  mutate_all(funs(replace_na(.,0)))
+
+# isolate metadata + community matrix
+meta <- df %>% select(CountryResponsible)
+comm <- df %>% select(-CountryResponsible)
+
+# Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
+comm_hel <- decostand(comm, method = "hellinger")
+
+# ─── 1) PCA (and optional RDA constrained by Country) ───────────────────────────
+# 1a) Unconstrained PCA on Hellinger data
+# pca1 <- rda(comm_hel)  
+# 
+# summary(pca1)
+# 
+# plot(pca1)
+
+# (re)compute PCA with prcomp
+pca_prcomp <- prcomp(comm_hel, scale. = TRUE)
+
+#summary(pca_prcomp)
+
+# 1b) Quick biplot via factoextra
+PCA_Litter_Country <- 
+fviz_pca_biplot(pca_prcomp,
+                geom.ind    = "point",            # show sites as points
+                col.ind     = meta$CountryResponsible %>% str_to_title(), 
+                palette.ind = "jco",              # color‐blind‐friendly palette
+                addEllipses = FALSE,               # 95% CI per country
+                label      = "var",               # show arrows for variables
+                repel      = TRUE
+) +
+  labs(title = "PCA of Litter Composition (Hellinger‐transformed)",
+       subtitle = "Points = samples colored by Country; arrows = litter types") +
+  theme_minimal(base_size = 14)
+
+PCA_Litter_Country
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+PCA_Litter_Country
+dev.off()
+```
+
+And the most important Items for the two forst principal components are:
+
+* First PC
+```{r PC1VarImport, message=FALSE, warning=FALSE}
+# Bar‐plot of top 10 contributors to PC1
+fviz_contrib(pca_prcomp, choice = "var", axes = 1, top = 10) +
+  ggtitle("Top 10 variables contributing to PC1")
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/Top10_PC1_PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+# Bar‐plot of top 10 contributors to PC1
+fviz_contrib(pca_prcomp, choice = "var", axes = 1, top = 10) +
+  ggtitle("Top 10 variables contributing to PC1")
+dev.off()
+```
+
+
+```{r PC2VarImport, message=FALSE, warning=FALSE}
+# Bar‐plot of top 10 contributors to PC2
+fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
+  ggtitle("Top 10 variables contributing to PC2")
+```
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/Top10_PC2_PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+# Bar‐plot of top 10 contributors to PC2
+fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
+  ggtitle("Top 10 variables contributing to PC2")
+dev.off()
 ```
