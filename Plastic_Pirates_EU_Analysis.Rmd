@@ -328,10 +328,64 @@ Average_litter_type <-
 Average_litter_type
 ```
 
-
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
 ggsave(filename = "Average_Waste_Category_GroupB.png", plot = Average_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.6, width = 35, height = 25, units = "cm", dpi = 150, limitsize = FALSE)
 ```
 
+If we now want to visualize the contribution per each country, we have:
 
+```{r}
+# Average litter type
+Average_litter_type_country <- 
+GroupB_data_validated %>% 
+  select(CountryResponsible, PlasticBags:LocalWaste) %>%  
+  pivot_longer(
+    PlasticBags:LocalWaste,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>% 
+  # 1) group by country AND type
+  group_by(CountryResponsible, Litter_type) %>% 
+  summarise(
+    Av_Abundance = mean(Abundance, na.rm = TRUE),
+    SE_Abundance = sd(Abundance,   na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>% 
+  # title‐case country, reorder types by their overall mean if you like
+  mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type       = reorder(Litter_type, -Av_Abundance)
+  ) %>% 
+  # 2) plot bars first, then error bars
+  ggplot(aes(x = Litter_type, y = Av_Abundance)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance,
+                    ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
+  labs(x = "", y = "Litter abundance (mean)", title = '', subtitle = "") +
+  # theme_classic() +
+  # theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +
+  theme_classic(base_size = 16) +
+  theme(
+    # rotate axis labels, center title, etc.
+    axis.text.x     = element_text(angle = 65, hjust = 1),
+    plot.title      = element_text(hjust = 0.5),
+    strip.background = element_rect(
+      fill   = "lightgrey",  # background color
+      color  = "black",      # border color
+      size   = 0.5           # border thickness
+    ),
+    strip.text       = element_text(
+      colour = "black",      # text color
+      face   = "bold"        # make it stand out
+    )
+  )
+
+Average_litter_type_country
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+ggsave(filename = "Average_Waste_Category_Country_GroupB.png", plot = Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.5, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
+```
