@@ -40,6 +40,8 @@ library(scales)
 library(vegan)       # decostand(), rda(), adonis2()
 library(factoextra)  # fviz_pca_biplot(), fviz_dend()
 library(randomForest)
+library(RColorBrewer)
+library(tidyHeatmap)
 ```
 
 ## Data loading
@@ -52,6 +54,24 @@ Riverbank <-
   mutate(SamplingDate = lubridate::ymd(SamplingDate)) %>% 
   mutate(across(where(is.character), as.factor))
 ```
+
+## Pre-proccessing
+
+```{r RiversName, message=FALSE, warning=FALSE}
+# Loading the rivers' dictionary
+Riverbank_dictionary <- read_excel("Riverbank_data_v2.1.xlsx", sheet = "Final vocabulary clean")
+
+Riverbank <-
+  Riverbank %>%
+  left_join(Riverbank_dictionary, by = "SamplingRiver") %>%
+    #select(SamplingRiver, Corrected_river_English, SamplingRiverSystem, River_basin, everything()) %>% 
+    mutate(River_basin = str_remove(River_basin, regex("\\s+Basin$", ignore_case = TRUE))) %>% 
+  mutate(SamplingRiver = coalesce(Corrected_river_English, SamplingRiver),
+         SamplingRiverSystem = River_basin) %>% 
+  select(-c("No", "Country", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver"))
+
+```
+
 
 ## RESEARCH QUESTIONS
 
@@ -305,6 +325,7 @@ There are some `NAs` values in the litter items that are probably incorrect sinc
 ```{r}
 summary(GroupB_data_validated)
 ```
+###### Litter type abundance
 
 We will obtain the plot for the most common (average abundance) litter type
 ```{r}
@@ -336,9 +357,12 @@ Average_litter_type
 ggsave(filename = "Average_Waste_Category_GroupB.png", plot = Average_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.6, width = 35, height = 25, units = "cm", dpi = 150, limitsize = FALSE)
 ```
 
+
+###### Litter type abundance per country
+
 If we now want to visualize the contribution per each country, we have:
 
-```{r}
+```{r AverageLitterCountry, message=FALSE, warning=FALSE}
 # Average litter type
 Average_litter_type_country <- 
 GroupB_data_validated %>% 
@@ -393,13 +417,300 @@ Average_litter_type_country
 ggsave(filename = "Average_Waste_Category_Country_GroupB.png", plot = Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.5, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
 ```
 
+###### Litter type Proportion I - "Across‑type" proportions
+
+* The first approach will be a "*Across‑type*" proportions. 
+  * For each litter type, what fraction comes from each country? (not from an european total)
+  * total abundance of that litter type over each total country.
+
+
+```{r ProportionLitterCountry, message=FALSE, warning=FALSE}
+Prop_Liter_Country <- 
+  GroupB_data_validated %>%
+  # 1) pivot to long form
+  pivot_longer(
+    cols      = PlasticBags:LocalWaste,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  # 2) sum abundance by (Country, Type)
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # 3) compute, per type, the global total
+  group_by(Litter_type) %>%
+  mutate(
+    Global_Total   = sum(Total_Abundance),
+    Prop_Country   = Total_Abundance / Global_Total
+  ) %>%
+  ungroup()
+
+Prop_Liter_Country
+```
+
+
+```{r ProportionLitterCountryPlot, message=FALSE, warning=FALSE}
+# Example 100%-stacked bar
+Prop_Liter_Country %>% 
+mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(
+    values = brewer.pal(12, "Paired"),
+    name   = "Country"
+  ) +
+  labs(
+    x = "Litter type",
+    y = "Share of global abundance",
+    title = "Country contributions to each litter type"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
+  coord_flip()
+```
+
+* Now, considering the total of Europe
+
+```{r ProportionLitterEurope, warning=FALSE, message=FALSE}
+# 1) Pivot, sum by country & type, then compute each country’s share of the European total
+Data_prop_eu <- 
+  GroupB_data_validated %>%
+  pivot_longer(
+    cols      = PlasticBags:LocalWaste,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(Litter_type) %>%
+  mutate(
+    European_Total   = sum(Total_Abundance),
+    Prop_of_Europe   = Total_Abundance / European_Total
+  ) %>%
+  ungroup() %>%
+  # optional: title‑case and reorder types by overall Prop for consistent ordering
+  mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type        = reorder(Litter_type, -Prop_of_Europe)
+  )
+
+Data_prop_eu
+```
+
+To compare and validate the output, for each `litter_type` the `European_Total` have to be the same.
+
+```{r ProportionLitterEuropeValidation, warning=FALSE, message=FALSE}
+# To compare and validate the output, for each `litter_type` the `European_Total` have to be the same.
+Data_prop_eu %>% 
+  filter(Litter_type == "AluminiumFoil")
+```
+
+```{r ProportionLitterEuropePlotStacked, warning=FALSE, message=FALSE, out.width='100%', fig.align='center'}
+# Example 100%-stacked bar
+Data_prop_eu %>% 
+mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = Litter_type, y = Prop_of_Europe, fill = CountryResponsible)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(
+    values = brewer.pal(12, "Paired"),
+    name   = "Country"
+  ) +
+  labs(
+    x = "Litter type",
+    y = "Share of global abundance",
+    title = "Country contributions to each litter type (Europe as basis)"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
+  coord_flip()
+```
+
+
+```{r ProportionLitterEuropePlot, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+#x11()
+# 2) Faceted bar chart of proportion (country share of European total)
+# 2) plot with fixed scales and text labels
+ggplot(Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_text( # comment if you don't need the numbers above the bars
+    #aes(label = percent(Prop_of_Europe, accuracy = 0.1), suffix = "%"),
+    aes(label = round((Prop_of_Europe*100), 1)),
+    angle   = 45,       # rotate labels 45°
+    hjust   = 0,        # left‑align text relative to its anchor
+    vjust   = -0.3,     # nudge it a bit above the bar
+    size  = 2.7          # adjust text size as needed
+  ) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.15))  # extra 15% headroom for labels
+  ) +
+  facet_wrap(~ CountryResponsible, ncol = 3, scales = "fixed") +
+  labs(
+    x        = NULL,
+    y        = "Share of European total (%)",
+    title    = "Country contributions to each litter type",
+    subtitle = "Proportion of European total abundance for each category"
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    axis.text.x      = element_text(angle = 65, hjust = 1),
+    strip.background = element_rect(fill = "lightgrey", colour = "black"),
+    strip.text       = element_text(face = "bold")
+  )
+```
+
+* HeatMaps
+
+```{r ProportionLitterEuropeHeatMap, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+Data_prop_eu %>%
+  heatmap(
+    .row           = Litter_type,
+    .column        = CountryResponsible,
+    .value         = Prop_of_Europe,
+    scale          = "column", # can be "none" (by default) or "row", "column" or "both". (#column keeps the z‑scaling)
+    # a three‑colour gradient: low→mid→high
+    palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
+    name           = "Deviation % from \nEU total",
+    column_title   = "Country",
+    row_title      = "Litter type",
+    show_row_names = TRUE,
+    show_column_names = TRUE
+  )
+```
+
+
+
+###### Litter type Proportion II - "Within‑country" proportions
+
+* The second approach will be a "*Within‑country*" proportions. 
+  * For each country, what fraction of its total litter is each type?
+  * Total abundance of all types in that country.
+
+
+```{r ProportionLitterCountryII, message=FALSE, warning=FALSE}
+Prop_Liter_Country2 <- 
+  GroupB_data_validated %>%
+  # 1) pivot to long
+  pivot_longer(
+    cols      = PlasticBags:LocalWaste,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  # 2) sum by (Country, Type)
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # 3) compute, per country, that country’s total
+  group_by(CountryResponsible) %>%
+  mutate(
+    Country_Total = sum(Total_Abundance),
+    Prop_Type     = Total_Abundance / Country_Total
+  ) %>%
+  ungroup()
+
+Prop_Liter_Country2
+```
+
+
+```{r ProportionLitterCountryIIPlot, message=FALSE, warning=FALSE}
+# Example 100%-stacked bar per country
+Prop_Liter_Country2 %>% 
+mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = CountryResponsible, y = Prop_Type, fill = Litter_type)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    x = "Country",
+    y = "Share of country’s total",
+    title = "Composition of litter types within each country"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1))
+```
+
+
+```{r ProportionLitterCountryIIPlot2, message=FALSE, warning=FALSE}
+  # 2) plot bars first, then error bars
+Prop_Liter_Country2 %>% 
+  # 1) group by country AND type
+  group_by(CountryResponsible, Litter_type) %>% 
+  summarise(
+    Av_Proportion = mean(Prop_Type, na.rm = TRUE),
+    SE_Proportion = sd(Prop_Type,   na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>% 
+  # title‐case country, reorder types by their overall mean if you like
+  mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type       = reorder(Litter_type, -Av_Proportion)
+  ) %>% 
+  ggplot(aes(x = Litter_type, y = Prop_Type)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_errorbar(aes(ymin = Prop_Type - SE_Abundance,
+                    ymax = Prop_Type + SE_Abundance), width = 0.2) +
+  facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
+  labs(x = "", y = "Litter abundance (mean)", title = '', subtitle = "") +
+  # theme_classic() +
+  # theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +
+  theme_classic(base_size = 16) +
+  theme(
+    # rotate axis labels, center title, etc.
+    axis.text.x     = element_text(angle = 65, hjust = 1),
+    plot.title      = element_text(hjust = 0.5),
+    strip.background = element_rect(
+      fill   = "lightgrey",  # background color
+      color  = "black",      # border color
+      size   = 0.5           # border thickness
+    ),
+    strip.text       = element_text(
+      colour = "black",      # text color
+      face   = "bold"        # make it stand out
+    )
+  )
+
+```
+
+
 * **Multivariate Perspective**
+
+```{r DataPreparationMultivariate}
+# assume your data is in a data.frame called `df`
+# and has at least:
+#   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
+# Replace the NA values for 0. --> Probably the default behaviour?
+df <- GroupB_data_validated %>% 
+  select(CountryResponsible, PlasticBags:LocalWaste) %>% 
+  #drop_na()
+  mutate_all(funs(replace_na(.,0)))
+
+# isolate metadata + community matrix
+meta <- df %>% select(CountryResponsible)
+comm <- df %>% select(-CountryResponsible)
+
+# Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
+comm_hel <- decostand(comm, method = "hellinger")
+
+```
+
 
 In order to see if there are significant differences across country in the community composition, we will perform a PERMANOVA test:
 
 ```{r PermanovaTest, message=FALSE, warning=FALSE}
+# 2a) Compute distance and hierarchical clustering (Ward’s D2)
+dist_mat <- vegdist(comm_hel, method = "euclid")
+
 # 3a) PERMANOVA: test if composition differs by Country
 set.seed(42)
+
 perm1 <- adonis2(dist_mat ~ CountryResponsible, data = meta, 
                  permutations = 999, by = "margin")
 print(perm1)
@@ -445,23 +756,6 @@ This plot of variable importance importance is telling us:
 Finally, we will perform a Principal Component Analysis (PCA) to see correlation among litter items and *possible* associations with countries
 
 ```{r PCA, warning=FALSE, message=FALSE}
-# assume your data is in a data.frame called `df`
-# and has at least:
-#   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
-
-# Replace the NA values for 0. --> Probably the default behaviour?
-df <- GroupB_data_validated %>% 
-  select(CountryResponsible, PlasticBags:LocalWaste) %>% 
-  #drop_na()
-  mutate_all(funs(replace_na(.,0)))
-
-# isolate metadata + community matrix
-meta <- df %>% select(CountryResponsible)
-comm <- df %>% select(-CountryResponsible)
-
-# Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
-comm_hel <- decostand(comm, method = "hellinger")
-
 # ─── 1) PCA (and optional RDA constrained by Country) ───────────────────────────
 # 1a) Unconstrained PCA on Hellinger data
 # pca1 <- rda(comm_hel)  
