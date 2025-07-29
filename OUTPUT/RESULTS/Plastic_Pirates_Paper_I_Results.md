@@ -3,6 +3,8 @@ title: "Plastic Pirates EU Analsysis"
 output: html_notebook
 ---
 
+
+
 # Paper's Skeleton
 The idea is to have two papers
 Questions to be solved
@@ -132,7 +134,7 @@ Riverbank %>%
        fill = "Sampling Year")
 ```
 
-![plot of chunk EDACountriesPlot](figure/EDACountriesPlot-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/EDACountriesPlot-1.png)
 
 #### Numer of Rivers sampled per year and country
 
@@ -187,7 +189,7 @@ Riverbank %>%
        fill = "Sampling Year")
 ```
 
-![plot of chunk EDARiversPlot](figure/EDARiversPlot-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/EDARiversPlot-1.png)
 
 * Plot (with numbers)
 
@@ -222,7 +224,7 @@ ggplot(plot_data, aes(x = CountryResponsible, y = Rivers, fill = factor(Sampling
        fill = "Sampling Year")
 ```
 
-![plot of chunk EDARiversPlotNum](figure/EDARiversPlotNum-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/EDARiversPlotNum-1.png)
 
 ### Most common types and quantities of litter per region? (Group B: riverbanks; Group C: floating litter)
 
@@ -668,7 +670,7 @@ Riverbank %>%
     )
 ```
 
-![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/unnamed-chunk-4-1.png)
 
 ##### Most common types/quantities of litter
 
@@ -1271,7 +1273,7 @@ Average_litter_type <-
 Average_litter_type
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/unnamed-chunk-9-1.png)
 
 
 
@@ -1331,7 +1333,7 @@ GroupB_data_validated %>%
 Average_litter_type_country
 ```
 
-![plot of chunk AverageLitterCountry](figure/AverageLitterCountry-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/AverageLitterCountry-1.png)
 
 
 
@@ -1409,7 +1411,7 @@ ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
   coord_flip()
 ```
 
-![plot of chunk ProportionLitterCountryPlot](figure/ProportionLitterCountryPlot-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/ProportionLitterCountryPlot-1.png)
 
 * Now, considering the total of Europe
 
@@ -1510,8 +1512,8 @@ ggplot(., aes(x = Litter_type, y = Prop_of_Europe, fill = CountryResponsible)) +
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/ProportionLitterEuropePlotStacked-1.png" alt="plot of chunk ProportionLitterEuropePlotStacked" width="100%" />
-<p class="caption">plot of chunk ProportionLitterEuropePlotStacked</p>
+<img src="OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/ProportionLitterEuropePlotStacked-1.png" alt="Default caption" width="100%" />
+<p class="caption">Default caption</p>
 </div>
 
 
@@ -1550,8 +1552,8 @@ ggplot(Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/ProportionLitterEuropePlot-1.png" alt="plot of chunk ProportionLitterEuropePlot" width="50%" />
-<p class="caption">plot of chunk ProportionLitterEuropePlot</p>
+<img src="OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/ProportionLitterEuropePlot-1.png" alt="Default caption" width="50%" />
+<p class="caption">Default caption</p>
 </div>
 
 * HeatMaps
@@ -1575,8 +1577,8 @@ Data_prop_eu %>%
 ```
 
 <div class="figure" style="text-align: center">
-<img src="figure/ProportionLitterEuropeHeatMap-1.png" alt="plot of chunk ProportionLitterEuropeHeatMap" width="50%" />
-<p class="caption">plot of chunk ProportionLitterEuropeHeatMap</p>
+<img src="OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/ProportionLitterEuropeHeatMap-1.png" alt="Default caption" width="50%" />
+<p class="caption">Default caption</p>
 </div>
 
 
@@ -1650,7 +1652,7 @@ ggplot(., aes(x = CountryResponsible, y = Prop_Type, fill = Litter_type)) +
   theme(axis.text.x = element_text(angle = 65, hjust = 1))
 ```
 
-![plot of chunk ProportionLitterCountryIIPlot](figure/ProportionLitterCountryIIPlot-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/ProportionLitterCountryIIPlot-1.png)
 
 
 
@@ -1694,7 +1696,7 @@ Prop_Liter_Country2 %>%
   )
 ```
 
-![plot of chunk ProportionLitterCountryIIPlot2](figure/ProportionLitterCountryIIPlot2-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/ProportionLitterCountryIIPlot2-1.png)
 
 
 * **Multivariate Perspective**
@@ -1812,7 +1814,7 @@ The estimated error rate (OOB) is high, so conclusion have to be taken with care
 varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination")
 ```
 
-![plot of chunk RFVarImport](figure/RFVarImport-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/RFVarImport-1.png)
 
 
 
@@ -1858,7 +1860,7 @@ fviz_pca_biplot(pca_prcomp,
 PCA_Litter_Country
 ```
 
-![plot of chunk PCA](figure/PCA-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/PCA-1.png)
 
 
 
@@ -1872,7 +1874,7 @@ fviz_contrib(pca_prcomp, choice = "var", axes = 1, top = 10) +
   ggtitle("Top 10 variables contributing to PC1")
 ```
 
-![plot of chunk PC1VarImport](figure/PC1VarImport-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/PC1VarImport-1.png)
 
 
 
@@ -1884,5 +1886,5 @@ fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
   ggtitle("Top 10 variables contributing to PC2")
 ```
 
-![plot of chunk PC2VarImport](figure/PC2VarImport-1.png)
+![Default caption](OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/PC2VarImport-1.png)
 
