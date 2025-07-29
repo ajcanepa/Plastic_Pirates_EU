@@ -653,10 +653,10 @@ Prop_Liter_Country2 %>%
     CountryResponsible = str_to_title(CountryResponsible),
     Litter_type       = reorder(Litter_type, -Av_Proportion)
   ) %>% 
-  ggplot(aes(x = Litter_type, y = Prop_Type)) +
+  ggplot(data = ., aes(x = Litter_type, y = Av_Proportion)) +
   geom_col(fill = "lightgray", colour = "black") +
-  geom_errorbar(aes(ymin = Prop_Type - SE_Abundance,
-                    ymax = Prop_Type + SE_Abundance), width = 0.2) +
+  geom_errorbar(aes(ymin = Av_Proportion - SE_Proportion,
+                    ymax = Av_Proportion + SE_Proportion), width = 0.2) +
   facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
   labs(x = "", y = "Litter abundance (mean)", title = '', subtitle = "") +
   # theme_classic() +
