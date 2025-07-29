@@ -33,9 +33,8 @@ vignettes/*.pdf
 /cache/
 
 # Temporary files created by R markdown
-# I need them since I want to save some output in .m format in github
-#*.utf8.md
-#*.knit.md
+*.utf8.md
+*.knit.md
 
 # R Environment Variables
 .Renviron
