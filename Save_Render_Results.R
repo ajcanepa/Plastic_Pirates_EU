@@ -1,3 +1,4 @@
+# Render R Notebook -------------------------------------------------------
 rmarkdown::render(
   "Plastic_Pirates_EU_Analysis.Rmd",
   output_format = "html_notebook",
@@ -5,3 +6,7 @@ rmarkdown::render(
   output_dir = "OUTPUT/RESULTS",
   clean = FALSE
 )
+
+
+# Render a .md file -------------------------------------------------------
+knitr::knit("Plastic_Pirates_EU_Analysis.Rmd", output = "OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results.md")
