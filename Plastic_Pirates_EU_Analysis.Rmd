@@ -3,13 +3,6 @@ title: "Plastic Pirates EU Analsysis"
 output: html_notebook
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-  fig.path = "OUTPUT/RESULTS/Plastic_Pirates_Paper_I_Results_files/",  # or "Plastic_Pirates_Paper_I_Results_files/"
-  fig.cap = "Default caption"
-)
-```
-
 # Paper's Skeleton
 The idea is to have two papers
 Questions to be solved
