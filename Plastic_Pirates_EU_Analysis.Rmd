@@ -86,6 +86,7 @@ Riverbank %>%
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Num_Sampling = n())
 ```
+
 * Plot
 
 ```{r EDACountriesPlot, message=FALSE, warning=FALSE}
@@ -119,6 +120,7 @@ Riverbank %>%
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Rivers = n_distinct(SamplingRiver))
 ```
+
 * Plot (without numbers)
 
 ```{r EDARiversPlot, message=FALSE, warning=FALSE}
@@ -193,6 +195,7 @@ To work with the `RiversideWasteVariety_` data, we need to filter the dataset to
 Riverbank %>% 
   filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
 ```
+
 ##### Percentage of qualified samplings
 
 This represents the percentage of validated data among the total number of sampling beign attempted.
