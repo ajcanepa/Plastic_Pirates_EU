@@ -41,7 +41,7 @@ library(vegan)       # decostand(), rda(), adonis2()
 library(factoextra)  # fviz_pca_biplot(), fviz_dend()
 library(randomForest)
 library(RColorBrewer)
-library(tidyHeatmap)
+library(tidyHeatmap) # Requieres ComplexHeatmap --> BiocManager::install("ComplexHeatmap")
 ```
 
 ## Data loading
