@@ -873,9 +873,7 @@ dev.off()
 
 #### Group B: Single Use Plastic - Riverside Waste
 
-Cogeremos el subset de datos que si representan los plasticos de un solo uso (`SUP`) para el grupo B.
-
-
+Cogeremos el subset de datos que si representan los plásticos de un solo uso (`SUP`) para el grupo B.
 
 ```{r, warning=FALSE, message=FALSE}
 # GroupB dataset
@@ -889,4 +887,37 @@ GroupB_SingleUsePlastic_data_validated
 
 ```{r}
 summary(GroupB_SingleUsePlastic_data_validated)
+```
+
+
+###### SUP type abundance
+
+We will obtain the plot for the most common (average abundance) Single Use Plastic type
+```{r}
+# Average litter type
+SUP_Average_litter_type <- 
+  GroupB_SingleUsePlastic_data_validated %>% 
+  select(CountryResponsible, SamplingYear, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    cols = PlasticBags:Polystyrene,
+    names_to = "Litter_type",
+    values_to = "Abundance") %>% 
+  group_by(Litter_type) %>% 
+  dplyr::summarise(Av_Abundance = mean(Abundance, na.rm = TRUE), 
+                   SE_Abundance = sd(Abundance, na.rm = TRUE)/sqrt(n())) %>% 
+  ggplot(., aes(x = reorder(Litter_type, -Av_Abundance), y = Av_Abundance)) +
+  geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance, ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(limits = c(0, 20), expand = c(0.01,0)) +
+  #geom_text(aes(label = sprintf("%.1f", round(Av_Abundance, digits = 1))), vjust = 1.4, size = 3.5, colour = "white") +
+  labs(x = "", y = "Litter abundance (mean)", title = '', subtitle = "") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
+
+SUP_Average_litter_type
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+ggsave(filename = "Average_SUP_GroupB.png", plot = SUP_Average_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.6, width = 35, height = 25, units = "cm", dpi = 150, limitsize = FALSE)
 ```
