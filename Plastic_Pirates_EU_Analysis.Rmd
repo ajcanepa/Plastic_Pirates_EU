@@ -1144,4 +1144,96 @@ SUP_Data_prop_eu %>%
 ```
 
 
+###### SUP type Proportion II - "Within‑country" proportions
+
+* The second approach will be a "*Within‑country*" proportions. 
+  * For each country, what fraction of its total litter is each type?
+  * Total abundance of all types in that country.
+
+
+```{r ProportionLitterCountryIISUP, message=FALSE, warning=FALSE}
+SUP_Prop_Liter_Country2 <- 
+  GroupB_SingleUsePlastic_data_validated %>% 
+  select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    PlasticBags:Polystyrene,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  # 2) sum by (Country, Type)
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # 3) compute, per country, that country’s total
+  group_by(CountryResponsible) %>%
+  mutate(
+    Country_Total = sum(Total_Abundance),
+    Prop_Type     = Total_Abundance / Country_Total
+  ) %>%
+  ungroup()
+
+SUP_Prop_Liter_Country2
+```
+
+
+```{r ProportionLitterCountryIIPlotSUP, message=FALSE, warning=FALSE}
+# Example 100%-stacked bar per country
+SUP_Prop_Liter_Country2 %>% 
+mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = CountryResponsible, y = Prop_Type, fill = Litter_type)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    x = "Country",
+    y = "Share of country’s total",
+    title = "Composition of litter types within each country",
+    fill = "Single use \nplastic type"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1))
+```
+
+
+```{r ProportionLitterCountryIIPlot2SUP, message=FALSE, warning=FALSE}
+  # 2) plot bars first, then error bars
+SUP_Prop_Liter_Country2 %>% 
+  # 1) group by country AND type
+  group_by(CountryResponsible, Litter_type) %>% 
+  summarise(
+    Av_Proportion = mean(Prop_Type, na.rm = TRUE),
+    SE_Proportion = sd(Prop_Type,   na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>% 
+  # title‐case country, reorder types by their overall mean if you like
+  mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type       = reorder(Litter_type, -Av_Proportion)
+  ) %>% 
+  ggplot(data = ., aes(x = Litter_type, y = Av_Proportion)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_errorbar(aes(ymin = Av_Proportion - SE_Proportion,
+                    ymax = Av_Proportion + SE_Proportion), width = 0.2) +
+  facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
+  labs(x = "", y = expression("Single use plastic abundance (mean" %+-% "s.e.)"), title = '', subtitle = "") +
+  # theme_classic() +
+  # theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +
+  theme_classic(base_size = 16) +
+  theme(
+    # rotate axis labels, center title, etc.
+    axis.text.x     = element_text(angle = 65, hjust = 1),
+    plot.title      = element_text(hjust = 0.5),
+    strip.background = element_rect(
+      fill   = "lightgrey",  # background color
+      color  = "black",      # border color
+      size   = 0.5           # border thickness
+    ),
+    strip.text       = element_text(
+      colour = "black",      # text color
+      face   = "bold"        # make it stand out
+    )
+  )
+
+```
 
