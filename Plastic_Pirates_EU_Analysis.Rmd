@@ -693,8 +693,7 @@ Prop_Liter_Country2 %>%
 
 ```
 
-
-* **Multivariate Perspective**
+###### Multivariate Perspective
 
 ```{r DataPreparationMultivariate}
 # assume your data is in a data.frame called `df`
@@ -981,5 +980,168 @@ SUP_Average_litter_type_country
 # Save the plot
 ggsave(filename = "Average_SUP_Country_GroupB.png", plot = SUP_Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.5, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
 ```
+
+
+###### SUP type Proportion I - "Across‑type" proportions
+
+* The first approach will be a "*Across‑type*" proportions. 
+  * For each litter type, what fraction comes from each country? (not from an european total)
+  * total abundance of that litter type over each total country.
+
+
+```{r ProportionLitterCountrySUP, message=FALSE, warning=FALSE}
+SUP_Prop_Liter_Country <- 
+  GroupB_SingleUsePlastic_data_validated %>% 
+  select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    PlasticBags:Polystyrene,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  # 2) sum abundance by (Country, Type)
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # 3) compute, per type, the global total
+  group_by(Litter_type) %>%
+  mutate(
+    Global_Total   = sum(Total_Abundance),
+    Prop_Country   = Total_Abundance / Global_Total
+  ) %>%
+  ungroup()
+
+SUP_Prop_Liter_Country
+```
+
+
+```{r ProportionLitterCountryPlotSUP, message=FALSE, warning=FALSE}
+# Example 100%-stacked bar
+SUP_Prop_Liter_Country %>% 
+mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(
+    values = brewer.pal(12, "Paired"),
+    name   = "Country"
+  ) +
+  labs(
+    x = "Single use plastic type",
+    y = "Share of global abundance",
+    title = "Country contributions to each litter type"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
+  coord_flip()
+```
+
+* Now, considering the total of Europe
+
+```{r ProportionLitterEuropeSUP, warning=FALSE, message=FALSE}
+# 1) Pivot, sum by country & type, then compute each country’s share of the European total
+SUP_Data_prop_eu <- 
+  GroupB_SingleUsePlastic_data_validated %>% 
+  select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    PlasticBags:Polystyrene,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(Litter_type) %>%
+  mutate(
+    European_Total   = sum(Total_Abundance),
+    Prop_of_Europe   = Total_Abundance / European_Total
+  ) %>%
+  ungroup() %>%
+  # optional: title‑case and reorder types by overall Prop for consistent ordering
+  mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type        = reorder(Litter_type, -Prop_of_Europe)
+  )
+
+SUP_Data_prop_eu
+```
+
+```{r ProportionLitterEuropePlotStackedSUP, warning=FALSE, message=FALSE, out.width='100%', fig.align='center'}
+# Example 100%-stacked bar
+SUP_Data_prop_eu %>% 
+mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = Litter_type, y = Prop_of_Europe, fill = CountryResponsible)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(
+    values = brewer.pal(12, "Paired"),
+    name   = "Country"
+  ) +
+  labs(
+    x = "Single use plastic type",
+    y = "Share of global abundance",
+    title = "Country contributions to each litter type (Europe as basis)"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
+  coord_flip()
+```
+
+
+```{r ProportionLitterEuropePlotSUP, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+#x11()
+# 2) Faceted bar chart of proportion (country share of European total)
+# 2) plot with fixed scales and text labels
+ggplot(SUP_Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_text( # comment if you don't need the numbers above the bars
+    #aes(label = percent(Prop_of_Europe, accuracy = 0.1), suffix = "%"),
+    aes(label = round((Prop_of_Europe*100), 1)),
+    angle   = 45,       # rotate labels 45°
+    hjust   = 0,        # left‑align text relative to its anchor
+    vjust   = -0.3,     # nudge it a bit above the bar
+    size  = 2.7          # adjust text size as needed
+  ) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.15))  # extra 15% headroom for labels
+  ) +
+  facet_wrap(~ CountryResponsible, ncol = 3, scales = "fixed") +
+  labs(
+    x        = NULL,
+    y        = "Share of European total (%)",
+    title    = "Country contributions to each litter type",
+    subtitle = "Proportion of European total abundance for each category"
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    axis.text.x      = element_text(angle = 65, hjust = 1),
+    strip.background = element_rect(fill = "lightgrey", colour = "black"),
+    strip.text       = element_text(face = "bold")
+  )
+```
+
+* HeatMaps
+
+```{r ProportionLitterEuropeHeatMapSUP, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+SUP_Data_prop_eu %>%
+  heatmap(
+    .row           = Litter_type,
+    .column        = CountryResponsible,
+    .value         = Prop_of_Europe,
+    scale          = "column", # can be "none" (by default) or "row", "column" or "both". (#column keeps the z‑scaling)
+    # a three‑colour gradient: low→mid→high
+    palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
+    name           = "Deviation % from \nEU total",
+    column_title   = "Country",
+    row_title      = "Litter type",
+    show_row_names = TRUE,
+    show_column_names = TRUE
+  )
+```
+
 
 
