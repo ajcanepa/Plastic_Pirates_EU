@@ -1237,3 +1237,182 @@ SUP_Prop_Liter_Country2 %>%
 
 ```
 
+###### SUP Multivariate Perspective
+
+```{r DataPreparationMultivariateSUP}
+# assume your data is in a data.frame called `df`
+# and has at least:
+#   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
+
+df_SUP <- GroupB_SingleUsePlastic_data_validated %>% 
+  select(CountryResponsible, PlasticBags:Polystyrene)
+# %>% 
+# #drop_na()
+# mutate_all(funs(replace_na(.,0)))
+
+# isolate metadata + community matrix
+meta_SUP <- df_SUP %>% select(CountryResponsible)
+comm_SUP <- df_SUP %>% select(-CountryResponsible)
+
+# Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
+comm_hel_SUP <- decostand(comm, method = "hellinger")
+
+```
+
+
+In order to see if there are significant differences across country in the community composition, we will perform a PERMANOVA test:
+
+```{r PermanovaTest_SUP, message=FALSE, warning=FALSE}
+# 2a) Compute distance and hierarchical clustering (Ward’s D2)
+dist_mat_SUP <- vegdist(comm_hel_SUP, method = "euclid")
+
+# 3a) PERMANOVA: test if composition differs by Country
+set.seed(42)
+
+perm1_SUP <- adonis2(dist_mat_SUP ~ CountryResponsible, data = meta, 
+                 permutations = 999, by = "margin")
+print(perm1_SUP)
+```
+
+So, we conclude that there are significant differences among countries. but What are the items that explains these differences? 
+
+The answer will be addressed by performing a **Multivariate Random Forest**.
+
+```{r MultRandForSUP, message=FALSE, warning=FALSE}
+# 3b) Multivariate Random Forest:  
+#     predict Country from composition → variable importance
+rf_SUP <- randomForest(
+  x      = comm_hel_SUP,
+  y      = as.factor(meta_SUP$CountryResponsible),
+  ntree  = 500,
+  importance = TRUE
+)
+
+print(rf_SUP)
+```
+The estimated error rate (OOB) is high, so conclusion have to be taken with care. Thus, the more important (differential across countries) litter components are:
+
+```{r RFVarImportSUP, message=FALSE, warning=FALSE}
+varImpPlot(rf_SUP, main="Random Forest: Litter‐type Importance for Country Discrimination")
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/Random_Forest_Importance_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+varImpPlot(rf_SUP, main="Random Forest: S.U.P. type Importance for Country Discrimination")
+dev.off()
+```
+
+This plot of variable importance importance is telling us:
+
+*  A large `MeanDecreaseAccuracy` (**MDA**) means that, when you break the relationship between that predictor and the response, the model’s accuracy suffers a lot → it’s an important predictor for correct country assignments. 
+  * **MDA** is generally the more reliable gauge of predictive importance, since it directly measures impact on OOB‐accuracy.
+
+* A large `MeanDecreaseGini` (**MDG**) means that X frequently appears in high‑up the tree splits and yields big purity gains → it’s structurally important to partitioning the data. 
+  * **MDG** is faster to compute and tells you which features the trees “prefer” splitting on, but can overweight high–cardinality or continuous variables.
+  
+Finally, we will perform a Principal Component Analysis (PCA) to see correlation among litter items and *possible* associations with countries
+
+```{r PCASUP, warning=FALSE, message=FALSE}
+# ─── 1) PCA (and optional RDA constrained by Country) ───────────────────────────
+# 1a) Unconstrained PCA on Hellinger data
+# pca1 <- rda(comm_hel)  
+# 
+# summary(pca1)
+# 
+# plot(pca1)
+
+# (re)compute PCA with prcomp
+pca_prcomp_SUP <- prcomp(comm_hel_SUP, scale. = TRUE)
+
+#summary(pca_prcomp_SUP)
+```
+
+
+```{r PCAplotSUP, warning=FALSE, message=FALSE}
+# # 1b) Quick biplot via factoextra
+# SUP_PCA_Litter_Country <- 
+# fviz_pca_biplot(pca_prcomp_SUP,
+#                 geom.ind    = "point",            # show sites as points
+#                 col.ind     = meta_SUP$CountryResponsible %>% str_to_title(), 
+#                 palette.ind = "jco",              # color‐blind‐friendly palette
+#                 addEllipses = FALSE,               # 95% CI per country
+#                 label      = "var",               # show arrows for variables
+#                 repel      = TRUE
+# ) +
+#   labs(title = "PCA of Litter Composition (Hellinger‐transformed)",
+#        subtitle = "Points = samples colored by Country; arrows = Single use plastic types") +
+#   theme_minimal(base_size = 14)
+# 
+# SUP_PCA_Litter_Country
+```
+
+
+```{r PCAplot2SUP, warning=FALSE, message=FALSE}
+SUP_PCA_Litter_Country2 <- 
+  fviz_pca_biplot(pca_prcomp_SUP,
+                  geom.ind    = "point",
+                  col.ind     = meta_SUP$CountryResponsible %>% str_to_title(), 
+                  palette     = "Set3",  # O prueba: "Paired", "Set1", "Dark2"
+                  addEllipses = FALSE,
+                  ellipse.type = "confidence",
+                  label       = "var",
+                  repel       = TRUE,
+                  #mean.point  = FALSE,  # Desactiva los centroides (promedio de todos los puntos de cada país)
+                  pointsize   = 3,
+                  pointshape  = 16,  # Fuerza todos los puntos a círculos
+                  alpha.ind   = 0.5  # Transparencia de los puntos (0-1)
+  ) +
+  labs(title = "PCA of Litter Composition (Hellinger‐transformed)",
+       subtitle = "Points = samples colored by Country; arrows = Single use plastic types",
+       color = "Country") +
+  theme_minimal(base_size = 14) +
+  guides(fill = "none")  # Quita la leyenda de fill (elipses)
+
+SUP_PCA_Litter_Country2
+```
+
+
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+SUP_PCA_Litter_Country2
+dev.off()
+```
+
+And the most important Items for the two forst principal components are:
+
+* First PC
+```{r PC1VarImportSUP, message=FALSE, warning=FALSE}
+# Bar‐plot of top 10 contributors to PC1
+fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 1, top = 10) +
+  ggtitle("Top 10 variables contributing to PC1")
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/Top10_PC1_PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+# Bar‐plot of top 10 contributors to PC1
+fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 1, top = 10) +
+  ggtitle("Top 10 variables contributing to PC1")
+dev.off()
+```
+
+
+```{r PC2VarImportSUP, message=FALSE, warning=FALSE}
+# Bar‐plot of top 10 contributors to PC2
+fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 2, top = 10) +
+  ggtitle("Top 10 variables contributing to PC2")
+```
+
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/Top10_PC2_PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+# Bar‐plot of top 10 contributors to PC2
+fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 2, top = 10) +
+  ggtitle("Top 10 variables contributing to PC2")
+dev.off()
+```
+
