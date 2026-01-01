@@ -48,6 +48,7 @@ library(tidyHeatmap) # Requieres ComplexHeatmap --> BiocManager::install("Comple
 
 ```{r DataLoading, message=FALSE, warning=FALSE}
 # Cargamos los datos incorporando las modificaciones para trabajar con él
+# https://zenodo.org/records/15535434
 # Cuidado con el nombre de los ríos, hay besòs y bessos.
 Riverbank <- 
   read.csv(file = "PlasticPirates_Riverbank_data/Riverbank_data_v2.0.0.csv", header = TRUE, sep = ",", na.strings = "na") %>% 
@@ -328,6 +329,16 @@ There are some `NAs` values in the litter items that are probably incorrect sinc
 ```{r}
 summary(GroupB_data_validated)
 ```
+
+After meeting and email fro Charlotte, we realise that NA in group B for some items it's really a zero. So we update these columns replacing `NA` values with a `0`.
+
+```{r}
+GroupB_data_validated <-
+  GroupB_data_validated %>% 
+  mutate(across(PlasticBags:LocalWaste, ~replace_na(., 0)))
+```
+
+
 ###### Litter type abundance
 
 We will obtain the plot for the most common (average abundance) litter type
@@ -691,9 +702,10 @@ Prop_Liter_Country2 %>%
 #   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
 # Replace the NA values for 0. --> Probably the default behaviour?
 df <- GroupB_data_validated %>% 
-  select(CountryResponsible, PlasticBags:LocalWaste) %>% 
-  #drop_na()
-  mutate_all(funs(replace_na(.,0)))
+  select(CountryResponsible, PlasticBags:LocalWaste)
+# %>% 
+# #drop_na()
+# mutate_all(funs(replace_na(.,0)))
 
 # isolate metadata + community matrix
 meta <- df %>% select(CountryResponsible)
@@ -771,7 +783,10 @@ Finally, we will perform a Principal Component Analysis (PCA) to see correlation
 pca_prcomp <- prcomp(comm_hel, scale. = TRUE)
 
 #summary(pca_prcomp)
+```
 
+
+```{r PCAplot, warning=FALSE, message=FALSE}
 # 1b) Quick biplot via factoextra
 PCA_Litter_Country <- 
 fviz_pca_biplot(pca_prcomp,
@@ -789,10 +804,37 @@ fviz_pca_biplot(pca_prcomp,
 PCA_Litter_Country
 ```
 
+
+```{r PCAplot2, warning=FALSE, message=FALSE}
+PCA_Litter_Country2 <- 
+  fviz_pca_biplot(pca_prcomp,
+                  geom.ind    = "point",
+                  col.ind     = meta$CountryResponsible %>% str_to_title(), 
+                  palette     = "Set3",  # O prueba: "Paired", "Set1", "Dark2"
+                  addEllipses = FALSE,
+                  ellipse.type = "confidence",
+                  label       = "var",
+                  repel       = TRUE,
+                  #mean.point  = FALSE,  # Desactiva los centroides (promedio de todos los puntos de cada país)
+                  pointsize   = 3,
+                  pointshape  = 16,  # Fuerza todos los puntos a círculos
+                  alpha.ind   = 0.5  # Transparencia de los puntos (0-1)
+  ) +
+  labs(title = "PCA of Litter Composition (Hellinger‐transformed)",
+       subtitle = "Points = samples colored by Country; arrows = litter types",
+       color = "Country") +
+  theme_minimal(base_size = 14) +
+  guides(fill = "none")  # Quita la leyenda de fill (elipses)
+
+PCA_Litter_Country2
+```
+
+
+
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
 png(filename = "OUTPUT/FIGURES/PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-PCA_Litter_Country
+PCA_Litter_Country2
 dev.off()
 ```
 
@@ -827,4 +869,24 @@ png(filename = "OUTPUT/FIGURES/Top10_PC2_PCA_Litter_Country.png", width = 30, he
 fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
   ggtitle("Top 10 variables contributing to PC2")
 dev.off()
+```
+
+#### Group B: Single Use Plastic - Riverside Waste
+
+Cogeremos el subset de datos que si representan los plasticos de un solo uso (`SUP`) para el grupo B.
+
+
+
+```{r, warning=FALSE, message=FALSE}
+# GroupB dataset
+GroupB_SingleUsePlastic_data_validated <- 
+  GroupB_data_validated %>% 
+  select(DatasetID:Polystyrene) # Seleccionamos metadata y los Single Use Plastic
+
+GroupB_SingleUsePlastic_data_validated
+
+```
+
+```{r}
+summary(GroupB_SingleUsePlastic_data_validated)
 ```
