@@ -369,7 +369,7 @@ Average_litter_type <-
   geom_bar(stat = "identity") +
   scale_y_continuous(limits = c(0, 60), expand = c(0.01,0)) +
   #geom_text(aes(label = sprintf("%.1f", round(Av_Abundance, digits = 1))), vjust = 1.4, size = 3.5, colour = "white") +
-  labs(x = "",  y = expression(Litter~abundance~"(mean" %+-% SD~")"), title = '', subtitle = "") +
+  labs(x = "",  y = expression(Litter~abundance~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
 
@@ -414,7 +414,7 @@ GroupB_data_validated %>%
   geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance,
                     ymax = Av_Abundance + SE_Abundance), width = 0.2) +
   facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
-  labs(x = "", y = expression(Litter~abundance~"(mean" %+-% SD~")"), title = '', subtitle = "") +
+  labs(x = "", y = expression(Litter~abundance~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
   # theme_classic() +
   # theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +
   theme_classic(base_size = 16) +
@@ -610,7 +610,7 @@ Data_prop_eu %>%
     scale          = "column", # can be "none" (by default) or "row", "column" or "both". (#column keeps the z‑scaling)
     # a three‑colour gradient: low→mid→high
     palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
-    name           = "Deviation % from \nEU total",
+    name           = "Relative \nimportance (%)",
     column_title   = "Country",
     row_title      = "Litter type",
     show_row_names = TRUE,
@@ -620,7 +620,12 @@ Data_prop_eu %>%
 print(ProportionLitterEuropeHeatMap)
 ```
 
-
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+ProportionLitterEuropeHeatMap
+dev.off()
+```
 
 ###### Litter type Proportion II - "Within‑country" proportions
 
@@ -934,7 +939,7 @@ SUP_Average_litter_type <-
   theme_classic() +
   theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
 
-SUP_Average_litter_type
+print(SUP_Average_litter_type)
 ```
 
 ```{r, echo=FALSE, eval=FALSE}
@@ -999,7 +1004,7 @@ SUP_Average_litter_type_country
 
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
-ggsave(filename = "Average_SUP_Country_GroupB.png", plot = SUP_Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.5, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
+ggsave(filename = "Average_SUP_Country_GroupB.png", plot = SUP_Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
 ```
 
 
@@ -1039,6 +1044,7 @@ SUP_Prop_Liter_Country
 
 ```{r ProportionLitterCountryPlotSUP, message=FALSE, warning=FALSE}
 # Example 100%-stacked bar
+Country_contribution_SUP_type <- 
 SUP_Prop_Liter_Country %>% 
 mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
 ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
@@ -1050,12 +1056,19 @@ ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
   ) +
   labs(
     x = "Single use plastic type",
-    y = "Share of global abundance",
+    y = "Relative abundance (%)",
     title = "Country contributions to each litter type"
   ) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
   coord_flip()
+
+print(Country_contribution_SUP_type)
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+ggsave(filename = "Country_contribution_SUP_type.png", plot = Country_contribution_SUP_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 * Now, considering the total of Europe
@@ -1148,6 +1161,7 @@ ggplot(SUP_Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
 * HeatMaps
 
 ```{r ProportionLitterEuropeHeatMapSUP, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+ProportionSUPEuropeHeatMap <- 
 SUP_Data_prop_eu %>%
   heatmap(
     .row           = Litter_type,
@@ -1156,14 +1170,21 @@ SUP_Data_prop_eu %>%
     scale          = "column", # can be "none" (by default) or "row", "column" or "both". (#column keeps the z‑scaling)
     # a three‑colour gradient: low→mid→high
     palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
-    name           = "Deviation % from \nEU total",
+    name           = "Relative \nimportance (%)",
     column_title   = "Country",
     row_title      = "Litter type",
     show_row_names = TRUE,
     show_column_names = TRUE
   )
-```
 
+print(ProportionSUPEuropeHeatMap)
+```
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+png(filename = "OUTPUT/FIGURES/Proportion_SUP_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+ProportionSUPEuropeHeatMap
+dev.off()
+```
 
 ###### SUP type Proportion II - "Within‑country" proportions
 
@@ -1392,8 +1413,6 @@ SUP_PCA_Litter_Country2 <-
 
 SUP_PCA_Litter_Country2
 ```
-
-
 
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
