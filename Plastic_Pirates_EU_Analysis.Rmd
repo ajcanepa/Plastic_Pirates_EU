@@ -477,6 +477,7 @@ Prop_Liter_Country
 
 ```{r ProportionLitterCountryPlot, message=FALSE, warning=FALSE}
 # Example 100%-stacked bar
+Country_contribution_litter_type <- 
 Prop_Liter_Country %>% 
 mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
 ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
@@ -488,13 +489,20 @@ ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
   ) +
   labs(
     x = "Litter type",
-    y = "Share of global abundance",
+    y = "Relative abundance (%)",
     title = "Country contributions to each litter type"
   ) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
   coord_flip()
+
+print(Country_contribution_litter_type)
 ```
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+ggsave(filename = "Country_contribution_litter_type.png", plot = Country_contribution_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
 
 * Now, considering the total of Europe
 
@@ -593,6 +601,7 @@ ggplot(Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
 * HeatMaps
 
 ```{r ProportionLitterEuropeHeatMap, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+ProportionLitterEuropeHeatMap <- 
 Data_prop_eu %>%
   heatmap(
     .row           = Litter_type,
@@ -607,6 +616,8 @@ Data_prop_eu %>%
     show_row_names = TRUE,
     show_column_names = TRUE
   )
+
+print(ProportionLitterEuropeHeatMap)
 ```
 
 
