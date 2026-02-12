@@ -5,9 +5,10 @@ date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
-    toc_float: false
-    toc_depth: 6
-    keep_md: true
+    toc_depth: 3
+    toc_float: true
+    df_print: paged
+    keep_md: false
 ---
 
 # Paper's Skeleton
@@ -210,7 +211,8 @@ To work with the `RiversideWasteVariety_` data, we need to filter the dataset to
 
 ```{r GroupBData, warning=FALSE, message=FALSE}
 Riverbank %>% 
-  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
+  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1) %>% 
+  head()
 ```
 
 ##### Percentage of qualified samplings
