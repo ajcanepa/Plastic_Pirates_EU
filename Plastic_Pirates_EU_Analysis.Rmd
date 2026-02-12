@@ -9,6 +9,8 @@ output:
     toc_float: true
     df_print: paged
     keep_md: false
+  #md_document:
+    #variant: gfm to use it --> uncomment and rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", output_format = "md_document")
 ---
 
 # Paper's Skeleton
