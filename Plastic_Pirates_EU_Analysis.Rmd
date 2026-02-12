@@ -3,14 +3,14 @@ title: "Plastic Pirates EU Analsysis"
 author: "Dr. Antonio Canepa-Oneto & Dr. Patricia De La Fuente-Gamero"
 date: "`r Sys.Date()`"
 output:
-  html_document:
+  html_document: # rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", "html_document")
     toc: true
     toc_depth: 3
     toc_float: true
     df_print: paged
     keep_md: false
-  #md_document:
-    #variant: gfm to use it --> uncomment and rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", output_format = "md_document")
+  md_document: # rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", output_format = "md_document")
+    variant: gfm 
 ---
 
 # Paper's Skeleton
@@ -203,7 +203,7 @@ print(Num_rios_year)
 #### Group B: Riverside Waste
 
 Statistics of the variable `RiversideWasteVariety_AttemptedSampling` to see how many samplings were performed.
-```{r GroupB, warning=FALSE, message=FALSE}
+```{r GroupB, warning=FALSE, message=FALSE, eval=TRUE}
 Riverbank %>% 
   select(RiversideWasteVariety_AttemptedSampling) %>% 
   table()
@@ -211,10 +211,9 @@ Riverbank %>%
 
 To work with the `RiversideWasteVariety_` data, we need to filter the dataset to include only those rows where `RiversideWasteVariety_AttemptedSampling` is 1 (indicating that a sampling was attempted) and `RiversideWasteVariety_Qualified` is also 1 (indicating that the sampling was qualified).
 
-```{r GroupBData, warning=FALSE, message=FALSE}
+```{r GroupBData, warning=FALSE, message=FALSE, eval=FALSE}
 Riverbank %>% 
-  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1) %>% 
-  head()
+  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
 ```
 
 ##### Percentage of qualified samplings
@@ -311,7 +310,7 @@ Riverbank %>%
 
 ##### Most common types/quantities of litter
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, eval=FALSE}
 
 Riverbank %>% 
   filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
@@ -342,11 +341,11 @@ GroupB_data_validated <-
     .fn = ~ gsub("RiversideWasteVariety_Results_", "", .) # Mantenemos la ultima extensión del nombre
   )
 
-GroupB_data_validated
+#GroupB_data_validated
 ```
 **CAUTION**!
 There are some `NAs` values in the litter items that are probably incorrect since the groups did find other items. 
-```{r}
+```{r, eval=FALSE}
 summary(GroupB_data_validated)
 ```
 
