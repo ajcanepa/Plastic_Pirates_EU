@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output:
   html_document:
     toc: true
-    toc_float: true
+    toc_float: false
     toc_depth: 6
     keep_md: true
 ---
@@ -147,7 +147,7 @@ Riverbank %>%
   # Ordenar por total acumulado de ríos
   mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum)) %>%
   ggplot(aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
-  geom_bar(stat = "identity", position = "stack", colour = 'black') +
+  geom_bar(stat = "identity", position = "dodge", colour = 'black') +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   # Paleta de colores con intensidad creciente hacia 2024
@@ -175,7 +175,7 @@ plot_data <- Riverbank %>%
 # Crear el gráfico
 Num_rios_year <- 
 ggplot(plot_data, aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
-  geom_bar(stat = "identity", position = "stack", colour = 'black') +
+  geom_bar(stat = "identity", position = "dodge", colour = 'black') +
   # Añadir etiquetas solo para valores superiores a 20
   geom_text(data = filter(plot_data, Rivers > 8), 
             aes(label = Rivers), 
@@ -204,7 +204,6 @@ Statistics of the variable `RiversideWasteVariety_AttemptedSampling` to see how 
 Riverbank %>% 
   select(RiversideWasteVariety_AttemptedSampling) %>% 
   table()
-
 ```
 
 To work with the `RiversideWasteVariety_` data, we need to filter the dataset to include only those rows where `RiversideWasteVariety_AttemptedSampling` is 1 (indicating that a sampling was attempted) and `RiversideWasteVariety_Qualified` is also 1 (indicating that the sampling was qualified).

@@ -1,0 +1,26 @@
+# 20260212_Results_Meeting.txt
+
+# Number of rivers
+Use not the Piled bars, but "stacked" bars.
+
+# Litter Abundance (mean)
+Remove the column --> SingleUsePlasticTotal.
+The same for the facet_wrap() per country.
+
+# Country contribution to each litter type
+En el grafico de barras proporcionales separar el tottalsingleusetotal (new scale)?
+
+# PCA
+Remove dots and/or include Ellipsoids
+
+
+# ¡FLOATING DATA!
+We need the floating data also!
+Receive some feedback on this...
+
+# MICROLITTER DATA 
+# Work on the published data
+Receive some feedback on this...
+
+# DISCUSSION
+Include a Spider-plot for the contribution of each country.
