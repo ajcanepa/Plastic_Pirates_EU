@@ -1,10 +1,10 @@
 # 20260212_Results_Meeting.txt
 
 # Number of rivers
-Use not the Piled bars, but "stacked" bars.
+Use not the Piled bars, but "stacked" bars. --> DONE!
 
 # Litter Abundance (mean)
-Remove the column --> SingleUsePlasticTotal.
+Remove the column --> SingleUsePlasticTotal. --> Done!
 The same for the facet_wrap() per country.
 
 # Country contribution to each litter type

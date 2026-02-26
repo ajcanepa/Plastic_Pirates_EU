@@ -279,7 +279,7 @@ Riverbank %>%
       position = "dodge",
       colour  = "black"
     ) +
-  geom_text(aes(label = n_attempted),
+  geom_text(aes(label = paste0("(",n_attempted,")")),
               position = position_dodge(width = 0.9),
               vjust    = -0.3,
               size     = 3
@@ -304,7 +304,7 @@ Riverbank %>%
     labs(
       x     = NULL,
       y     = "Validated sampling (%)",
-      title = "Percentage of validated records and total sampling per country and year"
+      title = "Percentage of validated records (sampling events) per country and year"
     ) +
     theme_classic(base_size = 12) +
     theme(
@@ -347,14 +347,20 @@ GroupB_data_validated <-
   )
 
 #GroupB_data_validated
+
+# Después de la reunión del día 20260212, decidimos que hay que quitar la variable `SingleUsePlasticTotal`.
+GroupB_data_validated <-
+  GroupB_data_validated %>% 
+  select(!SingleUsePlasticTotal)
 ```
+
 **CAUTION**!
 There are some `NAs` values in the litter items that are probably incorrect since the groups did find other items. 
 ```{r, eval=FALSE}
 summary(GroupB_data_validated)
 ```
 
-After meeting and email fro Charlotte, we realise that NA in group B for some items it's really a zero. So we update these columns replacing `NA` values with a `0`.
+After meeting and email from Charlotte, we realise that NA in group B for some items it's really a zero. So we update these columns replacing `NA` values with a `0`.
 
 ```{r}
 GroupB_data_validated <-
@@ -381,7 +387,7 @@ Average_litter_type <-
   ggplot(., aes(x = reorder(Litter_type, -Av_Abundance), y = Av_Abundance)) +
   geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance, ymax = Av_Abundance + SE_Abundance), width = 0.2) +
   geom_bar(stat = "identity") +
-  scale_y_continuous(limits = c(0, 60), expand = c(0.01,0)) +
+  scale_y_continuous(limits = c(0, 30), expand = c(0.01,0)) +
   #geom_text(aes(label = sprintf("%.1f", round(Av_Abundance, digits = 1))), vjust = 1.4, size = 3.5, colour = "white") +
   labs(x = "",  y = expression(Litter~abundance~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
   theme_classic() +
