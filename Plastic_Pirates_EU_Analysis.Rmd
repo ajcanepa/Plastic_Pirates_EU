@@ -52,6 +52,7 @@ library(factoextra)  # fviz_pca_biplot(), fviz_dend()
 library(randomForest)
 library(RColorBrewer)
 library(tidyHeatmap) # Requieres ComplexHeatmap --> BiocManager::install("ComplexHeatmap")
+library(stringr)
 ```
 
 ## Data loading
@@ -832,7 +833,7 @@ pca_prcomp <- prcomp(comm_hel, scale. = TRUE)
 ```
 
 
-```{r PCAplot, warning=FALSE, message=FALSE}
+```{r PCAplot, warning=FALSE, message=FALSE, echo=FALSE, eval=FALSE}
 # 1b) Quick biplot via factoextra
 PCA_Litter_Country <- 
 fviz_pca_biplot(pca_prcomp,
@@ -852,25 +853,73 @@ PCA_Litter_Country
 
 
 ```{r PCAplot2, warning=FALSE, message=FALSE}
+# Para el gráfico calcularemos los centroides y los pintaremos de manera diferencial
+
+# Calcular centroides manualmente
+scores <- as.data.frame(pca_prcomp$x)
+scores$Country <- meta$CountryResponsible %>% str_to_title()
+
+centroids <- 
+  scores %>%
+  group_by(Country) %>%
+  summarise(PC1 = mean(PC1),
+            PC2 = mean(PC2))
+
+# Definir niveles y paleta de colores para puntos y centroides, una sola vez
+meta$Country <- factor(str_to_title(meta$CountryResponsible))
+
+# Definir niveles únicos y ordenados
+countries <- levels(meta$Country)
+
+# Crear paleta manual coherente
+my_palette <- setNames(
+  brewer.pal(length(countries), "Set3"),
+  countries
+)
+
+# PCA con puntos pequeños (color)
+p <- fviz_pca_biplot(
+  pca_prcomp,
+  geom.ind   = "point",
+  col.ind    = meta$Country,
+  addEllipses = FALSE,
+  label      = "var",
+  repel      = TRUE,
+  pointsize  = 2.5,
+  pointshape = 16,
+  alpha.ind  = 0.6
+)
+
+# Añadir centroides (fill)
+# scores <- as.data.frame(pca_prcomp$x) # Esto ya estaba
+# scores$Country <- meta$Country # Esto ya estaba
+# 
+# centroids <- 
+#   scores %>% 
+#   dplyr::group_by(Country) %>% 
+#   dplyr::summarise(PC1 = mean(PC1),
+#                    PC2 = mean(PC2))
+
+
 PCA_Litter_Country2 <- 
-  fviz_pca_biplot(pca_prcomp,
-                  geom.ind    = "point",
-                  col.ind     = meta$CountryResponsible %>% str_to_title(), 
-                  palette     = "Set3",  # O prueba: "Paired", "Set1", "Dark2"
-                  addEllipses = FALSE,
-                  ellipse.type = "confidence",
-                  label       = "var",
-                  repel       = TRUE,
-                  #mean.point  = FALSE,  # Desactiva los centroides (promedio de todos los puntos de cada país)
-                  pointsize   = 3,
-                  pointshape  = 16,  # Fuerza todos los puntos a círculos
-                  alpha.ind   = 0.5  # Transparencia de los puntos (0-1)
-  ) +
+# x11()
+p +
+  geom_point(data = centroids,
+             aes(x = PC1, y = PC2, fill = Country),
+             shape = 21,
+             size = 5,
+             color = "black",
+             stroke = 1.2) +
+  
+  scale_color_manual(values = my_palette, drop = FALSE) +
+  scale_fill_manual(values = my_palette, drop = FALSE) +
+  
   labs(title = "PCA of Litter Composition (Hellinger‐transformed)",
-       subtitle = "Points = samples colored by Country; arrows = litter types",
-       color = "Country") +
-  theme_minimal(base_size = 14) +
-  guides(fill = "none")  # Quita la leyenda de fill (elipses)
+       subtitle = "Small points = samples; Large points = country centroids",
+       color = "Country",
+       fill = "Country") +
+  
+  theme_minimal(base_size = 14)
 
 PCA_Litter_Country2
 ```
@@ -996,10 +1045,10 @@ GroupB_SingleUsePlastic_data_validated %>%
     Litter_type       = Litter_type
   ) %>% 
   # 2) plot bars first, then error bars
-  ggplot(aes(x = Litter_type, y = Av_Abundance)) +
-  geom_col(fill = "lightgray", colour = "black") +
+  ggplot(aes(x = reorder(Litter_type, -Av_Abundance), y = Av_Abundance)) +
   geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance,
                     ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  geom_col(fill = "lightgray", colour = "black") +
   facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
   labs(x = "", y = expression("Single use plastic abundance (mean" %+-% "s.e.)"), title = '', subtitle = "") +
   # theme_classic() +
@@ -1412,25 +1461,64 @@ pca_prcomp_SUP <- prcomp(comm_hel_SUP, scale. = TRUE)
 
 
 ```{r PCAplot2SUP, warning=FALSE, message=FALSE}
-SUP_PCA_Litter_Country2 <- 
-  fviz_pca_biplot(pca_prcomp_SUP,
-                  geom.ind    = "point",
-                  col.ind     = meta_SUP$CountryResponsible %>% str_to_title(), 
-                  palette     = "Set3",  # O prueba: "Paired", "Set1", "Dark2"
-                  addEllipses = FALSE,
-                  ellipse.type = "confidence",
-                  label       = "var",
-                  repel       = TRUE,
-                  #mean.point  = FALSE,  # Desactiva los centroides (promedio de todos los puntos de cada país)
-                  pointsize   = 3,
-                  pointshape  = 16,  # Fuerza todos los puntos a círculos
-                  alpha.ind   = 0.5  # Transparencia de los puntos (0-1)
-  ) +
+# -----------------------------
+# Preparar factor y paleta común
+# -----------------------------
+meta_SUP$Country <- factor(str_to_title(meta_SUP$CountryResponsible))
+countries_sup <- levels(meta_SUP$Country)
+
+my_palette_sup <- setNames(
+  brewer.pal(length(countries_sup), "Set3"),
+  countries_sup
+)
+
+# -----------------------------
+# Crear gráfico base (p_sup) con puntos pequeños
+# -----------------------------
+p_sup <- fviz_pca_biplot(
+  pca_prcomp_SUP,
+  geom.ind    = "point",
+  col.ind     = meta_SUP$Country,
+  addEllipses = FALSE,
+  label       = "var",
+  repel       = TRUE,
+  pointsize   = 2.5,
+  pointshape  = 16,
+  alpha.ind   = 0.6
+)
+
+# -----------------------------
+# Calcular centroides manualmente
+# -----------------------------
+scores_sup <- as.data.frame(pca_prcomp_SUP$x)
+scores_sup$Country <- meta_SUP$Country
+
+centroids_sup <- scores_sup %>%
+  group_by(Country) %>%
+  summarise(
+    PC1 = mean(PC1),
+    PC2 = mean(PC2),
+    .groups = "drop"
+  )
+
+# -----------------------------
+# Añadir centroides y unificar escalas
+# -----------------------------
+SUP_PCA_Litter_Country2 <-
+  p_sup +
+  geom_point(data = centroids_sup,
+             aes(x = PC1, y = PC2, fill = Country),
+             shape = 21,
+             size = 5,
+             color = "black",
+             stroke = 1.2) +
+  scale_color_manual(values = my_palette_sup, drop = FALSE) +
+  scale_fill_manual(values = my_palette_sup, drop = FALSE) +
   labs(title = "PCA of Litter Composition (Hellinger‐transformed)",
        subtitle = "Points = samples colored by Country; arrows = Single use plastic types",
-       color = "Country") +
-  theme_minimal(base_size = 14) +
-  guides(fill = "none")  # Quita la leyenda de fill (elipses)
+       color = "Country",
+       fill  = "Country") +
+  theme_minimal(base_size = 14)
 
 SUP_PCA_Litter_Country2
 ```
