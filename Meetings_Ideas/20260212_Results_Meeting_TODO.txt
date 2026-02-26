@@ -11,7 +11,7 @@ The same for the facet_wrap() per country.
 En el grafico de barras proporcionales separar el tottalsingleusetotal (new scale)?
 
 # PCA
-Remove dots and/or include Ellipsoids
+Remove dots and/or include Ellipsoids --> DONE! (by highlitingg the centroids)
 
 
 # ¡FLOATING DATA!

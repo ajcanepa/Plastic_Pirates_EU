@@ -1386,7 +1386,49 @@ perm1_SUP <- adonis2(dist_mat_SUP ~ CountryResponsible, data = meta,
 print(perm1_SUP)
 ```
 
-So, we conclude that there are significant differences among countries. but What are the items that explains these differences? 
+So, we conclude that there are significant differences among countries. The R-Square value (0.098) means that the country "effects" explain 9.8% of the total variability. 90.2% is the remaining (unexplained) variability among countries. ***There is a significant country effect, but is small***.
+
+Or even better:
+**There are statistically significant multivariate differences in litter composition among countries, although the effect size is modest (R² = 0.098).**
+
+We can look for **heterocedasticity** among countries
+
+```{r betadisper}
+SUP_Disper <- betadisper(dist_mat_SUP, meta_SUP$CountryResponsible)
+
+SUP_Disper
+```
+
+```{r}
+permutest(SUP_Disper)
+```
+
+The **heterocedasticity** is significant, so we must be carefully conclude about the inter-countries differences. There is a Country effect butis small.
+
+If we need to parametrize this model, we should use a Mixed Multivariate Model (necessary?)
+
+```{r mvabund, echo=FALSE, eval=FALSE}
+# modelo lineal multivariado generalizado (PERMANOVA Multivariado)
+library(mvabund)
+
+mv_data <- mvabund(comm_matrix)
+
+fit <- manyglm(mv_data ~ CountryResponsible,
+               family = "negative.binomial")
+
+anova(fit, p.uni = "adjusted")
+
+# Modelo mixto jerárquico bayesiano
+
+brm(
+  mvbind(PlasticBags, PlasticBottles, ...) ~ 1 + (1|CountryResponsible),
+  family = negbinomial(),
+  data = data
+)
+```
+
+
+but What are the items that explains these differences? 
 
 The answer will be addressed by performing a **Multivariate Random Forest**.
 
@@ -1565,3 +1607,5 @@ fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 2, top = 10) +
 dev.off()
 ```
 
+
+# Floating DATA
