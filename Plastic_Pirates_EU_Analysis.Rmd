@@ -165,7 +165,8 @@ Riverbank %>%
 
 ```{r EDARiversPlotNum, message=FALSE, warning=FALSE}
 # Preparar los datos
-plot_data <- Riverbank %>% 
+plot_data <- 
+  Riverbank %>% 
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
   # Capitalizar primera letra de cada país
@@ -178,24 +179,28 @@ plot_data <- Riverbank %>%
 # Crear el gráfico
 Num_rios_year <- 
 ggplot(plot_data, aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
-  geom_bar(stat = "identity", position = "dodge", colour = 'black') +
-  # Añadir etiquetas solo para valores superiores a 20
-  geom_text(data = filter(plot_data, Rivers > 8), 
-            aes(label = Rivers), 
-            position = position_stack(vjust = 0.5),
-            color = "white", fontweight = "bold", size = 2.5) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), colour = "black") +
+# Etiquetas encima de cada barra
+  geom_text(aes(label = Rivers), position = position_dodge(width = 0.9), vjust = -0.3, # coloca el texto encima
+    color = "black", # color negro como quieres 
+    fontface = "bold", size = 3
+  ) +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  # Paleta de colores con intensidad creciente hacia 2024
-  scale_fill_manual(values = c("2021" = "#E0FFFF", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
-  labs(x = "", 
-       y = "Number of rivers",
-       fill = "Sampling Year")
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "right") +
+  scale_fill_manual(values = c(
+    "2021" = "#E0FFFF",
+    "2022" = "#B8D4F0",
+    "2023" = "#4A90E2",
+    "2024" = "#1E3A8A"
+  )) +
+# Más espacio arriba para que no se corten las etiquetas
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(x = "", y = "Number of rivers", fill = "Sampling Year")
 
 print(Num_rios_year)
 
-#ggsave(filename = "Temporal_Number_Rivers.png", plot = Num_rios_year, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+#ggsave(filename = "Temporal_Number_Rivers.png", plot = Num_rios_year, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 ### Most common types and quantities of litter per region? (Group B: riverbanks; Group C: floating litter)
