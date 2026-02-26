@@ -430,9 +430,10 @@ GroupB_data_validated %>%
   ) %>% 
   # 2) plot bars first, then error bars
   ggplot(aes(x = Litter_type, y = Av_Abundance)) +
-  geom_col(fill = "lightgray", colour = "black") +
+  #geom_col(fill = "lightgray", colour = "black") +
   geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance,
                     ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  geom_col(fill = "lightgray", colour = "black") +
   facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
   labs(x = "", y = expression(Litter~abundance~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
   # theme_classic() +
