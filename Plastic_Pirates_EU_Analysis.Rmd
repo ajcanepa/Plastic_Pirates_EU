@@ -13,27 +13,6 @@ output:
     variant: gfm 
 ---
 
-# Paper's Skeleton
-The idea is to have two papers
-Questions to be solved
-
-* Calification/descualification rate
-  * We need to analyse the raw data in order to have those sampling events that were qualified and which doesn't (RiversideWasteVariety_AttemptedSampling == 1 and RiversideWasteVariety_Qualified == 1)
-  
-
-# Litter Presence/Absence
-
-# Community-based approach to analyze composition of litter
-
-# Look for explanatory variables inside the dataset from Plastic Pirates. (se está dejando para después)
-
-# Include extra-explanatory variables for all the variables will be nice if something else can take care on this.
-
-# Next meeting before the Workshop on Data Validation/Consolidation and Analysis.
-## Focused in the general aspect of data (Types, Kg, Zones, etc.)
-
-# We have to include the informaton of group D (look at quantitative/semi-quantitative data)
-
 # Data Analysis
 
 ## Loading Packages
@@ -1608,4 +1587,86 @@ dev.off()
 ```
 
 
-# Floating DATA
+## Floating DATA
+
+### Data loading
+
+```{r FloatingData, message=FALSE, warning=FALSE}
+# Cargamos los datos incorporando las modificaciones para trabajar con él
+# https://zenodo.org/records/15535434
+Floating_data <- read_csv("PlasticPirates_Floating_data/Floating_data_v2.0.0.csv", na = "na") %>%
+  select(DatasetID,
+    CountryResponsible,
+    SamplingYear,
+    SamplingAttempted,
+    DatasetQualified,
+    SamplingDate,
+    SamplingCoordinatesLatitude,
+    SamplingCoordinatesLongitude,
+    SamplingRiverSystem,
+    FloatingMacro_AttemptedSampling,
+    FloatingMacro_Qualified,
+    FloatingMacro_ObservationTimeInMinutes,
+    FloatingMacro_RiverWidth,
+    FloatingMacro_ObservedWidth,
+    FloatingMacro_AmountOfFloatingMacrolitter
+  ) %>%
+  filter(
+    SamplingAttempted == 1 &
+    DatasetQualified == 1 &
+    FloatingMacro_AttemptedSampling == 1 &
+    FloatingMacro_Qualified == 1
+  ) %>%
+  mutate(across(where(is.character), as.factor),
+         CountryResponsible = str_to_title(CountryResponsible))
+
+Floating_data
+```
+
+#### Sampling Effor for Floating Data
+
+```{r}
+Floating_data %>%
+  count(CountryResponsible, SamplingYear) %>%   # contar ambas variables
+  ungroup() %>%                                  # importante
+  complete(CountryResponsible, SamplingYear, fill = list(n = 0)) %>% 
+  ggplot(aes(x = reorder(CountryResponsible, -n),
+             y = n,
+             fill = factor(SamplingYear))) +
+  geom_col(position = "dodge", colour = "black") +
+  # Etiquetas encima de cada barra
+  geom_text(aes(label = n), position = position_dodge(width = 0.9), vjust = -0.3, # coloca el texto encima
+    color = "black", # color negro como quieres 
+    fontface = "bold", size = 3
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("2021" = "#E0FFFF",
+                               "2022" = "#B8D4F0",
+                               "2023" = "#4A90E2",
+                               "2024" = "#1E3A8A")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(x = "",
+       y = "Floating litter sampling (number of samplings)",
+       fill = "Sampling Year")
+```
+
+### Pre-proccessing
+
+```{r RiversName, message=FALSE, warning=FALSE}
+# Loading the rivers' dictionary
+Riverbank_dictionary <- read_excel("Riverbank_data_v2.1.xlsx", sheet = "Final vocabulary clean")
+
+Riverbank <-
+  Riverbank %>%
+  left_join(Riverbank_dictionary, by = "SamplingRiver") %>%
+    #select(SamplingRiver, Corrected_river_English, SamplingRiverSystem, River_basin, everything()) %>% 
+    mutate(River_basin = str_remove(River_basin, regex("\\s+Basin$", ignore_case = TRUE))) %>% 
+  mutate(SamplingRiver = coalesce(Corrected_river_English, SamplingRiver),
+         SamplingRiverSystem = River_basin) %>% 
+  select(-c("No", "Country", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver"))
+
+```
+
+
+## RESEARCH QUESTIONS
