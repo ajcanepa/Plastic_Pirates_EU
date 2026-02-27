@@ -32,6 +32,9 @@ library(randomForest)
 library(RColorBrewer)
 library(tidyHeatmap) # Requieres ComplexHeatmap --> BiocManager::install("ComplexHeatmap")
 library(stringr)
+library(glmmTMB) 
+library(emmeans)
+library(multcomp)
 ```
 
 ## Data loading
@@ -42,8 +45,8 @@ library(stringr)
 # Cuidado con el nombre de los ríos, hay besòs y bessos.
 Riverbank <- 
   read.csv(file = "PlasticPirates_Riverbank_data/Riverbank_data_v2.0.0.csv", header = TRUE, sep = ",", na.strings = "na") %>% 
-  mutate(SamplingDate = lubridate::ymd(SamplingDate)) %>% 
-  mutate(across(where(is.character), as.factor))
+  dplyr::mutate(SamplingDate = lubridate::ymd(SamplingDate)) %>% 
+  dplyr::mutate(across(where(is.character), as.factor))
 ```
 
 ## Pre-proccessing
@@ -55,11 +58,11 @@ Riverbank_dictionary <- read_excel("Riverbank_data_v2.1.xlsx", sheet = "Final vo
 Riverbank <-
   Riverbank %>%
   left_join(Riverbank_dictionary, by = "SamplingRiver") %>%
-    #select(SamplingRiver, Corrected_river_English, SamplingRiverSystem, River_basin, everything()) %>% 
-    mutate(River_basin = str_remove(River_basin, regex("\\s+Basin$", ignore_case = TRUE))) %>% 
-  mutate(SamplingRiver = coalesce(Corrected_river_English, SamplingRiver),
+    #dplyr::select(SamplingRiver, Corrected_river_English, SamplingRiverSystem, River_basin, everything()) %>% 
+    dplyr::mutate(River_basin = str_remove(River_basin, regex("\\s+Basin$", ignore_case = TRUE))) %>% 
+  dplyr::mutate(SamplingRiver = coalesce(Corrected_river_English, SamplingRiver),
          SamplingRiverSystem = River_basin) %>% 
-  select(-c("No", "Country", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver"))
+  dplyr::select(-c("No", "Country", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver"))
 
 ```
 
@@ -86,11 +89,11 @@ Riverbank %>%
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Num_Sampling = n(), .groups = 'drop') %>%
     # Capitalizar primera letra de cada país
-  mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
   # Crear todas las combinaciones posibles de país y año
   complete(CountryResponsible, SamplingYear, fill = list(Num_Sampling = 0)) %>%
   # Ordenar por total acumulado
-  mutate(CountryResponsible = reorder(CountryResponsible, -Num_Sampling, sum)) %>%
+  dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Num_Sampling, sum)) %>%
   ggplot(aes(x = CountryResponsible, y = Num_Sampling, fill = factor(SamplingYear))) +
   geom_bar(stat = "identity", position = "dodge", colour = 'black') +
   theme_classic() +
@@ -124,11 +127,11 @@ Riverbank %>%
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
   # Capitalizar primera letra de cada país
-  mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
   # Crear todas las combinaciones posibles de país y año
   complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) %>%
   # Ordenar por total acumulado de ríos
-  mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum)) %>%
+  dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum)) %>%
   ggplot(aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
   geom_bar(stat = "identity", position = "dodge", colour = 'black') +
   theme_classic() +
@@ -150,11 +153,11 @@ plot_data <-
   group_by(CountryResponsible, SamplingYear) %>%
   summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
   # Capitalizar primera letra de cada país
-  mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
   # Crear todas las combinaciones posibles de país y año
   complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) %>%
   # Ordenar por total acumulado de ríos
-  mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum))
+  dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum))
 
 # Crear el gráfico
 Num_rios_year <- 
@@ -190,7 +193,7 @@ print(Num_rios_year)
 Statistics of the variable `RiversideWasteVariety_AttemptedSampling` to see how many samplings were performed.
 ```{r GroupB, warning=FALSE, message=FALSE, eval=TRUE}
 Riverbank %>% 
-  select(RiversideWasteVariety_AttemptedSampling) %>% 
+  dplyr::select(RiversideWasteVariety_AttemptedSampling) %>% 
   table()
 ```
 
@@ -198,7 +201,7 @@ To work with the `RiversideWasteVariety_` data, we need to filter the dataset to
 
 ```{r GroupBData, warning=FALSE, message=FALSE, eval=FALSE}
 Riverbank %>% 
-  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
+  dplyr::filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
 ```
 
 ##### Percentage of qualified samplings
@@ -228,7 +231,7 @@ validated_pct_by_country <-
     total_attempts         = sum(RiversideWasteVariety_AttemptedSampling == 1, na.rm = TRUE),
     valid_among_attempts   = sum(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
     `pct_valid_among_attempts(%)` = round((valid_among_attempts / total_attempts) * 100,1), .groups = "drop") %>% 
-  mutate(CountryResponsible = str_to_title(CountryResponsible))
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible))
 
 validated_pct_by_country
 ```
@@ -242,14 +245,14 @@ Riverbank %>%
     pct_validated = if_else(n_attempted > 0, n_validated / n_attempted * 100, 0),
     .groups = "drop"
   ) %>% 
-  mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
   complete(CountryResponsible, SamplingYear,
            fill = list(n_attempted   = 0,
                        n_validated   = 0,
                        pct_validated = 0)
   ) %>% 
-  filter(SamplingYear > 2021)  %>% 
-  mutate(CountryResponsible = reorder(CountryResponsible,-pct_validated, FUN = mean)) %>% 
+  dplyr::filter(SamplingYear > 2021)  %>% 
+  dplyr::mutate(CountryResponsible = reorder(CountryResponsible,-pct_validated, FUN = mean)) %>% 
   ggplot(aes(
     x    = CountryResponsible,
     y    = pct_validated,
@@ -298,7 +301,7 @@ Riverbank %>%
 ```{r, warning=FALSE, message=FALSE, eval=FALSE}
 
 Riverbank %>% 
-  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
+  dplyr::filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
 
 ```
 Firstly, we will pick up data to answer the question about group B. Only some variables are taken from the general dataset.
@@ -307,7 +310,7 @@ Firstly, we will pick up data to answer the question about group B. Only some va
 # GroupB dataset
 GroupB_data <- 
   Riverbank %>% 
-  select(DatasetID, CountryResponsible, SamplingCampaign, SamplingYear, SamplingCoordinatesLatitude, SamplingCoordinatesLongitude, SamplingRiverSystem, SamplingParticipants, RiversideWasteVariety_AttemptedSampling, RiversideWasteVariety_Qualified:RiversideWasteVariety_Results_ResultsComment)
+  dplyr::select(DatasetID, CountryResponsible, SamplingCampaign, SamplingYear, SamplingCoordinatesLatitude, SamplingCoordinatesLongitude, SamplingRiverSystem, SamplingParticipants, RiversideWasteVariety_AttemptedSampling, RiversideWasteVariety_Qualified:RiversideWasteVariety_Results_ResultsComment)
 
 ```
 
@@ -317,8 +320,8 @@ The, Attributes' names are so complicated to work that I'll remote the preceding
 # GroupB dataset
 GroupB_data_validated <- 
   Riverbank %>% 
-  select(DatasetID, CountryResponsible, SamplingCampaign, SamplingYear, SamplingCoordinatesLatitude, SamplingCoordinatesLongitude, SamplingRiverSystem, SamplingParticipants, RiversideWasteVariety_AttemptedSampling, RiversideWasteVariety_Qualified:RiversideWasteVariety_Results_ResultsComment) %>% 
-  filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1) %>% 
+  dplyr::select(DatasetID, CountryResponsible, SamplingCampaign, SamplingYear, SamplingCoordinatesLatitude, SamplingCoordinatesLongitude, SamplingRiverSystem, SamplingParticipants, RiversideWasteVariety_AttemptedSampling, RiversideWasteVariety_Qualified:RiversideWasteVariety_Results_ResultsComment) %>% 
+  dplyr::filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1) %>% 
   # Primero quitamos `RiversideWasteVariety_Results_`
   rename_with(
     .cols = starts_with("RiversideWasteVariety_Results_"),
@@ -331,7 +334,7 @@ GroupB_data_validated <-
 # Después de la reunión del día 20260212, decidimos que hay que quitar la variable `SingleUsePlasticTotal`.
 GroupB_data_validated <-
   GroupB_data_validated %>% 
-  select(!SingleUsePlasticTotal)
+  dplyr::select(!SingleUsePlasticTotal)
 ```
 
 **CAUTION**!
@@ -345,7 +348,7 @@ After meeting and email from Charlotte, we realise that NA in group B for some i
 ```{r}
 GroupB_data_validated <-
   GroupB_data_validated %>% 
-  mutate(across(PlasticBags:LocalWaste, ~replace_na(., 0)))
+  dplyr::mutate(across(PlasticBags:LocalWaste, ~replace_na(., 0)))
 ```
 
 
@@ -356,7 +359,7 @@ We will obtain the plot for the most common (average abundance) litter type
 # Average litter type
 Average_litter_type <- 
   GroupB_data_validated %>% 
-  select(CountryResponsible, SamplingYear, PlasticBags:LocalWaste) %>%  
+  dplyr::select(CountryResponsible, SamplingYear, PlasticBags:LocalWaste) %>%  
   pivot_longer(
     cols = PlasticBags:LocalWaste,
     names_to = "Litter_type",
@@ -390,7 +393,7 @@ If we now want to visualize the contribution per each country, we have:
 # Average litter type
 Average_litter_type_country <- 
 GroupB_data_validated %>% 
-  select(CountryResponsible, PlasticBags:LocalWaste) %>%  
+  dplyr::select(CountryResponsible, PlasticBags:LocalWaste) %>%  
   pivot_longer(
     PlasticBags:LocalWaste,
     names_to  = "Litter_type",
@@ -404,7 +407,7 @@ GroupB_data_validated %>%
     .groups = "drop"
   ) %>% 
   # title‐case country, reorder types by their overall mean if you like
-  mutate(
+  dplyr::mutate(
     CountryResponsible = str_to_title(CountryResponsible),
     Litter_type       = reorder(Litter_type, -Av_Abundance)
   ) %>% 
@@ -466,7 +469,7 @@ Prop_Liter_Country <-
   ) %>%
   # 3) compute, per type, the global total
   group_by(Litter_type) %>%
-  mutate(
+  dplyr::mutate(
     Global_Total   = sum(Total_Abundance),
     Prop_Country   = Total_Abundance / Global_Total
   ) %>%
@@ -480,7 +483,7 @@ Prop_Liter_Country
 # Example 100%-stacked bar
 Country_contribution_litter_type <- 
 Prop_Liter_Country %>% 
-mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
 ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
   geom_col(position = "fill") +
   scale_y_continuous(labels = percent_format()) +
@@ -522,13 +525,13 @@ Data_prop_eu <-
     .groups = "drop"
   ) %>%
   group_by(Litter_type) %>%
-  mutate(
+  dplyr::mutate(
     European_Total   = sum(Total_Abundance),
     Prop_of_Europe   = Total_Abundance / European_Total
   ) %>%
   ungroup() %>%
   # optional: title‑case and reorder types by overall Prop for consistent ordering
-  mutate(
+  dplyr::mutate(
     CountryResponsible = str_to_title(CountryResponsible),
     Litter_type        = reorder(Litter_type, -Prop_of_Europe)
   )
@@ -541,13 +544,13 @@ To compare and validate the output, for each `litter_type` the `European_Total` 
 ```{r ProportionLitterEuropeValidation, warning=FALSE, message=FALSE}
 # To compare and validate the output, for each `litter_type` the `European_Total` have to be the same.
 Data_prop_eu %>% 
-  filter(Litter_type == "AluminiumFoil")
+  dplyr::filter(Litter_type == "AluminiumFoil")
 ```
 
 ```{r ProportionLitterEuropePlotStacked, warning=FALSE, message=FALSE, out.width='100%', fig.align='center'}
 # Example 100%-stacked bar
 Data_prop_eu %>% 
-mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
 ggplot(., aes(x = Litter_type, y = Prop_of_Europe, fill = CountryResponsible)) +
   geom_col(position = "fill") +
   scale_y_continuous(labels = percent_format()) +
@@ -652,7 +655,7 @@ Prop_Liter_Country2 <-
   ) %>%
   # 3) compute, per country, that country’s total
   group_by(CountryResponsible) %>%
-  mutate(
+  dplyr::mutate(
     Country_Total = sum(Total_Abundance),
     Prop_Type     = Total_Abundance / Country_Total
   ) %>%
@@ -665,7 +668,7 @@ Prop_Liter_Country2
 ```{r ProportionLitterCountryIIPlot, message=FALSE, warning=FALSE}
 # Example 100%-stacked bar per country
 Prop_Liter_Country2 %>% 
-mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
 ggplot(., aes(x = CountryResponsible, y = Prop_Type, fill = Litter_type)) +
   geom_col(position = "fill") +
   scale_y_continuous(labels = percent_format()) +
@@ -690,7 +693,7 @@ Prop_Liter_Country2 %>%
     .groups = "drop"
   ) %>% 
   # title‐case country, reorder types by their overall mean if you like
-  mutate(
+  dplyr::mutate(
     CountryResponsible = str_to_title(CountryResponsible),
     Litter_type       = reorder(Litter_type, -Av_Proportion)
   ) %>% 
@@ -728,14 +731,14 @@ Prop_Liter_Country2 %>%
 #   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
 # Replace the NA values for 0. --> Probably the default behaviour?
 df <- GroupB_data_validated %>% 
-  select(CountryResponsible, PlasticBags:LocalWaste)
+  dplyr::select(CountryResponsible, PlasticBags:LocalWaste)
 # %>% 
 # #drop_na()
 # mutate_all(funs(replace_na(.,0)))
 
 # isolate metadata + community matrix
-meta <- df %>% select(CountryResponsible)
-comm <- df %>% select(-CountryResponsible)
+meta <- df %>% dplyr::select(CountryResponsible)
+comm <- df %>% dplyr::select(-CountryResponsible)
 
 # Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
 comm_hel <- decostand(comm, method = "hellinger")
@@ -953,7 +956,7 @@ Cogeremos el subset de datos que si representan los plásticos de un solo uso (`
 # GroupB dataset
 GroupB_SingleUsePlastic_data_validated <- 
   GroupB_data_validated %>% 
-  select(DatasetID:Polystyrene) # Seleccionamos metadata y los Single Use Plastic
+  dplyr::select(DatasetID:Polystyrene) # Seleccionamos metadata y los Single Use Plastic
 
 GroupB_SingleUsePlastic_data_validated
 
@@ -971,7 +974,7 @@ We will obtain the plot for the most common (average abundance) Single Use Plast
 # Average litter type
 SUP_Average_litter_type <- 
   GroupB_SingleUsePlastic_data_validated %>% 
-  select(CountryResponsible, SamplingYear, PlasticBags:Polystyrene) %>%  
+  dplyr::select(CountryResponsible, SamplingYear, PlasticBags:Polystyrene) %>%  
   pivot_longer(
     cols = PlasticBags:Polystyrene,
     names_to = "Litter_type",
@@ -1004,7 +1007,7 @@ If we now want to visualize the contribution per each country, we have:
 # Average litter type
 SUP_Average_litter_type_country <- 
 GroupB_SingleUsePlastic_data_validated %>% 
-  select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene) %>%  
   pivot_longer(
     PlasticBags:Polystyrene,
     names_to  = "Litter_type",
@@ -1018,7 +1021,7 @@ GroupB_SingleUsePlastic_data_validated %>%
     .groups = "drop"
   ) %>% 
   # title‐case country, reorder types by their overall mean if you like
-  mutate(
+  dplyr::mutate(
     CountryResponsible = str_to_title(CountryResponsible),
     #Litter_type       = reorder(Litter_type, -Av_Abundance) # Reordenando el eje X (poco util)
     Litter_type       = Litter_type
@@ -1067,7 +1070,7 @@ ggsave(filename = "Average_SUP_Country_GroupB.png", plot = SUP_Average_litter_ty
 ```{r ProportionLitterCountrySUP, message=FALSE, warning=FALSE}
 SUP_Prop_Liter_Country <- 
   GroupB_SingleUsePlastic_data_validated %>% 
-  select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene) %>%  
   pivot_longer(
     PlasticBags:Polystyrene,
     names_to  = "Litter_type",
@@ -1081,7 +1084,7 @@ SUP_Prop_Liter_Country <-
   ) %>%
   # 3) compute, per type, the global total
   group_by(Litter_type) %>%
-  mutate(
+  dplyr::mutate(
     Global_Total   = sum(Total_Abundance),
     Prop_Country   = Total_Abundance / Global_Total
   ) %>%
@@ -1095,7 +1098,7 @@ SUP_Prop_Liter_Country
 # Example 100%-stacked bar
 Country_contribution_SUP_type <- 
 SUP_Prop_Liter_Country %>% 
-mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
 ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
   geom_col(position = "fill") +
   scale_y_continuous(labels = percent_format()) +
@@ -1126,7 +1129,7 @@ ggsave(filename = "Country_contribution_SUP_type.png", plot = Country_contributi
 # 1) Pivot, sum by country & type, then compute each country’s share of the European total
 SUP_Data_prop_eu <- 
   GroupB_SingleUsePlastic_data_validated %>% 
-  select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene) %>%  
   pivot_longer(
     PlasticBags:Polystyrene,
     names_to  = "Litter_type",
@@ -1138,13 +1141,13 @@ SUP_Data_prop_eu <-
     .groups = "drop"
   ) %>%
   group_by(Litter_type) %>%
-  mutate(
+  dplyr::mutate(
     European_Total   = sum(Total_Abundance),
     Prop_of_Europe   = Total_Abundance / European_Total
   ) %>%
   ungroup() %>%
   # optional: title‑case and reorder types by overall Prop for consistent ordering
-  mutate(
+  dplyr::mutate(
     CountryResponsible = str_to_title(CountryResponsible),
     Litter_type        = reorder(Litter_type, -Prop_of_Europe)
   )
@@ -1155,7 +1158,7 @@ SUP_Data_prop_eu
 ```{r ProportionLitterEuropePlotStackedSUP, warning=FALSE, message=FALSE, out.width='100%', fig.align='center'}
 # Example 100%-stacked bar
 SUP_Data_prop_eu %>% 
-mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
 ggplot(., aes(x = Litter_type, y = Prop_of_Europe, fill = CountryResponsible)) +
   geom_col(position = "fill") +
   scale_y_continuous(labels = percent_format()) +
@@ -1245,7 +1248,7 @@ dev.off()
 ```{r ProportionLitterCountryIISUP, message=FALSE, warning=FALSE}
 SUP_Prop_Liter_Country2 <- 
   GroupB_SingleUsePlastic_data_validated %>% 
-  select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene) %>%  
   pivot_longer(
     PlasticBags:Polystyrene,
     names_to  = "Litter_type",
@@ -1259,7 +1262,7 @@ SUP_Prop_Liter_Country2 <-
   ) %>%
   # 3) compute, per country, that country’s total
   group_by(CountryResponsible) %>%
-  mutate(
+  dplyr::mutate(
     Country_Total = sum(Total_Abundance),
     Prop_Type     = Total_Abundance / Country_Total
   ) %>%
@@ -1272,7 +1275,7 @@ SUP_Prop_Liter_Country2
 ```{r ProportionLitterCountryIIPlotSUP, message=FALSE, warning=FALSE}
 # Example 100%-stacked bar per country
 SUP_Prop_Liter_Country2 %>% 
-mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
 ggplot(., aes(x = CountryResponsible, y = Prop_Type, fill = Litter_type)) +
   geom_col(position = "fill") +
   scale_y_continuous(labels = percent_format()) +
@@ -1298,7 +1301,7 @@ SUP_Prop_Liter_Country2 %>%
     .groups = "drop"
   ) %>% 
   # title‐case country, reorder types by their overall mean if you like
-  mutate(
+  dplyr::mutate(
     CountryResponsible = str_to_title(CountryResponsible),
     Litter_type       = reorder(Litter_type, -Av_Proportion)
   ) %>% 
@@ -1336,14 +1339,14 @@ SUP_Prop_Liter_Country2 %>%
 #   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
 
 df_SUP <- GroupB_SingleUsePlastic_data_validated %>% 
-  select(CountryResponsible, PlasticBags:Polystyrene)
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene)
 # %>% 
 # #drop_na()
 # mutate_all(funs(replace_na(.,0)))
 
 # isolate metadata + community matrix
-meta_SUP <- df_SUP %>% select(CountryResponsible)
-comm_SUP <- df_SUP %>% select(-CountryResponsible)
+meta_SUP <- df_SUP %>% dplyr::select(CountryResponsible)
+comm_SUP <- df_SUP %>% dplyr::select(-CountryResponsible)
 
 # Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
 comm_hel_SUP <- decostand(comm, method = "hellinger")
@@ -1595,7 +1598,7 @@ dev.off()
 # Cargamos los datos incorporando las modificaciones para trabajar con él
 # https://zenodo.org/records/15535434
 Floating_data <- read_csv("PlasticPirates_Floating_data/Floating_data_v2.0.0.csv", na = "na") %>%
-  select(DatasetID,
+  dplyr::select(DatasetID,
     CountryResponsible,
     SamplingYear,
     SamplingAttempted,
@@ -1611,13 +1614,13 @@ Floating_data <- read_csv("PlasticPirates_Floating_data/Floating_data_v2.0.0.csv
     FloatingMacro_ObservedWidth,
     FloatingMacro_AmountOfFloatingMacrolitter
   ) %>%
-  filter(
+  dplyr::filter(
     SamplingAttempted == 1 &
     DatasetQualified == 1 &
     FloatingMacro_AttemptedSampling == 1 &
     FloatingMacro_Qualified == 1
   ) %>%
-  mutate(across(where(is.character), as.factor),
+  dplyr::mutate(across(where(is.character), as.factor),
          CountryResponsible = str_to_title(CountryResponsible))
 
 Floating_data
@@ -1651,22 +1654,73 @@ Floating_data %>%
        fill = "Sampling Year")
 ```
 
-### Pre-proccessing
+#### Macrolitter Flow calculation
 
-```{r RiversName, message=FALSE, warning=FALSE}
-# Loading the rivers' dictionary
-Riverbank_dictionary <- read_excel("Riverbank_data_v2.1.xlsx", sheet = "Final vocabulary clean")
+The variable `FlowMacrolitter` is represented as the Number of floating macrolitter $m^{-1}$ $h^{-1}$.
 
-Riverbank <-
-  Riverbank %>%
-  left_join(Riverbank_dictionary, by = "SamplingRiver") %>%
-    #select(SamplingRiver, Corrected_river_English, SamplingRiverSystem, River_basin, everything()) %>% 
-    mutate(River_basin = str_remove(River_basin, regex("\\s+Basin$", ignore_case = TRUE))) %>% 
-  mutate(SamplingRiver = coalesce(Corrected_river_English, SamplingRiver),
-         SamplingRiverSystem = River_basin) %>% 
-  select(-c("No", "Country", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver"))
+```{r flowCalculation, warning=FALSE, message=FALSE}
+FlowData <- 
+  Floating_data %>% 
+  dplyr::mutate(
+    TimeInHours = as.numeric(FloatingMacro_ObservationTimeInMinutes/60),
+    RiverWidth = as.numeric(FloatingMacro_ObservedWidth),
+    FlowMacrolitter = as.numeric(FloatingMacro_AmountOfFloatingMacrolitter) /(RiverWidth * TimeInHours))
 
+FlowData  
+```
+#### Macrolitter Flow Visualization
+
+##### Differences across countries
+
+```{r}
+FlowData %>%
+ # group_by(CountryResponsible, SamplingYear) %>% 
+ #  dplyr::summarise(Av_FlowMacrolitter = mean(FlowMacrolitter, na.rm = TRUE), 
+ #                   SE_FlowMacrolitter = sd(FlowMacrolitter, na.rm = TRUE)/sqrt(n()), .groups = "drop") %>% 
+  #ggplot(., aes(x = reorder(CountryResponsible, -Av_FlowMacrolitter), y = Av_FlowMacrolitter)) +
+  ggplot(., aes(x = CountryResponsible, y = FlowMacrolitter)) +
+  # geom_errorbar(aes(ymin = Av_FlowMacrolitter - SE_FlowMacrolitter, ymax = Av_FlowMacrolitter + SE_FlowMacrolitter), width = 0.2) +
+  # geom_bar(stat = "identity") +
+  geom_boxplot(na.rm = TRUE, aes(fill = factor(SamplingYear))) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0.01,0)) +
+  #geom_text(aes(label = sprintf("%.1f", round(Av_Abundance, digits = 1))), vjust = 1.4, size = 3.5, colour = "white") +
+  labs(x = "",  y = expression(Floating~macrolitter~(m^{-1}~h^{-1})), title = '', subtitle = "", fill = "Sampling Year") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
 ```
 
+* Test estadístico
 
-## RESEARCH QUESTIONS
+ Modelo Tweedie (muchos ceros)
+ 
+```{r}
+Float_Macro_model <- glmmTMB(
+  FlowMacrolitter ~ CountryResponsible,
+  family = tweedie(link = "log"),
+  data = FlowData
+)
+
+summary(Float_Macro_model)
+```
+ 
+```{r}
+# Cálculo del valor de País
+
+# Modelo completo (con CountryResponsible)
+mod_full <- glmmTMB(FlowMacrolitter ~ CountryResponsible, family = tweedie(link = "log"), data = FlowData)
+
+# Modelo nulo (sin CountryResponsible)
+mod_null <- glmmTMB(FlowMacrolitter ~ 1, family = tweedie(link = "log"), data = FlowData)
+
+anova(mod_null, mod_full)
+```
+
+* Posthoc con comparaciones múltiples
+
+```{r}
+emmeans_mod <- emmeans(Float_Macro_model, pairwise ~ CountryResponsible, type = "response")
+
+# Resultados de comparaciones ajustadas
+summary(emmeans_mod$contrasts, adjust = "tukey")
+```
+
