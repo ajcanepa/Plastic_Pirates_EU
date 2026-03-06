@@ -13,6 +13,12 @@ output:
     variant: gfm 
 ---
 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
 # Data Analysis
 
 ## Loading Packages
