@@ -395,7 +395,7 @@ ggsave(filename = "Average_Waste_Category_GroupB.png", plot = Average_litter_typ
 
 If we now want to visualize the contribution per each country, we have:
 
-```{r AverageLitterCountry, message=FALSE, warning=FALSE}
+```{r AverageLitterCountry, message=FALSE, warning=FALSE, fig.height=25, fig.width=20}
 # Average litter type
 Average_litter_type_country <- 
 GroupB_data_validated %>% 
@@ -513,7 +513,7 @@ print(Country_contribution_litter_type)
 ggsave(filename = "Country_contribution_litter_type.png", plot = Country_contribution_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
-
+<!--
 * Now, considering the total of Europe
 
 ```{r ProportionLitterEurope, warning=FALSE, message=FALSE}
@@ -553,7 +553,7 @@ Data_prop_eu %>%
   dplyr::filter(Litter_type == "AluminiumFoil")
 ```
 
-```{r ProportionLitterEuropePlotStacked, warning=FALSE, message=FALSE, out.width='100%', fig.align='center'}
+```{r ProportionLitterEuropePlotStacked, warning=FALSE, message=FALSE, out.width='100%', fig.align='center', eval=FALSE}
 # Example 100%-stacked bar
 Data_prop_eu %>% 
 dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
@@ -608,9 +608,11 @@ ggplot(Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
   )
 ```
 
+-->
+
 * HeatMaps
 
-```{r ProportionLitterEuropeHeatMap, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+```{r ProportionLitterEuropeHeatMap, warning=FALSE, message=FALSE, out.width='80%', fig.align='center'}
 ProportionLitterEuropeHeatMap <- 
 Data_prop_eu %>%
   heatmap(
@@ -637,6 +639,8 @@ ProportionLitterEuropeHeatMap
 dev.off()
 ```
 
+
+<!--
 ###### Litter type Proportion II - "Within‑country" proportions
 
 * The second approach will be a "*Within‑country*" proportions. 
@@ -729,6 +733,8 @@ Prop_Liter_Country2 %>%
 
 ```
 
+-->
+
 ###### Multivariate Perspective
 
 ```{r DataPreparationMultivariate}
@@ -782,27 +788,45 @@ rf <- randomForest(
 
 print(rf)
 ```
-The estimated error rate (OOB) is high, so conclusion have to be taken with care. Thus, the more important (differential across countries) litter components are:
 
-```{r RFVarImport, message=FALSE, warning=FALSE}
-varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination")
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+# Random Forest Evaluation
+# El Mean Decrease Gini mide cuánto contribuye cada variable a la pureza de los nodos
+importance_df <- as.data.frame(importance(rf))
+importance_df$Variable <- rownames(importance_df)
+
+# Accuracy
+cm <- rf$confusion
+accuracy <- sum(diag(cm[,-ncol(cm)])) / sum(cm[,-ncol(cm)])
+```
+
+Decisions have to be taken carefully since the prediction accuracy is very low (`r round(accuracy, 2)`). Furthermore, the estimated error rate (OOB) is high, so conclusion have to be taken with care. 
+
+Eventhough, the more important (differential across countries) litter components are:
+
+```{r RFVarImport, message=FALSE, warning=FALSE, out.width="80%"}
+varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination", type = 2)
 ```
 
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Random_Forest_Importance.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination")
+png(filename = "OUTPUT/FIGURES/Random_Forest_Importance.png", width = 20, height = 16, units = "cm", pointsize = 10, bg = "white", res = 150)
+varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination", , type = 2)
 dev.off()
 ```
 
 This plot of variable importance importance is telling us:
 
+<!--
 *  A large `MeanDecreaseAccuracy` (**MDA**) means that, when you break the relationship between that predictor and the response, the model’s accuracy suffers a lot → it’s an important predictor for correct country assignments. 
   * **MDA** is generally the more reliable gauge of predictive importance, since it directly measures impact on OOB‐accuracy.
+-->
 
 * A large `MeanDecreaseGini` (**MDG**) means that X frequently appears in high‑up the tree splits and yields big purity gains → it’s structurally important to partitioning the data. 
-  * **MDG** is faster to compute and tells you which features the trees “prefer” splitting on, but can overweight high–cardinality or continuous variables.
-  
+  * **MDG** tells you which features the trees “prefer” splitting on.
+
+* **Principal COmponent Analysis **
+
 Finally, we will perform a Principal Component Analysis (PCA) to see correlation among litter items and *possible* associations with countries
 
 ```{r PCA, warning=FALSE, message=FALSE}
@@ -956,7 +980,7 @@ dev.off()
 
 #### Group B: Single Use Plastic - Riverside Waste
 
-Cogeremos el subset de datos que si representan los plásticos de un solo uso (`SUP`) para el grupo B.
+We wil take as a subset the single use plastic (`SUP`) for the group B.
 
 ```{r, warning=FALSE, message=FALSE}
 # GroupB dataset
@@ -1009,7 +1033,7 @@ ggsave(filename = "Average_SUP_GroupB.png", plot = SUP_Average_litter_type, path
 
 If we now want to visualize the contribution per each country, we have:
 
-```{r AverageLitterCountrySUP, message=FALSE, warning=FALSE}
+```{r AverageLitterCountrySUP, message=FALSE, warning=FALSE, fig.height=25, fig.width=20}
 # Average litter type
 SUP_Average_litter_type_country <- 
 GroupB_SingleUsePlastic_data_validated %>% 
@@ -1069,8 +1093,12 @@ ggsave(filename = "Average_SUP_Country_GroupB.png", plot = SUP_Average_litter_ty
 ###### SUP type Proportion I - "Across‑type" proportions
 
 * The first approach will be a "*Across‑type*" proportions. 
-  * For each litter type, what fraction comes from each country? (not from an european total)
-  * total abundance of that litter type over each total country.
+    * total abundance of that litter type over each total country. 
+
+<!--
+    * For each litter type, what fraction comes from each country? (not from an european total) 
+    -->
+
 
 
 ```{r ProportionLitterCountrySUP, message=FALSE, warning=FALSE}
@@ -1129,6 +1157,8 @@ print(Country_contribution_SUP_type)
 ggsave(filename = "Country_contribution_SUP_type.png", plot = Country_contribution_SUP_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
+<!--
+
 * Now, considering the total of Europe
 
 ```{r ProportionLitterEuropeSUP, warning=FALSE, message=FALSE}
@@ -1161,7 +1191,7 @@ SUP_Data_prop_eu <-
 SUP_Data_prop_eu
 ```
 
-```{r ProportionLitterEuropePlotStackedSUP, warning=FALSE, message=FALSE, out.width='100%', fig.align='center'}
+```{r ProportionLitterEuropePlotStackedSUP, warning=FALSE, message=FALSE, out.width='100%', fig.align='center', eval=FALSE}
 # Example 100%-stacked bar
 SUP_Data_prop_eu %>% 
 dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
@@ -1183,7 +1213,7 @@ ggplot(., aes(x = Litter_type, y = Prop_of_Europe, fill = CountryResponsible)) +
 ```
 
 
-```{r ProportionLitterEuropePlotSUP, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+```{r ProportionLitterEuropePlotSUP, warning=FALSE, message=FALSE, out.width='50%', fig.align='center', eval=FALSE}
 #x11()
 # 2) Faceted bar chart of proportion (country share of European total)
 # 2) plot with fixed scales and text labels
@@ -1216,9 +1246,11 @@ ggplot(SUP_Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
   )
 ```
 
+-->
+
 * HeatMaps
 
-```{r ProportionLitterEuropeHeatMapSUP, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+```{r ProportionLitterEuropeHeatMapSUP, warning=FALSE, message=FALSE, out.width='80%', fig.align='center'}
 ProportionSUPEuropeHeatMap <- 
 SUP_Data_prop_eu %>%
   heatmap(
@@ -1237,12 +1269,16 @@ SUP_Data_prop_eu %>%
 
 print(ProportionSUPEuropeHeatMap)
 ```
+
+
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
 png(filename = "OUTPUT/FIGURES/Proportion_SUP_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
 ProportionSUPEuropeHeatMap
 dev.off()
 ```
+
+<!--
 
 ###### SUP type Proportion II - "Within‑country" proportions
 
@@ -1278,7 +1314,7 @@ SUP_Prop_Liter_Country2
 ```
 
 
-```{r ProportionLitterCountryIIPlotSUP, message=FALSE, warning=FALSE}
+```{r ProportionLitterCountryIIPlotSUP, message=FALSE, warning=FALSE, eval=FALSE}
 # Example 100%-stacked bar per country
 SUP_Prop_Liter_Country2 %>% 
 dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
@@ -1337,6 +1373,9 @@ SUP_Prop_Liter_Country2 %>%
 
 ```
 
+
+-->
+
 ###### SUP Multivariate Perspective
 
 ```{r DataPreparationMultivariateSUP}
@@ -1355,7 +1394,7 @@ meta_SUP <- df_SUP %>% dplyr::select(CountryResponsible)
 comm_SUP <- df_SUP %>% dplyr::select(-CountryResponsible)
 
 # Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
-comm_hel_SUP <- decostand(comm, method = "hellinger")
+comm_hel_SUP <- decostand(comm_SUP, method = "hellinger")
 
 ```
 
@@ -1367,7 +1406,7 @@ In order to see if there are significant differences across country in the commu
 dist_mat_SUP <- vegdist(comm_hel_SUP, method = "euclid")
 
 # 3a) PERMANOVA: test if composition differs by Country
-set.seed(42)
+#set.seed(42)
 
 perm1_SUP <- adonis2(dist_mat_SUP ~ CountryResponsible, data = meta, 
                  permutations = 999, by = "margin")
@@ -1432,16 +1471,29 @@ rf_SUP <- randomForest(
 
 print(rf_SUP)
 ```
-The estimated error rate (OOB) is high, so conclusion have to be taken with care. Thus, the more important (differential across countries) litter components are:
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+# Random Forest Evaluation
+# El Mean Decrease Gini mide cuánto contribuye cada variable a la pureza de los nodos
+Sup_importance_df <- as.data.frame(importance(rf_SUP))
+Sup_importance_df$Variable <- rownames(Sup_importance_df)
+
+# Accuracy
+Sup_cm <- rf_SUP$confusion
+Sup_accuracy <- sum(diag(Sup_cm[,-ncol(Sup_cm)])) / sum(Sup_cm[,-ncol(Sup_cm)])
+```
+
+Decisions have to be taken carefully since the prediction accuracy is very low (`r round(Sup_accuracy, 2)`). Furthermore, the estimated error rate (OOB) is high, so conclusion have to be taken with care. 
+
+Even though, the more important (differential across countries) litter components are:
 
 ```{r RFVarImportSUP, message=FALSE, warning=FALSE}
-varImpPlot(rf_SUP, main="Random Forest: Litter‐type Importance for Country Discrimination")
+varImpPlot(rf_SUP, main="Random Forest: 'Sigle Use Plastic-type' Importance for Country Discrimination", type = 2)
 ```
 
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Random_Forest_Importance_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-varImpPlot(rf_SUP, main="Random Forest: S.U.P. type Importance for Country Discrimination")
+png(filename = "OUTPUT/FIGURES/Random_Forest_Importance_SUP.png", width = 22, height = 12, units = "cm", pointsize = 10, bg = "white", res = 150)
+varImpPlot(rf_SUP, main="Random Forest: 'Sigle Use Plastic-type' Importance for Country Discrimination", type = 2)
 dev.off()
 ```
 
@@ -1674,11 +1726,13 @@ FlowData <-
 
 FlowData  
 ```
+
 #### Macrolitter Flow Visualization
 
 ##### Differences across countries
 
 ```{r}
+Floating_Macrolitter_Countries <- 
 FlowData %>%
  # group_by(CountryResponsible, SamplingYear) %>% 
  #  dplyr::summarise(Av_FlowMacrolitter = mean(FlowMacrolitter, na.rm = TRUE), 
@@ -1693,11 +1747,22 @@ FlowData %>%
   labs(x = "",  y = expression(Floating~macrolitter~(m^{-1}~h^{-1})), title = '', subtitle = "", fill = "Sampling Year") +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
+
+Floating_Macrolitter_Countries
 ```
 
-* Test estadístico
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+ggsave(filename = "Floating_Macrolitter_Countries.png", plot = Floating_Macrolitter_Countries, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+```
 
- Modelo Tweedie (muchos ceros)
+
+* **Statistical test**
+
+  * Generalize linear mixed model (Tweedie)
+
+  Family error distribution was selected due to the data restriction (only positive values with high numbers of zeroes)
+
  
 ```{r}
 Float_Macro_model <- glmmTMB(
@@ -1721,7 +1786,8 @@ mod_null <- glmmTMB(FlowMacrolitter ~ 1, family = tweedie(link = "log"), data = 
 anova(mod_null, mod_full)
 ```
 
-* Posthoc con comparaciones múltiples
+
+* Posthoc with multple comparisons
 
 ```{r}
 emmeans_mod <- emmeans(Float_Macro_model, pairwise ~ CountryResponsible, type = "response")
