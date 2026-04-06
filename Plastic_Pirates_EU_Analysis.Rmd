@@ -310,6 +310,7 @@ Riverbank %>%
   dplyr::filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
 
 ```
+
 Firstly, we will pick up data to answer the question about group B. Only some variables are taken from the general dataset.
 
 ```{r, warning=FALSE, message=FALSE}
