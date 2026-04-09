@@ -528,10 +528,9 @@ ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
   coord_flip()
 
 print(Country_contribution_litter_type)
-```
-```{r, echo=FALSE, eval=FALSE}
+
 # Save the plot
-ggsave(filename = "Country_contribution_litter_type.png", plot = Country_contribution_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+# ggsave(filename = "Country_contribution_litter_type.png", plot = Country_contribution_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 <!--
@@ -846,9 +845,9 @@ This plot of variable importance importance is telling us:
 * A large `MeanDecreaseGini` (**MDG**) means that X frequently appears in high‑up the tree splits and yields big purity gains → it’s structurally important to partitioning the data. 
   * **MDG** tells you which features the trees “prefer” splitting on.
 
-* **Principal COmponent Analysis **
+* **Principal Component Analysis**
 
-Finally, we will perform a Principal Component Analysis (PCA) to see correlation among litter items and *possible* associations with countries
+We will perform a Principal Component Analysis (PCA) to see correlation among litter items and *possible* associations with countries
 
 ```{r PCA, warning=FALSE, message=FALSE}
 # ─── 1) PCA (and optional RDA constrained by Country) ───────────────────────────
@@ -998,6 +997,96 @@ fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
   ggtitle("Top 10 variables contributing to PC2")
 dev.off()
 ```
+
+* **Non-Metric Multidimensional Scaling - nMDS**
+
+We will perform a Non-Metric Multidimensional Scaling (nMDS) to see correlation among litter items and *possible* associations with countries.
+
+We can re-use the distance matrix using the hellinger‐transformed data (`comm_hel`) and then perform the nMDS.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# En la matriz de comm hay columnas con todo 0 (vacías) que pueden causar problemas en el análisis multivariante, así que las eliminamos antes de hacer el nMDS.
+# Filas con todo 0 (vacías)
+empty_rows <- which(rowSums(comm, na.rm = TRUE) == 0)
+
+length(empty_rows)   # para ver cuántas hay
+empty_rows           # opcional: ver índices concretos
+
+# Eliminar esas filas de comm y de meta a la vez
+if (length(empty_rows) > 0) {
+  comm1 <- comm[-empty_rows, , drop = FALSE]
+  meta1 <- meta[-empty_rows, , drop = FALSE]
+}
+
+# Repetimos la transformación Hellinger sobre la nueva matriz de comunidad sin filas vacías.
+comm_hel1 <- decostand(comm1, method = "hellinger") #esto ya estaba definido.
+
+set.seed(123)  # reproducibilidad
+
+nmds <- metaMDS(
+  comm_hel1,                 # matriz de comunidad (Hellinger‐transformed)
+  distance      = "bray",  # típico en comunidad
+  k             = 2,       # nº de dimensiones
+  autotransform = FALSE    # ya transformaste con Hellinger
+)
+
+```
+
+Now, we calculate the scores for the sites (samples) and add the metadata to be able to visualize the nMDS with the country information.
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# scores de sitios
+site_scores <- as.data.frame(scores(nmds, display = "sites"))  # NMDS1, NMDS2, ...
+
+site_scores <- site_scores %>% 
+  mutate(
+    SampleID = rownames(.)
+  )
+
+# añadimos CountryResponsible alineando por fila
+site_scores <- site_scores %>% 
+  bind_cols(meta1)  # meta está en el mismo orden que comm/site_scores
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ggplot(site_scores, aes(x = NMDS1, y = NMDS2, colour = CountryResponsible)) +
+  geom_point(size = 3, alpha = 0.8) +
+  theme_minimal() +
+  coord_equal() +
+  labs(x = "NMDS1", y = "NMDS2")
+```
+
+To see which countries are more similar than others, we can calculate the centroids of each country in the NMDS space and then plot them.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# centroides (medias) por país en el espacio NMDS
+country_centroids <- site_scores %>% 
+  group_by(CountryResponsible) %>% 
+  summarise(
+    NMDS1 = mean(NMDS1, na.rm = TRUE),
+    NMDS2 = mean(NMDS2, na.rm = TRUE),
+    n     = dplyr::n()
+  )
+
+ggplot() +
+  geom_point(data = site_scores,
+             aes(x = NMDS1, y = NMDS2, colour = CountryResponsible),
+             alpha = 0.3, size = 2) +
+  geom_point(data = country_centroids,
+             aes(x = NMDS1, y = NMDS2, fill = CountryResponsible),
+             size = 5, shape = 21, colour = "black") +
+  ggrepel::geom_text_repel(
+    data = country_centroids,
+    aes(x = NMDS1, y = NMDS2, label = CountryResponsible),
+    size = 3
+  ) +
+  coord_equal() +
+  theme_minimal() +
+  labs(x = "NMDS1", y = "NMDS2")
+```
+
+From the above plot, we can say that the non-metric multidimensional scaling ordination based on Bray–Curtis dissimilarities of Hellinger-transformed litter composition revealed a clear gradient along the first two NMDS axes. Countries are arranged in a roughly linear sequence in this ordination space, indicating systematic shifts in the relative contribution of the different litter categories rather than discrete clusters. This pattern suggests that national litter profiles form a continuum, with some countries showing more similar compositions and therefore grouping closer together, while others occupy more distant positions along the gradient. Taken together, the NMDS indicates that between-country variation in litter is primarily structured along one dominant compositional axis, with a secondary axis capturing finer differences among otherwise similar profiles.
+
+
 
 #### Group B: Single Use Plastic - Riverside Waste
 
