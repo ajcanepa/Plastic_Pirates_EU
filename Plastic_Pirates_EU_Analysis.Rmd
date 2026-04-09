@@ -361,7 +361,27 @@ GroupB_data_validated <-
 
 ###### Litter type abundance
 
-We will obtain the plot for the most common (average abundance) litter type
+We will obtain the plot for the most common (average abundance) litter type, as a table and then as a plot.
+
+```{r}
+Litter_Average_table <-
+GroupB_data_validated %>% 
+  dplyr::select(CountryResponsible, SamplingYear, PlasticBags:LocalWaste) %>%  
+  pivot_longer(
+    cols = PlasticBags:LocalWaste,
+    names_to = "Litter_type",
+    values_to = "Abundance") %>% 
+  group_by(Litter_type) %>% 
+  dplyr::summarise(Av_Abundance = round(mean(Abundance, na.rm = TRUE), 2),
+                   SE_Abundance = round(sd(Abundance, na.rm = TRUE)/sqrt(n()), 2)) %>% 
+                    arrange(desc(Av_Abundance))
+
+datatable(Litter_Average_table)
+
+```
+
+
+
 ```{r}
 # Average litter type
 Average_litter_type <- 
@@ -989,7 +1009,7 @@ GroupB_SingleUsePlastic_data_validated <-
   GroupB_data_validated %>% 
   dplyr::select(DatasetID:Polystyrene) # Seleccionamos metadata y los Single Use Plastic
 
-GroupB_SingleUsePlastic_data_validated
+head(GroupB_SingleUsePlastic_data_validated)
 
 ```
 
