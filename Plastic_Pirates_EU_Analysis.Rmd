@@ -9,7 +9,7 @@ output:
     toc_float: true
     df_print: paged
     keep_md: false
-  md_document: # rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", output_format = "md_document")
+  md_document: # usar esto para el .md rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", output_format = "md_document")
     variant: gfm 
 ---
 
