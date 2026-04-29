@@ -99,7 +99,7 @@ Riverbank %>%
   # Crear todas las combinaciones posibles de país y año
   complete(CountryResponsible, SamplingYear, fill = list(Num_Sampling = 0)) %>%
   # Ordenar por total acumulado
-  dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Num_Sampling, sum)) %>%
+  #dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Num_Sampling, sum)) %>%
   ggplot(aes(x = CountryResponsible, y = Num_Sampling, fill = factor(SamplingYear))) +
   geom_bar(stat = "identity", position = "dodge", colour = 'black') +
   theme_classic() +
