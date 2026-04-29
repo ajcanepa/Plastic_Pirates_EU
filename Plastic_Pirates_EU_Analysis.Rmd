@@ -35,6 +35,7 @@ library(lubridate)
 library(scales)
 library(vegan)       # decostand(), rda(), adonis2()
 library(factoextra)  # fviz_pca_biplot(), fviz_dend()
+library(pvclust)
 library(randomForest)
 library(RColorBrewer)
 library(tidyHeatmap) # Requieres ComplexHeatmap --> BiocManager::install("ComplexHeatmap")
@@ -261,6 +262,7 @@ validated_pct_by_country
 ```
 
 ```{r, fig.width= 10}
+Percent_Validated_Records_Country_year <-
 Riverbank %>% 
   group_by(CountryResponsible, SamplingYear) %>% 
   summarise(
@@ -276,7 +278,7 @@ Riverbank %>%
                        pct_validated = 0)
   ) %>% 
   dplyr::filter(SamplingYear > 2021)  %>% 
-  dplyr::mutate(CountryResponsible = reorder(CountryResponsible,-pct_validated, FUN = mean)) %>% 
+  # dplyr::mutate(CountryResponsible = reorder(CountryResponsible,-pct_validated, FUN = mean)) %>% 
   ggplot(aes(
     x    = CountryResponsible,
     y    = pct_validated,
@@ -318,6 +320,12 @@ Riverbank %>%
       axis.text.x = element_text(angle = 45, hjust = 1),
       plot.title  = element_text(hjust = 0.5)
     )
+
+print(Percent_Validated_Records_Country_year)
+
+# Guardamos la gráfica
+# ggsave(filename = "Percentage_Validated_Sampling_Country_Year.png", plot = Percent_Validated_Records_Country_year, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+
 ```
 
 ##### Most common types/quantities of litter
