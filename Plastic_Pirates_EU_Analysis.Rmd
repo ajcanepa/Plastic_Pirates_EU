@@ -30,6 +30,7 @@ library(tidyverse)
 library(readxl)
 library(writexl)
 library(DT)
+library(patchwork)
 library(lubridate)
 library(scales)
 library(vegan)       # decostand(), rda(), adonis2()
@@ -191,6 +192,23 @@ print(Num_rios_year)
 
 #ggsave(filename = "Temporal_Number_Rivers.png", plot = Num_rios_year, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 ```
+
+Crearemos una sola figura con las dos gráficas.
+
+```{r}
+# Gráfica combinada
+Sampling_effort <-
+  Temp_Num_Samp_Campaigns + Num_rios_year +
+  plot_layout(ncol = 2, widths = c(1.4, 1.6), guides = "collect") &
+  theme(plot.margin = ggplot2::margin(t = 5, r = 11, b = 5, l = 11, unit = "pt"),
+  legend.box.spacing  = unit(-8, "pt"),
+  legend.position = "bottom")  # o "right", "top", "left"
+
+print(Sampling_effort)
+
+#ggsave(filename = "Sampling_effort_combined.png", plot = Sampling_effort, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 2, width = 20, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
 
 ### Most common types and quantities of litter per region? (Group B: riverbanks; Group C: floating litter)
 
