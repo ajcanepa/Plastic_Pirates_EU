@@ -137,7 +137,7 @@ Riverbank %>%
   # Crear todas las combinaciones posibles de país y año
   complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) %>%
   # Ordenar por total acumulado de ríos
-  dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum)) %>%
+  #dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum)) %>%
   ggplot(aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
   geom_bar(stat = "identity", position = "dodge", colour = 'black') +
   theme_classic() +
@@ -161,9 +161,9 @@ plot_data <-
   # Capitalizar primera letra de cada país
   dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
   # Crear todas las combinaciones posibles de país y año
-  complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) %>%
+  complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) #%>%
   # Ordenar por total acumulado de ríos
-  dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum))
+  #dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum))
 
 # Crear el gráfico
 Num_rios_year <- 
