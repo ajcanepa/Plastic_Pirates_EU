@@ -480,11 +480,9 @@ GroupB_data_validated %>%
   )
 
 Average_litter_type_country
-```
 
-```{r, echo=FALSE, eval=FALSE}
 # Save the plot
-ggsave(filename = "Average_Waste_Category_Country_GroupB.png", plot = Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+# ggsave(filename = "Average_Waste_Category_Country_GroupB.png", plot = Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 ###### Litter type Proportion I - "Across‑type" proportions
@@ -548,7 +546,7 @@ print(Country_contribution_litter_type)
 # ggsave(filename = "Country_contribution_litter_type.png", plot = Country_contribution_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
-<!--
+
 * Now, considering the total of Europe
 
 ```{r ProportionLitterEurope, warning=FALSE, message=FALSE}
@@ -643,8 +641,6 @@ ggplot(Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
   )
 ```
 
--->
-
 * HeatMaps
 
 ```{r ProportionLitterEuropeHeatMap, warning=FALSE, message=FALSE, out.width='80%', fig.align='center'}
@@ -656,10 +652,13 @@ Data_prop_eu %>%
     .value         = Prop_of_Europe,
     scale          = "column", # can be "none" (by default) or "row", "column" or "both". (#column keeps the z‑scaling)
     # a three‑colour gradient: low→mid→high
+     cluster_rows      = FALSE,        # <- elimina el dendrograma de Litter_type
     palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
     name           = "Relative \nimportance (%)",
     column_title   = "Country",
     row_title      = "Litter type",
+    row_names_side    = "left",        # <- nombres de fila a la izquierda
+    row_title_side    = "left",        # <- título del eje Y también a la izquierda
     show_row_names = TRUE,
     show_column_names = TRUE
   )
@@ -669,10 +668,72 @@ print(ProportionLitterEuropeHeatMap)
 
 ```{r, echo=FALSE, eval=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
-ProportionLitterEuropeHeatMap
-dev.off()
+# png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+# ProportionLitterEuropeHeatMap
+# dev.off()
 ```
+
+Bootstrap implementation in the dendrograms nodes. It replaces the previous heatmap with the dendrograms based on bootstrap values.
+
+```{r}
+#library(pvclust)
+
+# 1. Preparar la matriz de datos en formato wide (países como columnas)
+mat <- Data_prop_eu %>%
+  pivot_wider(id_cols = Litter_type,
+              names_from = CountryResponsible,
+              values_from = Prop_of_Europe) %>%
+  column_to_rownames("Litter_type") %>%
+  as.matrix()
+
+# 2. Calcular el clustering con bootstrap (nboot = 1000 recomendado para publicación)
+pv_result <- pvclust(mat, method.hclust = "ward.D2",
+                     method.dist = "euclidean", nboot = 1000)
+
+# 3. Extraer el dendrograma con los valores AU
+dend_with_bootstrap <- as.dendrogram(pv_result)
+
+# 4. Pasar el dendrograma personalizado a tidyHeatmap
+ProportionLitterEuropeHeatMap_pvclust <-
+  Data_prop_eu %>%
+  heatmap(
+    .row           = Litter_type,
+    .column        = CountryResponsible,
+    .value         = Prop_of_Europe,
+    scale          = "column",
+    cluster_rows   = FALSE,
+    cluster_columns = dend_with_bootstrap,   # <- dendrograma con bootstrap
+    row_names_side = "left",
+    row_title_side = "left",
+    palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
+    name           = "Relative \nimportance (%)",
+    column_title   = "Country",
+    row_title      = "Litter type",
+    show_row_names    = TRUE,
+    show_column_names = TRUE
+  )
+
+ProportionLitterEuropeHeatMap_pvclust
+```
+
+```{r, echo=FALSE, eval=FALSE}
+# Save the plot
+# png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+# ProportionLitterEuropeHeatMap_pvclust
+# dev.off()
+```
+
+Dendrogram with the values
+
+```{r}
+# Save the plot
+#png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_Clustering_Percentage.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 10) # Descomentar para guardar
+# Dendrograma con valores AU (rojo) y BP (verde) en cada nodo
+plot(pv_result)
+pvrect(pv_result, alpha = 0.95)  # recuadra los clusters con AU >= 95%
+#dev.off() # Descomentar para guardar
+```
+
 
 
 <!--
