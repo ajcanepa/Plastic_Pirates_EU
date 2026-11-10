@@ -220,6 +220,7 @@ print(Sampling_effort)
 
 if (save_figures) ggsave(filename = "Sampling_effort_combined.png", plot = Sampling_effort, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 2, width = 20, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 ```
+
 ### Sampling Effort Description
 
 The sampling effort of each Group B survey is defined by the size of the riverbank area searched, recorded in two attributes:
