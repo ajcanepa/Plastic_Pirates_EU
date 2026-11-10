@@ -52,7 +52,7 @@ library(multcomp)
 # https://zenodo.org/records/15535434
 # Cuidado con el nombre de los ríos, hay besòs y bessos.
 Riverbank <- 
-  read.csv(file = "PlasticPirates_Riverbank_data/Riverbank_data_v2.0.0.csv", header = TRUE, sep = ",", na.strings = "na") %>% 
+  read.csv(file = "PlasticPirates_Riverbank_data/Riverbank_data_v2.0.0.csv", header = TRUE, sep = ",", na.strings = c("na", "NA")) %>% 
   dplyr::mutate(SamplingDate = lubridate::ymd(SamplingDate)) %>% 
   dplyr::mutate(across(where(is.character), as.factor))
 ```
@@ -218,10 +218,10 @@ The sampling effort of each Group B survey is defined by the size of the riverba
 
 According to the dataset documentation (`READme_info_riverbank_v2.0.0.txt`), *"Data for length and width of riverbank searched for group B could not always be verified by the experts"*. Therefore, before using them (e.g. to standardise litter counts per m²), we describe (i) the amount of missing values and (ii) their variability, looking for outliers.
 
-**Note:** the width attribute is read as a `factor` because the CSV contains the literal text `"NA"` in some cells, and `read.csv(..., na.strings = "na")` only treats lowercase `"na"` as missing. We convert both attributes to numeric here; those `"NA"` cells become true `NA`.
+**Note:** the CSV codes missing values both as `"na"` and as `"NA"`. Both are declared as missing in `DataLoading` (`na.strings = c("na", "NA")`), so length and width are read as numeric. Otherwise, the width attribute would be read as text because of the literal `"NA"` cells.
 
 ```{r SamplingEffortData, message=FALSE, warning=FALSE}
-# Dataset de esfuerzo de muestreo con nombres cortos y ambas variables numéricas
+# Sampling effort dataset with short column names
 Sampling_effort_data <-
   Riverbank %>%
   dplyr::transmute(
@@ -229,17 +229,16 @@ Sampling_effort_data <-
     CountryResponsible = str_to_title(CountryResponsible),
     SamplingYear,
     SamplingRiver,
-    # Mismos criterios que GroupB_data_validated (los NA cuentan como FALSE)
+    # Same criteria as GroupB_data_validated (NA counts as FALSE)
     Attempted = coalesce(RiversideWasteVariety_AttemptedSampling == 1, FALSE),
     Validated = coalesce(RiversideWasteVariety_AttemptedSampling == 1 &
                            RiversideWasteVariety_Qualified == 1, FALSE),
-    Length_m = as.numeric(as.character(RiversideWasteVariety_Results_LengthOfRiverbankSearchedM)),
-    # El texto literal "NA" se convierte en NA (de ahí el suppressWarnings)
-    Width_m  = suppressWarnings(as.numeric(as.character(RiversideWasteVariety_Results_WidthOfRiverbankSearchedM))),
+    Length_m = RiversideWasteVariety_Results_LengthOfRiverbankSearchedM,
+    Width_m  = RiversideWasteVariety_Results_WidthOfRiverbankSearchedM,
     Area_m2  = Length_m * Width_m
   )
 
-# Subconjunto validado (el que se usa en los análisis de Group B)
+# Validated subset (the one used in the Group B analyses)
 Sampling_effort_validated <- Sampling_effort_data %>% dplyr::filter(Validated)
 ```
 
@@ -248,7 +247,7 @@ Sampling_effort_validated <- Sampling_effort_data %>% dplyr::filter(Validated)
 For each attribute we count the missing values (`NA`), and for the combination of both we count the *complete cases* (rows with both length and width). The *Incomplete* columns show how many records, and what percentage of the total, would be removed if we kept only complete cases. This is shown for the whole dataset, for the attempted samplings and for the validated Group B samplings (the subset used in the analyses).
 
 ```{r SamplingEffortNA, message=FALSE, warning=FALSE}
-# Resumen de valores ausentes (n y %) para largo, ancho y su combinación
+# Summary of missing values (n and %) for length, width and their combination
 na_summary <- function(data, subset_name) {
   data %>%
     summarise(
@@ -301,7 +300,7 @@ Descriptive statistics of the validated Group B samplings. Zero values are also 
 Both attributes are strongly concentrated around a few "standard" values (most samplings searched about 50 m × 20 m) and have long right tails. Under these conditions Tukey's IQR rule is not useful: the width IQR is very narrow (15–20 m), so the rule flags around a quarter of the samplings as outliers, even on a log scale. Instead, we flag as **extreme values** those below the lower or above the upper percentile set in `pct_limits` (by default the 1st and 99th percentiles), plus all zero values. The limits can be changed to make the criterion more or less strict.
 
 ```{r SamplingEffortStats, message=FALSE, warning=FALSE}
-# Percentiles que delimitan los valores extremos (modificar para un criterio más/menos estricto)
+# Percentiles defining the extreme values (change them for a more/less strict criterion)
 pct_limits <- c(0.01, 0.99)
 
 Sampling_effort_stats <-
@@ -332,7 +331,7 @@ Sampling_effort_stats
 Both attributes are strongly right-skewed (the mean is much higher than the median), so the histograms use a logarithmic x-axis. Zero values cannot be shown on a log scale and are excluded from the plots (they are counted in the table above). The solid line marks the median and the dashed lines the percentile limits. The scatter plot combines both attributes; the grey diagonal lines show constant searched areas (100, 1,000, 10,000 and 100,000 m²).
 
 ```{r SamplingEffortPlot, message=FALSE, warning=FALSE, fig.width=12, fig.height=9}
-# Límites (percentiles) y medianas para las figuras
+# Limits (percentiles) and medians for the figures
 get_stat <- function(var, stat) {
   Sampling_effort_stats %>% dplyr::filter(Variable == var) %>% pull(all_of(stat))
 }
@@ -341,13 +340,13 @@ lim_W <- c(get_stat("Width_m",  "P_low"), get_stat("Width_m",  "P_high"))
 med_L <- get_stat("Length_m", "Median")
 med_W <- get_stat("Width_m",  "Median")
 
-# Clasificación de cada muestreo según si es extremo en largo, ancho o ambos
+# Classify each sampling as extreme in length, width or both
 Sampling_effort_validated <-
   Sampling_effort_validated %>%
   dplyr::mutate(
     Extreme_L = Length_m < lim_L[1] | Length_m > lim_L[2] | Length_m == 0,
     Extreme_W = Width_m  < lim_W[1] | Width_m  > lim_W[2] | Width_m  == 0,
-    # Un valor ausente no cuenta como extremo; solo NA si faltan ambos
+    # A missing value does not count as extreme; NA only when both are missing
     Extreme   = case_when(
       is.na(Extreme_L) & is.na(Extreme_W)                     ~ NA_character_,
       coalesce(Extreme_L, FALSE) & coalesce(Extreme_W, FALSE) ~ "Length & Width",
@@ -361,9 +360,9 @@ Sampling_effort_validated <-
 Sampling_effort_plot_data <-
   Sampling_effort_validated %>%
   dplyr::filter(Length_m > 0, Width_m > 0) %>%
-  arrange(Extreme)  # los extremos se dibujan encima
+  arrange(Extreme)  # extreme values are drawn on top
 
-# Histograma del largo
+# Length histogram
 Hist_length <-
   Sampling_effort_validated %>%
   dplyr::filter(Length_m > 0) %>%
@@ -376,7 +375,7 @@ Hist_length <-
   labs(x = "Length of riverbank searched (m, log scale)", y = "Number of samplings") +
   theme_classic()
 
-# Histograma del ancho
+# Width histogram
 Hist_width <-
   Sampling_effort_validated %>%
   dplyr::filter(Width_m > 0) %>%
@@ -389,7 +388,7 @@ Hist_width <-
   labs(x = "Width of riverbank searched (m, log scale)", y = "Number of samplings") +
   theme_classic()
 
-# Dispersión largo vs ancho, con líneas de área constante (L * W = A  ->  W = A / L)
+# Length vs width scatter plot, with constant-area lines (L * W = A  ->  W = A / L)
 Scatter_LW <-
   ggplot(Sampling_effort_plot_data, aes(x = Length_m, y = Width_m)) +
   geom_abline(intercept = log10(c(1e2, 1e3, 1e4, 1e5)), slope = -1,
@@ -408,7 +407,7 @@ Scatter_LW <-
   theme_classic() +
   theme(legend.position = "bottom")
 
-# Figura combinada: histogramas arriba, dispersión abajo
+# Combined figure: histograms on top, scatter plot below
 Sampling_effort_area <-
   (Hist_length + Hist_width) / Scatter_LW +
   plot_layout(heights = c(1, 1.6)) +
