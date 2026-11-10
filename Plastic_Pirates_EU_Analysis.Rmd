@@ -211,12 +211,247 @@ print(Sampling_effort)
 ```
 ### Sampling Effort Description
 
-<!--
-Describir La variabilidad de Longitud y Ancho de área muestreada -> Outliers? los quitamos?
-Describir el pocerntaje de valores ausentes (en cada uno y en total)
-¿Que coño hacemos?
+The sampling effort of each Group B survey is defined by the size of the riverbank area searched, recorded in two attributes:
 
--->
+* `RiversideWasteVariety_Results_LengthOfRiverbankSearchedM`: length of the riverbank searched (m).
+* `RiversideWasteVariety_Results_WidthOfRiverbankSearchedM`: width of the riverbank searched (m).
+
+According to the dataset documentation (`READme_info_riverbank_v2.0.0.txt`), *"Data for length and width of riverbank searched for group B could not always be verified by the experts"*. Therefore, before using them (e.g. to standardise litter counts per m²), we describe (i) the amount of missing values and (ii) their variability, looking for outliers.
+
+**Note:** the width attribute is read as a `factor` because the CSV contains the literal text `"NA"` in some cells, and `read.csv(..., na.strings = "na")` only treats lowercase `"na"` as missing. We convert both attributes to numeric here; those `"NA"` cells become true `NA`.
+
+```{r SamplingEffortData, message=FALSE, warning=FALSE}
+# Dataset de esfuerzo de muestreo con nombres cortos y ambas variables numéricas
+Sampling_effort_data <-
+  Riverbank %>%
+  dplyr::transmute(
+    DatasetID,
+    CountryResponsible = str_to_title(CountryResponsible),
+    SamplingYear,
+    SamplingRiver,
+    # Mismos criterios que GroupB_data_validated (los NA cuentan como FALSE)
+    Attempted = coalesce(RiversideWasteVariety_AttemptedSampling == 1, FALSE),
+    Validated = coalesce(RiversideWasteVariety_AttemptedSampling == 1 &
+                           RiversideWasteVariety_Qualified == 1, FALSE),
+    Length_m = as.numeric(as.character(RiversideWasteVariety_Results_LengthOfRiverbankSearchedM)),
+    # El texto literal "NA" se convierte en NA (de ahí el suppressWarnings)
+    Width_m  = suppressWarnings(as.numeric(as.character(RiversideWasteVariety_Results_WidthOfRiverbankSearchedM))),
+    Area_m2  = Length_m * Width_m
+  )
+
+# Subconjunto validado (el que se usa en los análisis de Group B)
+Sampling_effort_validated <- Sampling_effort_data %>% dplyr::filter(Validated)
+```
+
+#### Missing values
+
+For each attribute we count the missing values (`NA`), and for the combination of both we count the *complete cases* (rows with both length and width). The *Incomplete* columns show how many records, and what percentage of the total, would be removed if we kept only complete cases. This is shown for the whole dataset, for the attempted samplings and for the validated Group B samplings (the subset used in the analyses).
+
+```{r SamplingEffortNA, message=FALSE, warning=FALSE}
+# Resumen de valores ausentes (n y %) para largo, ancho y su combinación
+na_summary <- function(data, subset_name) {
+  data %>%
+    summarise(
+      Subset                 = subset_name,
+      N                      = n(),
+      `NA Length (n)`        = sum(is.na(Length_m)),
+      `NA Length (%)`        = round(100 * mean(is.na(Length_m)), 1),
+      `NA Width (n)`         = sum(is.na(Width_m)),
+      `NA Width (%)`         = round(100 * mean(is.na(Width_m)), 1),
+      `NA Both (n)`          = sum(is.na(Length_m) & is.na(Width_m)),
+      `Incomplete (n)`       = sum(is.na(Length_m) | is.na(Width_m)),
+      `Incomplete (%)`       = round(100 * mean(is.na(Length_m) | is.na(Width_m)), 1),
+      `Complete cases (n)`   = sum(!is.na(Length_m) & !is.na(Width_m)),
+      `Complete cases (%)`   = round(100 * mean(!is.na(Length_m) & !is.na(Width_m)), 1)
+    )
+}
+
+Sampling_effort_NA <-
+  bind_rows(
+    na_summary(Sampling_effort_data, "All records"),
+    na_summary(dplyr::filter(Sampling_effort_data, Attempted), "Attempted sampling"),
+    na_summary(Sampling_effort_validated, "Validated (Group B)")
+  )
+
+Sampling_effort_NA
+```
+
+In the validated Group B dataset, `r Sampling_effort_NA$"Incomplete (n)"[3]` out of `r Sampling_effort_NA$N[3]` samplings (`r Sampling_effort_NA$"Incomplete (%)"[3]`%) lack the length, the width or both. Keeping only complete cases would remove that share of the data.
+
+Missing values per country (validated Group B samplings), to check whether they are concentrated in a few countries:
+
+```{r SamplingEffortNACountry, message=FALSE, warning=FALSE}
+Sampling_effort_validated %>%
+  group_by(CountryResponsible) %>%
+  summarise(
+    N                    = n(),
+    `NA Length (n)`      = sum(is.na(Length_m)),
+    `NA Width (n)`       = sum(is.na(Width_m)),
+    `Incomplete (n)`     = sum(is.na(Length_m) | is.na(Width_m)),
+    `Incomplete (%)`     = round(100 * mean(is.na(Length_m) | is.na(Width_m)), 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(`Incomplete (%)`))
+```
+
+#### Variability and outliers
+
+Descriptive statistics of the validated Group B samplings. Zero values are also counted, since a searched length or width of 0 m is not plausible.
+
+Both attributes are strongly concentrated around a few "standard" values (most samplings searched about 50 m × 20 m) and have long right tails. Under these conditions Tukey's IQR rule is not useful: the width IQR is very narrow (15–20 m), so the rule flags around a quarter of the samplings as outliers, even on a log scale. Instead, we flag as **extreme values** those below the lower or above the upper percentile set in `pct_limits` (by default the 1st and 99th percentiles), plus all zero values. The limits can be changed to make the criterion more or less strict.
+
+```{r SamplingEffortStats, message=FALSE, warning=FALSE}
+# Percentiles que delimitan los valores extremos (modificar para un criterio más/menos estricto)
+pct_limits <- c(0.01, 0.99)
+
+Sampling_effort_stats <-
+  Sampling_effort_validated %>%
+  dplyr::select(Length_m, Width_m, Area_m2) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Value") %>%
+  dplyr::mutate(Variable = factor(Variable, levels = c("Length_m", "Width_m", "Area_m2"))) %>%
+  group_by(Variable) %>%
+  summarise(
+    n            = sum(!is.na(Value)),
+    `NA`         = sum(is.na(Value)),
+    Zeros        = sum(Value == 0, na.rm = TRUE),
+    Min          = min(Value, na.rm = TRUE),
+    P_low        = quantile(Value, pct_limits[1], na.rm = TRUE),
+    Q1           = quantile(Value, 0.25, na.rm = TRUE),
+    Median       = median(Value, na.rm = TRUE),
+    Mean         = round(mean(Value, na.rm = TRUE), 1),
+    Q3           = quantile(Value, 0.75, na.rm = TRUE),
+    P_high       = quantile(Value, pct_limits[2], na.rm = TRUE),
+    Max          = max(Value, na.rm = TRUE),
+    `Extreme (n)` = sum(Value < P_low | Value > P_high | Value == 0, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+Sampling_effort_stats
+```
+
+Both attributes are strongly right-skewed (the mean is much higher than the median), so the histograms use a logarithmic x-axis. Zero values cannot be shown on a log scale and are excluded from the plots (they are counted in the table above). The solid line marks the median and the dashed lines the percentile limits. The scatter plot combines both attributes; the grey diagonal lines show constant searched areas (100, 1,000, 10,000 and 100,000 m²).
+
+```{r SamplingEffortPlot, message=FALSE, warning=FALSE, fig.width=12, fig.height=9}
+# Límites (percentiles) y medianas para las figuras
+get_stat <- function(var, stat) {
+  Sampling_effort_stats %>% dplyr::filter(Variable == var) %>% pull(all_of(stat))
+}
+lim_L <- c(get_stat("Length_m", "P_low"), get_stat("Length_m", "P_high"))
+lim_W <- c(get_stat("Width_m",  "P_low"), get_stat("Width_m",  "P_high"))
+med_L <- get_stat("Length_m", "Median")
+med_W <- get_stat("Width_m",  "Median")
+
+# Clasificación de cada muestreo según si es extremo en largo, ancho o ambos
+Sampling_effort_validated <-
+  Sampling_effort_validated %>%
+  dplyr::mutate(
+    Extreme_L = Length_m < lim_L[1] | Length_m > lim_L[2] | Length_m == 0,
+    Extreme_W = Width_m  < lim_W[1] | Width_m  > lim_W[2] | Width_m  == 0,
+    # Un valor ausente no cuenta como extremo; solo NA si faltan ambos
+    Extreme   = case_when(
+      is.na(Extreme_L) & is.na(Extreme_W)                     ~ NA_character_,
+      coalesce(Extreme_L, FALSE) & coalesce(Extreme_W, FALSE) ~ "Length & Width",
+      coalesce(Extreme_L, FALSE)                              ~ "Length",
+      coalesce(Extreme_W, FALSE)                              ~ "Width",
+      TRUE                                                    ~ "None"
+    ),
+    Extreme = factor(Extreme, levels = c("None", "Length", "Width", "Length & Width"))
+  )
+
+Sampling_effort_plot_data <-
+  Sampling_effort_validated %>%
+  dplyr::filter(Length_m > 0, Width_m > 0) %>%
+  arrange(Extreme)  # los extremos se dibujan encima
+
+# Histograma del largo
+Hist_length <-
+  Sampling_effort_validated %>%
+  dplyr::filter(Length_m > 0) %>%
+  ggplot(aes(x = Length_m)) +
+  geom_histogram(bins = 40, fill = "#4A90E2", colour = "black") +
+  geom_vline(xintercept = med_L, linewidth = 0.8) +
+  geom_vline(xintercept = lim_L, linetype = "dashed", linewidth = 0.8) +
+  scale_x_log10(labels = label_comma()) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  labs(x = "Length of riverbank searched (m, log scale)", y = "Number of samplings") +
+  theme_classic()
+
+# Histograma del ancho
+Hist_width <-
+  Sampling_effort_validated %>%
+  dplyr::filter(Width_m > 0) %>%
+  ggplot(aes(x = Width_m)) +
+  geom_histogram(bins = 40, fill = "#B8D4F0", colour = "black") +
+  geom_vline(xintercept = med_W, linewidth = 0.8) +
+  geom_vline(xintercept = lim_W, linetype = "dashed", linewidth = 0.8) +
+  scale_x_log10(labels = label_comma()) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  labs(x = "Width of riverbank searched (m, log scale)", y = "Number of samplings") +
+  theme_classic()
+
+# Dispersión largo vs ancho, con líneas de área constante (L * W = A  ->  W = A / L)
+Scatter_LW <-
+  ggplot(Sampling_effort_plot_data, aes(x = Length_m, y = Width_m)) +
+  geom_abline(intercept = log10(c(1e2, 1e3, 1e4, 1e5)), slope = -1,
+              colour = "grey70", linetype = "dotted") +
+  geom_vline(xintercept = lim_L, linetype = "dashed", colour = "grey40") +
+  geom_hline(yintercept = lim_W, linetype = "dashed", colour = "grey40") +
+  geom_jitter(aes(fill = Extreme), shape = 21, size = 2.5, alpha = 0.8,
+              width = 0.02, height = 0.02) +
+  scale_x_log10(labels = label_comma()) +
+  scale_y_log10(labels = label_comma()) +
+  scale_fill_manual(values = c("None" = "grey80", "Length" = "#4A90E2",
+                               "Width" = "#E69F00", "Length & Width" = "#D55E00")) +
+  labs(x = "Length of riverbank searched (m, log scale)",
+       y = "Width of riverbank searched (m, log scale)",
+       fill = "Extreme value") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+# Figura combinada: histogramas arriba, dispersión abajo
+Sampling_effort_area <-
+  (Hist_length + Hist_width) / Scatter_LW +
+  plot_layout(heights = c(1, 1.6)) +
+  plot_annotation(tag_levels = "A")
+
+print(Sampling_effort_area)
+
+#ggsave(filename = "Sampling_effort_area.png", plot = Sampling_effort_area, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.5, width = 20, height = 16, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+Distribution of length and width per country, to check whether outliers are specific to some countries (zero values excluded):
+
+```{r SamplingEffortCountryPlot, message=FALSE, warning=FALSE, fig.width=12, fig.height=6}
+Sampling_effort_country <-
+  Sampling_effort_validated %>%
+  dplyr::select(CountryResponsible, Length_m, Width_m) %>%
+  pivot_longer(c(Length_m, Width_m), names_to = "Variable", values_to = "Value") %>%
+  dplyr::filter(Value > 0) %>%
+  dplyr::mutate(Variable = recode(Variable, Length_m = "Length (m)", Width_m = "Width (m)")) %>%
+  ggplot(aes(x = CountryResponsible, y = Value)) +
+  geom_boxplot(fill = "#B8D4F0", outlier.shape = NA) +
+  geom_jitter(width = 0.15, size = 1, alpha = 0.4) +
+  scale_y_log10(labels = label_comma()) +
+  facet_wrap(~ Variable, scales = "free_y") +
+  labs(x = NULL, y = "Value (log scale)") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(Sampling_effort_country)
+```
+
+List of the validated samplings with extreme values (outside the percentile limits, or zero) in length or width, ordered by searched area, for manual checking:
+
+```{r SamplingEffortOutliers, message=FALSE, warning=FALSE}
+Sampling_effort_outliers <-
+  Sampling_effort_validated %>%
+  dplyr::filter(Extreme_L | Extreme_W) %>%
+  dplyr::select(DatasetID, CountryResponsible, SamplingYear, SamplingRiver,
+                Length_m, Width_m, Area_m2, Extreme) %>%
+  arrange(desc(Area_m2))
+
+Sampling_effort_outliers
+```
 
 
 
