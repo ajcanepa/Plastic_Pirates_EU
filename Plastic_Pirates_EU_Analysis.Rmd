@@ -584,6 +584,38 @@ if (save_figures) ggsave(filename = "Percentage_Validated_Sampling_Country_Year.
 
 ```
 
+###### Manuscript values: validation rates (Sampling Effort)
+
+Validation rate (% of attempted Group B samplings that were validated) per country and year, as in Fig. 2C, and the lowest rate among the countries described in the manuscript as having high validation rates.
+
+```{r ManuscriptValidationRates, message=FALSE, warning=FALSE}
+# Validation rate per country and year (same definition as Fig. 2C)
+Validation_country_year <-
+  Riverbank %>%
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(
+    n_attempted   = sum(RiversideWasteVariety_AttemptedSampling == 1, na.rm = TRUE),
+    n_validated   = sum(RiversideWasteVariety_AttemptedSampling == 1 &
+                          RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
+    pct_validated = round(100 * n_validated / n_attempted, 1),
+    .groups = "drop"
+  )
+
+# Wide table: one column per year
+Validation_country_year %>%
+  dplyr::select(CountryResponsible, SamplingYear, pct_validated) %>%
+  pivot_wider(names_from = SamplingYear, values_from = pct_validated)
+
+# Countries with high validation rates in the manuscript: lowest country-year rate
+high_validation <- c("Greece", "Germany", "Italy", "Slovenia", "Hungary", "Belgium", "Bulgaria")
+
+Validation_country_year %>%
+  dplyr::filter(CountryResponsible %in% high_validation, n_attempted > 0) %>%
+  arrange(pct_validated) %>%
+  head(5)
+```
+
 ##### Most common types/quantities of litter
 
 ```{r, warning=FALSE, message=FALSE, eval=FALSE}
@@ -747,6 +779,60 @@ Average_litter_type_country
 
 # Save the plot
 if (save_figures) ggsave(filename = "Average_Waste_Category_Country_GroupB.png", plot = Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+###### Manuscript values: mean ± s.e. and n (Fig. 3 and Fig. 4)
+
+Mean ± standard error (rounded to one decimal) and number of validated samplings (*n*) for the litter categories and countries cited in the Results section.
+
+```{r ManuscriptLitterMeanSE, message=FALSE, warning=FALSE}
+# Mean ± s.e. and n per litter category, optionally grouped by other variables (e.g. country)
+litter_mean_se <- function(data, cols, ...) {
+  data %>%
+    dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+    pivot_longer({{ cols }}, names_to = "Litter_type", values_to = "Abundance") %>%
+    group_by(..., Litter_type) %>%
+    summarise(n    = n(),
+              Mean = mean(Abundance),
+              SE   = sd(Abundance) / sqrt(n()),
+              .groups = "drop") %>%
+    dplyr::mutate(Manuscript = sprintf("%.1f ± %.1f, n = %d", Mean, SE, n))
+}
+
+# Whole validated dataset (Fig. 3)
+Litter_overall_mean_se <-
+  litter_mean_se(GroupB_data_validated, PlasticBags:LocalWaste) %>%
+  arrange(desc(Mean))
+
+Litter_overall_mean_se %>% head(4)
+
+# Per country (Fig. 4): category-country pairs cited in the manuscript, in the same order
+Litter_country_mean_se <-
+  litter_mean_se(GroupB_data_validated, PlasticBags:LocalWaste, CountryResponsible)
+
+Litter_cited_pairs <- tribble(
+  ~Litter_type,                 ~CountryResponsible,
+  "CigaretteButts",             "Bulgaria",
+  "CigaretteButts",             "Austria",
+  "CigaretteButts",             "Germany",
+  "CigaretteButts",             "Lithuania",
+  "GlassPieces",                "Austria",
+  "GlassPieces",                "Germany",
+  "GlassPieces",                "Italy",
+  "GlassPieces",                "Portugal",
+  "GlassPieces",                "Lithuania",
+  "PlasticBottles",             "Hungary",
+  "PlasticBottles",             "Greece",
+  "PlasticBags",                "Greece",
+  "Polystyrene",                "Slovenia",
+  "WetWipesSanitaryProducts",   "Spain",
+  "PlasticPackagingSweets",     "Belgium",
+  "OtherUnidentifiablePlastic", "Belgium"
+)
+
+Litter_cited_pairs %>%
+  left_join(Litter_country_mean_se, by = c("Litter_type", "CountryResponsible")) %>%
+  dplyr::select(Litter_type, CountryResponsible, Manuscript)
 ```
 
 ###### Litter type Proportion I - "Across‑type" proportions
@@ -1570,6 +1656,39 @@ if (save_figures) {
 ```
 
 
+###### Manuscript values: SUP mean ± s.e. and n (Fig. 8 and Fig. 9)
+
+Mean ± standard error (one decimal) and *n* for the SUP categories and countries cited in the Results section (uses `litter_mean_se()`, defined in the Group B section).
+
+```{r ManuscriptSUPMeanSE, message=FALSE, warning=FALSE}
+# Whole validated dataset (Fig. 8)
+SUP_overall_mean_se <-
+  litter_mean_se(GroupB_SingleUsePlastic_data_validated, PlasticBags:Polystyrene) %>%
+  arrange(desc(Mean))
+
+SUP_overall_mean_se %>% head(3)
+
+# Per country (Fig. 9): category-country pairs cited in the manuscript, in the same order
+SUP_country_mean_se <-
+  litter_mean_se(GroupB_SingleUsePlastic_data_validated, PlasticBags:Polystyrene, CountryResponsible)
+
+SUP_cited_pairs <- tribble(
+  ~Litter_type,       ~CountryResponsible,
+  "PlasticBags",      "Italy",
+  "PlasticBags",      "Greece",
+  "Polystyrene",      "Portugal",
+  "Polystyrene",      "Slovenia",
+  "PlasticBottles",   "Hungary",
+  "PlasticBottles",   "Greece",
+  "PlasticLids",      "Bulgaria",
+  "TakeawayFastFood", "Bulgaria"
+)
+
+SUP_cited_pairs %>%
+  left_join(SUP_country_mean_se, by = c("Litter_type", "CountryResponsible")) %>%
+  dplyr::select(Litter_type, CountryResponsible, Manuscript)
+```
+
 ###### SUP type Proportion I - "Across‑type" proportions
 
 * The first approach will be a "*Across‑type*" proportions. 
@@ -2144,6 +2263,33 @@ if (save_figures) {
 ```
 
 
+###### Manuscript values: Table 2 (PERMANOVA)
+
+PERMANOVA results for the overall litter dataset (`perm1`) and the SUP subset (`perm1_SUP`), in the layout of Table 2 of the manuscript.
+
+```{r ManuscriptTable2, message=FALSE, warning=FALSE}
+# Tidy adonis2 output (one row per term)
+tidy_permanova <- function(perm, analysis) {
+  as.data.frame(perm) %>%
+    rownames_to_column("Term") %>%
+    dplyr::transmute(
+      Analysis = analysis,
+      Term     = recode(Term, CountryResponsible = "Country", Residual = "Residuals"),
+      df       = Df,
+      SS       = round(SumOfSqs, 3),
+      F        = round(F, 2),
+      R2       = round(R2, 3),
+      p_value  = `Pr(>F)`
+    )
+}
+
+Table2_PERMANOVA <-
+  bind_rows(tidy_permanova(perm1,     "Overall analysis"),
+            tidy_permanova(perm1_SUP, "Single-Use Plastics (SUP)"))
+
+Table2_PERMANOVA
+```
+
 ## Floating DATA
 
 ### Data loading
@@ -2344,6 +2490,33 @@ if (save_figures) {
 }
 ```
 
+
+###### Manuscript values: low floating macrolitter densities
+
+Summary of floating macrolitter flow (items m⁻¹ h⁻¹) per country, pooling all years, to fill the sentence on the countries with low densities (Belgium, Greece, Hungary and Latvia).
+
+```{r ManuscriptFloatingLow, message=FALSE, warning=FALSE}
+Flow_country_summary <-
+  Flow_plot_data %>%
+  group_by(CountryResponsible) %>%
+  summarise(n      = n(),
+            Median = median(FlowMacrolitter),
+            Mean   = mean(FlowMacrolitter),
+            SE     = sd(FlowMacrolitter) / sqrt(n()),
+            Q75    = quantile(FlowMacrolitter, 0.75),
+            Max    = max(FlowMacrolitter),
+            .groups = "drop") %>%
+  dplyr::mutate(across(Median:Max, ~ round(.x, 3)))
+
+Flow_country_summary
+
+# Countries cited as having low densities, per year (medians and maxima)
+Flow_plot_data %>%
+  dplyr::filter(CountryResponsible %in% c("Belgium", "Greece", "Hungary", "Latvia")) %>%
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(n = n(), Median = round(median(FlowMacrolitter), 3),
+            Max = round(max(FlowMacrolitter), 3), .groups = "drop")
+```
 
 * **Statistical test**
 

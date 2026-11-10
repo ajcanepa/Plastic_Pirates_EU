@@ -259,6 +259,37 @@ of sampling beign attempted.
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
+###### Manuscript values: validation rates (Sampling Effort)
+
+Validation rate (% of attempted Group B samplings that were validated)
+per country and year, as in Fig. 2C, and the lowest rate among the
+countries described in the manuscript as having high validation rates.
+
+    ## # A tibble: 12 × 4
+    ##    CountryResponsible `2022` `2023` `2024`
+    ##    <chr>               <dbl>  <dbl>  <dbl>
+    ##  1 Austria              66.7   56.6   62.7
+    ##  2 Belgium              90.5   NA     96.8
+    ##  3 Bulgaria             NA    100     NA  
+    ##  4 Germany              93.2  100    100  
+    ##  5 Greece              100    100    100  
+    ##  6 Hungary              93.3  100     NA  
+    ##  7 Italy               100     87.5  100  
+    ##  8 Latvia               NA     52.6   NA  
+    ##  9 Lithuania            39.1   71.1   75.4
+    ## 10 Portugal             NA     56.8   60  
+    ## 11 Slovenia             95.7  100     NA  
+    ## 12 Spain                59.5   63.9   62.1
+
+    ## # A tibble: 5 × 5
+    ##   CountryResponsible SamplingYear n_attempted n_validated pct_validated
+    ##   <chr>                     <int>       <int>       <int>         <dbl>
+    ## 1 Italy                      2023          32          28          87.5
+    ## 2 Belgium                    2022          21          19          90.5
+    ## 3 Germany                    2022          73          68          93.2
+    ## 4 Hungary                    2022          15          14          93.3
+    ## 5 Slovenia                   2022          23          22          95.7
+
 ##### Most common types/quantities of litter
 
 Firstly, we will pick up data to answer the question about group B. Only
@@ -290,6 +321,40 @@ type, as a table and then as a plot.
 If we now want to visualize the contribution per each country, we have:
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/AverageLitterCountry-1.png)<!-- -->
+
+###### Manuscript values: mean ± s.e. and n (Fig. 3 and Fig. 4)
+
+Mean ± standard error (rounded to one decimal) and number of validated
+samplings (*n*) for the litter categories and countries cited in the
+Results section.
+
+    ## # A tibble: 4 × 5
+    ##   Litter_type                    n  Mean    SE Manuscript         
+    ##   <chr>                      <int> <dbl> <dbl> <chr>              
+    ## 1 CigaretteButts               545  23.4  2.57 23.4 ± 2.6, n = 545
+    ## 2 GlassPieces                  545  17.2  3.98 17.2 ± 4.0, n = 545
+    ## 3 OtherUnidentifiablePlastic   545  12.1  1.39 12.1 ± 1.4, n = 545
+    ## 4 WetWipesSanitaryProducts     545  12.1  4.52 12.1 ± 4.5, n = 545
+
+    ## # A tibble: 16 × 3
+    ##    Litter_type                CountryResponsible Manuscript          
+    ##    <chr>                      <chr>              <chr>               
+    ##  1 CigaretteButts             Bulgaria           192.6 ± 33.5, n = 10
+    ##  2 CigaretteButts             Austria            39.6 ± 8.5, n = 70  
+    ##  3 CigaretteButts             Germany            39.3 ± 8.4, n = 84  
+    ##  4 CigaretteButts             Lithuania          14.6 ± 4.1, n = 90  
+    ##  5 GlassPieces                Austria            32.3 ± 14.6, n = 70 
+    ##  6 GlassPieces                Germany            30.7 ± 7.2, n = 84  
+    ##  7 GlassPieces                Italy              11.4 ± 3.8, n = 51  
+    ##  8 GlassPieces                Portugal           46.9 ± 39.4, n = 45 
+    ##  9 GlassPieces                Lithuania          9.1 ± 2.7, n = 90   
+    ## 10 PlasticBottles             Hungary            81.7 ± 42.2, n = 15 
+    ## 11 PlasticBottles             Greece             17.8 ± 6.5, n = 11  
+    ## 12 PlasticBags                Greece             19.4 ± 6.2, n = 11  
+    ## 13 Polystyrene                Slovenia           30.0 ± 18.0, n = 24 
+    ## 14 WetWipesSanitaryProducts   Spain              65.9 ± 28.1, n = 86 
+    ## 15 PlasticPackagingSweets     Belgium            11.9 ± 2.6, n = 49  
+    ## 16 OtherUnidentifiablePlastic Belgium            10.5 ± 2.9, n = 49
 
 ###### Litter type Proportion I - “Across‑type” proportions
 
@@ -682,6 +747,31 @@ If we now want to visualize the contribution per each country, we have:
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/AverageLitterCountrySUP-1.png)<!-- -->
 
+###### Manuscript values: SUP mean ± s.e. and n (Fig. 8 and Fig. 9)
+
+Mean ± standard error (one decimal) and *n* for the SUP categories and
+countries cited in the Results section (uses `litter_mean_se()`, defined
+in the Group B section).
+
+    ## # A tibble: 3 × 5
+    ##   Litter_type                  n  Mean    SE Manuscript         
+    ##   <chr>                    <int> <dbl> <dbl> <chr>              
+    ## 1 WetWipesSanitaryProducts   545 12.1  4.52  12.1 ± 4.5, n = 545
+    ## 2 PlasticPackagingSweets     545  9.91 0.665 9.9 ± 0.7, n = 545 
+    ## 3 PlasticBags                545  7.54 0.693 7.5 ± 0.7, n = 545
+
+    ## # A tibble: 8 × 3
+    ##   Litter_type      CountryResponsible Manuscript         
+    ##   <chr>            <chr>              <chr>              
+    ## 1 PlasticBags      Italy              10.9 ± 2.7, n = 51 
+    ## 2 PlasticBags      Greece             19.4 ± 6.2, n = 11 
+    ## 3 Polystyrene      Portugal           27.3 ± 11.0, n = 45
+    ## 4 Polystyrene      Slovenia           30.0 ± 18.0, n = 24
+    ## 5 PlasticBottles   Hungary            81.7 ± 42.2, n = 15
+    ## 6 PlasticBottles   Greece             17.8 ± 6.5, n = 11 
+    ## 7 PlasticLids      Bulgaria           14.9 ± 5.0, n = 10 
+    ## 8 TakeawayFastFood Bulgaria           10.2 ± 3.8, n = 10
+
 ###### SUP type Proportion I - “Across‑type” proportions
 
   - The first approach will be a “*Across‑type*” proportions.
@@ -925,6 +1015,19 @@ And the most important Items for the two forst principal components are:
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/PC2VarImportSUP-1.png)<!-- -->
 
+###### Manuscript values: Table 2 (PERMANOVA)
+
+PERMANOVA results for the overall litter dataset (`perm1`) and the SUP
+subset (`perm1_SUP`), in the layout of Table 2 of the manuscript.
+
+    ##                    Analysis      Term  df      SS    F    R2 p_value
+    ## 1          Overall analysis   Country  11  27.362 5.25 0.099   0.001
+    ## 2          Overall analysis Residuals 526 249.052   NA 0.901      NA
+    ## 3          Overall analysis     Total 537 276.414   NA 1.000      NA
+    ## 4 Single-Use Plastics (SUP)   Country  11  23.275 5.39 0.103   0.001
+    ## 5 Single-Use Plastics (SUP) Residuals 518 203.232   NA 0.897      NA
+    ## 6 Single-Use Plastics (SUP)     Total 529 226.507   NA 1.000      NA
+
 ## Floating DATA
 
 ### Data loading
@@ -1026,6 +1129,35 @@ Notes on the figures:
     compare countries within each year:
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/FloatingMacrolitterCountriesYears-1.png)<!-- -->
+
+###### Manuscript values: low floating macrolitter densities
+
+Summary of floating macrolitter flow (items m⁻¹ h⁻¹) per country,
+pooling all years, to fill the sentence on the countries with low
+densities (Belgium, Greece, Hungary and Latvia).
+
+    ## # A tibble: 9 × 7
+    ##   CountryResponsible     n Median  Mean    SE   Q75   Max
+    ##   <chr>              <int>  <dbl> <dbl> <dbl> <dbl> <dbl>
+    ## 1 Austria               77  0     0.047 0.012 0.059 0.764
+    ## 2 Belgium               18  0     0.005 0.003 0     0.054
+    ## 3 Greece                11  0     0.573 0.543 0.015 6    
+    ## 4 Hungary                8  0     0     0     0     0    
+    ## 5 Italy                 33  0.008 0.086 0.029 0.098 0.667
+    ## 6 Latvia                 7  0     0.231 0.221 0.03  1.56 
+    ## 7 Lithuania            107  0     0.051 0.016 0.009 1.08 
+    ## 8 Portugal              48  0     0.139 0.083 0.063 3.83 
+    ## 9 Slovenia              22  0     0.02  0.009 0     0.141
+
+    ## # A tibble: 6 × 5
+    ##   CountryResponsible SamplingYear     n Median   Max
+    ##   <chr>              <fct>        <int>  <dbl> <dbl>
+    ## 1 Belgium            2024            18  0     0.054
+    ## 2 Greece             2022             8  0     6    
+    ## 3 Greece             2023             2  0.003 0.006
+    ## 4 Greece             2024             1  0.024 0.024
+    ## 5 Hungary            2022             8  0     0    
+    ## 6 Latvia             2023             7  0     1.56
 
   - **Statistical test**
     
