@@ -209,6 +209,15 @@ print(Sampling_effort)
 
 #ggsave(filename = "Sampling_effort_combined.png", plot = Sampling_effort, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 2, width = 20, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 ```
+### Sampling Effort Description
+
+<!--
+Describir La variabilidad de Longitud y Ancho de área muestreada -> Outliers? los quitamos?
+Describir el pocerntaje de valores ausentes (en cada uno y en total)
+¿Que coño hacemos?
+
+-->
+
 
 
 ### Most common types and quantities of litter per region? (Group B: riverbanks; Group C: floating litter)
@@ -847,18 +856,22 @@ Prop_Liter_Country2 %>%
 #   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
 # Replace the NA values for 0. --> Probably the default behaviour?
 df <- GroupB_data_validated %>% 
-  dplyr::select(CountryResponsible, PlasticBags:LocalWaste)
-# %>% 
-# #drop_na()
+  dplyr::select(DatasetID, CountryResponsible, PlasticBags:LocalWaste) %>% 
+  drop_na()
 # mutate_all(funs(replace_na(.,0)))
 
+# Filas sin ningún residuo (no se pueden transformar con Hellinger)
+empty <- rowSums(dplyr::select(df, PlasticBags:LocalWaste)) == 0
+# df %>% dplyr::filter(empty)   # para documentar qué muestreos se excluyen
+
+df <- df %>% dplyr::filter(!empty)
+
 # isolate metadata + community matrix
-meta <- df %>% dplyr::select(CountryResponsible)
-comm <- df %>% dplyr::select(-CountryResponsible)
+meta <- df %>% dplyr::select(DatasetID, CountryResponsible)
+comm <- df %>% dplyr::select(PlasticBags:LocalWaste)
 
 # Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
-comm_hel <- decostand(comm, method = "hellinger")
-
+comm_hel <- decostand(comm, method = "hellinger", na.rm = TRUE)
 ```
 
 
@@ -866,13 +879,13 @@ In order to see if there are significant differences across country in the commu
 
 ```{r PermanovaTest, message=FALSE, warning=FALSE}
 # 2a) Compute distance and hierarchical clustering (Ward’s D2)
-dist_mat <- vegdist(comm_hel, method = "euclid")
+dist_mat <- vegdist(comm_hel, method = "euclid", na.rm = TRUE)
 
 # 3a) PERMANOVA: test if composition differs by Country
 set.seed(42)
 
 perm1 <- adonis2(dist_mat ~ CountryResponsible, data = meta, 
-                 permutations = 999, by = "margin")
+                 permutations = 999, by = "margin", na.action = na.omit)
 print(perm1)
 ```
 
@@ -1602,7 +1615,7 @@ dist_mat_SUP <- vegdist(comm_hel_SUP, method = "euclid")
 # 3a) PERMANOVA: test if composition differs by Country
 #set.seed(42)
 
-perm1_SUP <- adonis2(dist_mat_SUP ~ CountryResponsible, data = meta, 
+perm1_SUP <- adonis2(dist_mat_SUP ~ CountryResponsible, data = meta_SUP, 
                  permutations = 999, by = "margin")
 print(perm1_SUP)
 ```
