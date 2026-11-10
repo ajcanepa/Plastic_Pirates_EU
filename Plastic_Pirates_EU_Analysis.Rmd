@@ -76,7 +76,9 @@ Riverbank <-
     dplyr::mutate(River_basin = str_remove(River_basin, regex("\\s+Basin$", ignore_case = TRUE))) %>% 
   dplyr::mutate(SamplingRiver = coalesce(Corrected_river_English, SamplingRiver),
          SamplingRiverSystem = River_basin) %>% 
-  dplyr::select(-c("No", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver"))
+  dplyr::select(-c("No", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver")) %>%
+  # 2021 has a single (non-validated) sampling from one country, so it is excluded from the whole analysis
+  dplyr::filter(SamplingYear != 2021)
 
 ```
 
