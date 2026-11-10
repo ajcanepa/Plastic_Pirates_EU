@@ -1055,7 +1055,7 @@ subset (`perm1_SUP`), in the layout of Table 2 of the manuscript.
 
 #### Sampling Effor for Floating Data
 
-![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/FloatingSamplingEffort-1.png)<!-- -->
 
 #### Macrolitter Flow calculation
 
