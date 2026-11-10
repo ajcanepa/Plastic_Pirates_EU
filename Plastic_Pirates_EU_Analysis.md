@@ -71,7 +71,8 @@ Loading R packages necessary to perform the **EDA**.
 Crearemos una sola figura con las dos gráficas.
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
-\#\#\# Sampling Effort Description
+
+### Sampling Effort Description
 
 The sampling effort of each Group B survey is defined by the size of the
 riverbank area searched, recorded in two attributes:
@@ -501,7 +502,48 @@ the community composition, we will perform a PERMANOVA test:
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 So, we conclude that there are significant differences among countries.
-but What are the items that explains these differences?
+
+We can look for **heterocedasticity** among countries (homogeneity of
+multivariate dispersions), since PERMANOVA can also detect differences
+in dispersion and not only in location:
+
+    ## 
+    ##  Homogeneity of multivariate dispersions
+    ## 
+    ## Call: betadisper(d = dist_mat, group = meta$CountryResponsible)
+    ## 
+    ## No. of Positive Eigenvalues: 25
+    ## No. of Negative Eigenvalues: 0
+    ## 
+    ## Average distance to median:
+    ##   austria   belgium  bulgaria   germany    greece   hungary     italy    latvia 
+    ##    0.6550    0.6981    0.3731    0.6561    0.5943    0.6351    0.7082    0.6479 
+    ## lithuania  portugal  slovenia     spain 
+    ##    0.6720    0.6830    0.6464    0.6964 
+    ## 
+    ## Eigenvalues for PCoA axes:
+    ## (Showing 8 of 25 eigenvalues)
+    ## PCoA1 PCoA2 PCoA3 PCoA4 PCoA5 PCoA6 PCoA7 PCoA8 
+    ## 39.70 25.03 22.93 20.66 18.41 16.90 15.74 13.57
+
+    ## 
+    ## Permutation test for homogeneity of multivariate dispersions
+    ## Permutation: free
+    ## Number of permutations: 999
+    ## 
+    ## Response: Distances
+    ##            Df Sum Sq  Mean Sq      F N.Perm Pr(>F)    
+    ## Groups     11 1.1883 0.108023 6.8969    999  0.001 ***
+    ## Residuals 526 8.2385 0.015663                         
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+The multivariate dispersion **differs significantly** among countries
+(betadisper; F = 6.9, p = 0.001), so part of the PERMANOVA result may
+reflect differences in within-country variability rather than only in
+composition.
+
+But what are the items that explain these differences?
 
 The answer will be addressed by performing a **Multivariate Random
 Forest**.
@@ -513,37 +555,37 @@ Forest**.
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 5
     ## 
-    ##         OOB estimate of  error rate: 64.68%
+    ##         OOB estimate of  error rate: 66.17%
     ## Confusion matrix:
     ##           austria belgium bulgaria germany greece hungary italy latvia
-    ## austria        21       3        0      14      0       0     7      0
-    ## belgium         9       4        0       2      0       0     4      0
+    ## austria        19       4        0      14      0       0     5      0
+    ## belgium         8       5        0       3      0       0     4      0
     ## bulgaria        0       0        9       0      0       1     0      0
-    ## germany         9       2        1      37      0       0     3      0
-    ## greece          1       0        0       1      0       0     4      0
-    ## hungary         4       1        1       0      0       3     1      0
-    ## italy           9       2        0       6      0       0    18      0
-    ## latvia          0       0        0       1      0       0     0      0
-    ## lithuania       8       1        0      25      0       0     2      0
-    ## portugal        5       4        0       6      0       0     8      0
-    ## slovenia        3       1        0       0      0       1     5      0
-    ## spain          11       3        0       8      0       1     8      0
+    ## germany         7       2        0      38      0       0     3      0
+    ## greece          1       0        0       0      0       0     6      0
+    ## hungary         5       1        0       0      0       3     1      0
+    ## italy          10       4        0       7      0       0    16      0
+    ## latvia          0       0        0       2      0       0     0      0
+    ## lithuania       5       1        0      26      0       0     2      0
+    ## portugal        6       3        0       7      0       0     6      0
+    ## slovenia        3       0        0       0      0       0     4      0
+    ## spain          14       6        0       5      0       1     6      0
     ##           lithuania portugal slovenia spain class.error
-    ## austria           5        1        0    19   0.7000000
-    ## belgium          14        0        0    14   0.9148936
+    ## austria           8        1        0    19   0.7285714
+    ## belgium          15        0        0    12   0.8936170
     ## bulgaria          0        0        0     0   0.1000000
-    ## germany          22        5        0     5   0.5595238
-    ## greece            0        2        0     3   1.0000000
+    ## germany          21        7        0     6   0.5476190
+    ## greece            0        2        0     2   1.0000000
     ## hungary           0        0        0     5   0.8000000
-    ## italy             3        2        1    10   0.6470588
-    ## latvia            5        0        0     2   1.0000000
-    ## lithuania        45        0        0     8   0.4943820
-    ## portugal          6       10        1     5   0.7777778
-    ## slovenia          1        3        1     9   0.9583333
-    ## spain             9        2        0    42   0.5000000
+    ## italy             3        3        2     6   0.6862745
+    ## latvia            5        0        0     1   1.0000000
+    ## lithuania        41        3        0    11   0.5393258
+    ## portugal          7       11        0     5   0.7555556
+    ## slovenia          1        3        2    11   0.9166667
+    ## spain            13        0        1    38   0.5476190
 
 Decisions have to be taken carefully since the prediction accuracy is
-very low (0.35). Furthermore, the estimated error rate (OOB) is high, so
+very low (0.34). Furthermore, the estimated error rate (OOB) is high, so
 conclusion have to be taken with care.
 
 Eventhough, the more important (differential across countries) litter
@@ -885,14 +927,14 @@ the community composition, we will perform a PERMANOVA test:
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 So, we conclude that there are significant differences among countries.
-The R-Square value (0.098) means that the country “effects” explain 9.8%
-of the total variability. 90.2% is the remaining (unexplained)
+The R-Square value (0.103) means that the country “effects” explain
+10.3% of the total variability. 89.7% is the remaining (unexplained)
 variability among countries. ***There is a significant country effect,
 but is small***.
 
 Or even better: **There are statistically significant multivariate
 differences in litter composition among countries, although the effect
-size is modest (R² = 0.098).**
+size is modest (R² = 0.103).**
 
 We can look for **heterocedasticity** among countries
 
@@ -922,14 +964,15 @@ We can look for **heterocedasticity** among countries
     ## 
     ## Response: Distances
     ##            Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)  
-    ## Groups     11  0.5355 0.048686 1.6889    999  0.076 .
+    ## Groups     11  0.5355 0.048686 1.6889    999  0.071 .
     ## Residuals 518 14.9326 0.028827                       
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-The **heterocedasticity** is significant, so we must be carefully
-conclude about the inter-countries differences. There is a Country
-effect butis small.
+The multivariate dispersion **does not differ significantly** among
+countries (betadisper; F = 1.69, p = 0.071), so the PERMANOVA result
+reflects differences in composition rather than in within-country
+variability. There is a Country effect but it is small.
 
 If we need to parametrize this model, we should use a Mixed Multivariate
 Model (necessary?)
@@ -946,34 +989,34 @@ Forest**.
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 3
     ## 
-    ##         OOB estimate of  error rate: 76.04%
+    ##         OOB estimate of  error rate: 75.66%
     ## Confusion matrix:
     ##           austria belgium bulgaria germany greece hungary italy latvia
-    ## austria        11       4        0      10      0       0     8      0
-    ## belgium         5       3        1       9      0       0     5      0
-    ## bulgaria        1       1        5       1      0       0     2      0
-    ## germany         7       2        0      27      0       1     6      0
-    ## greece          1       0        0       0      0       1     7      0
-    ## hungary         2       1        1       1      0       3     3      0
-    ## italy           7       3        0       4      0       1    19      0
-    ## latvia          1       1        0       4      0       0     0      0
-    ## lithuania      12       7        0      17      0       0     6      0
-    ## portugal        8       2        0       6      0       0     5      0
-    ## slovenia        3       1        0       3      1       0     4      0
-    ## spain          11      10        1      19      0       1     8      0
+    ## austria        12       2        0      14      0       0     7      0
+    ## belgium         3       3        1       9      0       0     3      0
+    ## bulgaria        2       1        5       1      0       0     1      0
+    ## germany         8       2        0      28      0       1     6      0
+    ## greece          1       0        1       1      0       1     5      0
+    ## hungary         1       1        1       1      0       3     3      0
+    ## italy           6       3        0       6      1       2    17      0
+    ## latvia          1       2        0       1      0       0     0      0
+    ## lithuania       8      11        0      18      0       1     6      0
+    ## portugal        7       2        0       6      0       0     5      0
+    ## slovenia        5       1        0       2      1       0     4      0
+    ## spain           9       9        1      18      0       1     9      0
     ##           lithuania portugal slovenia spain class.error
-    ## austria          19        4        2    12   0.8428571
-    ## belgium          10        4        0     7   0.9318182
+    ## austria          17        4        2    12   0.8285714
+    ## belgium          14        3        0     8   0.9318182
     ## bulgaria          0        0        0     0   0.5000000
-    ## germany          26        3        0    11   0.6746988
+    ## germany          25        4        0     9   0.6626506
     ## greece            0        1        1     0   1.0000000
-    ## hungary           3        1        0     0   0.8000000
-    ## italy             5        2        1     8   0.6200000
-    ## latvia            2        0        0     0   1.0000000
-    ## lithuania        33        2        1    10   0.6250000
-    ## portugal          7        7        1     7   0.8372093
-    ## slovenia          6        3        0     3   1.0000000
-    ## spain            12        2        1    19   0.7738095
+    ## hungary           3        2        0     0   0.8000000
+    ## italy             4        0        2     9   0.6600000
+    ## latvia            4        0        0     0   1.0000000
+    ## lithuania        33        1        1     9   0.6250000
+    ## portugal          8        6        1     8   0.8604651
+    ## slovenia          5        4        1     1   0.9583333
+    ## spain            12        1        3    21   0.7500000
 
 Decisions have to be taken carefully since the prediction accuracy is
 very low (0.24). Furthermore, the estimated error rate (OOB) is high, so
@@ -1027,6 +1070,12 @@ subset (`perm1_SUP`), in the layout of Table 2 of the manuscript.
     ## 4 Single-Use Plastics (SUP)   Country  11  23.275 5.39 0.103   0.001
     ## 5 Single-Use Plastics (SUP) Residuals 518 203.232   NA 0.897      NA
     ## 6 Single-Use Plastics (SUP)     Total 529 226.507   NA 1.000      NA
+
+    ## # A tibble: 2 × 3
+    ##   Analysis                      F p_value
+    ##   <chr>                     <dbl>   <dbl>
+    ## 1 Overall analysis           6.9    0.001
+    ## 2 Single-Use Plastics (SUP)  1.69   0.071
 
 ## Floating DATA
 
