@@ -1113,6 +1113,10 @@ empty_rows           # opcional: ver índices concretos
 if (length(empty_rows) > 0) {
   comm1 <- comm[-empty_rows, , drop = FALSE]
   meta1 <- meta[-empty_rows, , drop = FALSE]
+} else {
+  # comm ya viene sin filas vacías (filtradas en DataPreparationMultivariate)
+  comm1 <- comm
+  meta1 <- meta
 }
 
 # Repetimos la transformación Hellinger sobre la nueva matriz de comunidad sin filas vacías.
@@ -1595,6 +1599,10 @@ df_SUP <- GroupB_SingleUsePlastic_data_validated %>%
 # %>% 
 # #drop_na()
 # mutate_all(funs(replace_na(.,0)))
+
+# Filas sin ningún residuo SUP (no se pueden transformar con Hellinger: dan NaN)
+empty_SUP <- rowSums(dplyr::select(df_SUP, -CountryResponsible)) == 0
+df_SUP <- df_SUP %>% dplyr::filter(!empty_SUP)
 
 # isolate metadata + community matrix
 meta_SUP <- df_SUP %>% dplyr::select(CountryResponsible)
