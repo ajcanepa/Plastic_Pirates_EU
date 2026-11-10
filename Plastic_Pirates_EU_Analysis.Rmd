@@ -16,6 +16,9 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+
+# Set to TRUE to (re)write all figures to OUTPUT/FIGURES when rendering or running the Rmd
+save_figures <- FALSE
 ```
 
 
@@ -65,12 +68,15 @@ Riverbank_dictionary <- read_excel("Riverbank_data_v2.1.xlsx", sheet = "Final vo
 
 Riverbank <-
   Riverbank %>%
-  left_join(Riverbank_dictionary, by = "SamplingRiver") %>%
+  # The dictionary has one row per river AND country (e.g. "donau" for Austria and Germany),
+  # so joining only by river would duplicate those samplings
+  left_join(Riverbank_dictionary, by = c("SamplingRiver", "CountryResponsible" = "Country"),
+            relationship = "many-to-one") %>%
     #dplyr::select(SamplingRiver, Corrected_river_English, SamplingRiverSystem, River_basin, everything()) %>% 
     dplyr::mutate(River_basin = str_remove(River_basin, regex("\\s+Basin$", ignore_case = TRUE))) %>% 
   dplyr::mutate(SamplingRiver = coalesce(Corrected_river_English, SamplingRiver),
          SamplingRiverSystem = River_basin) %>% 
-  dplyr::select(-c("No", "Country", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver"))
+  dplyr::select(-c("No", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver"))
 
 ```
 
@@ -115,7 +121,7 @@ Riverbank %>%
 
 Temp_Num_Samp_Campaigns
 
-#ggsave(filename = "Temporal_Number_Campaigns.png", plot = Temp_Num_Samp_Campaigns, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) ggsave(filename = "Temporal_Number_Campaigns.png", plot = Temp_Num_Samp_Campaigns, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 #### Numer of Rivers sampled per year and country
@@ -191,7 +197,7 @@ ggplot(plot_data, aes(x = CountryResponsible, y = Rivers, fill = factor(Sampling
 
 print(Num_rios_year)
 
-#ggsave(filename = "Temporal_Number_Rivers.png", plot = Num_rios_year, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) ggsave(filename = "Temporal_Number_Rivers.png", plot = Num_rios_year, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 Crearemos una sola figura con las dos gráficas.
@@ -207,7 +213,7 @@ Sampling_effort <-
 
 print(Sampling_effort)
 
-#ggsave(filename = "Sampling_effort_combined.png", plot = Sampling_effort, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 2, width = 20, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) ggsave(filename = "Sampling_effort_combined.png", plot = Sampling_effort, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 2, width = 20, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 ### Sampling Effort Description
 
@@ -415,7 +421,7 @@ Sampling_effort_area <-
 
 print(Sampling_effort_area)
 
-#ggsave(filename = "Sampling_effort_area.png", plot = Sampling_effort_area, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.5, width = 20, height = 16, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) ggsave(filename = "Sampling_effort_area.png", plot = Sampling_effort_area, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.5, width = 20, height = 16, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 Distribution of length and width per country, to check whether outliers are specific to some countries (zero values excluded):
@@ -567,7 +573,7 @@ Riverbank %>%
 print(Percent_Validated_Records_Country_year)
 
 # Guardamos la gráfica
-# ggsave(filename = "Percentage_Validated_Sampling_Country_Year.png", plot = Percent_Validated_Records_Country_year, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) ggsave(filename = "Percentage_Validated_Sampling_Country_Year.png", plot = Percent_Validated_Records_Country_year, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 
 ```
 
@@ -674,7 +680,7 @@ Average_litter_type <-
 
 print(Average_litter_type)
 
-# ggsave(filename = "Average_Waste_Category_GroupB.png", plot = Average_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) ggsave(filename = "Average_Waste_Category_GroupB.png", plot = Average_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 
@@ -733,7 +739,7 @@ GroupB_data_validated %>%
 Average_litter_type_country
 
 # Save the plot
-# ggsave(filename = "Average_Waste_Category_Country_GroupB.png", plot = Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) ggsave(filename = "Average_Waste_Category_Country_GroupB.png", plot = Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 ###### Litter type Proportion I - "Across‑type" proportions
@@ -794,7 +800,7 @@ ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
 print(Country_contribution_litter_type)
 
 # Save the plot
-# ggsave(filename = "Country_contribution_litter_type.png", plot = Country_contribution_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) ggsave(filename = "Country_contribution_litter_type.png", plot = Country_contribution_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
 ```
 
 
@@ -917,11 +923,13 @@ Data_prop_eu %>%
 print(ProportionLitterEuropeHeatMap)
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-# png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
-# ProportionLitterEuropeHeatMap
-# dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+  print(ProportionLitterEuropeHeatMap)
+  dev.off()
+}
 ```
 
 Bootstrap implementation in the dendrograms nodes. It replaces the previous heatmap with the dendrograms based on bootstrap values.
@@ -967,22 +975,29 @@ ProportionLitterEuropeHeatMap_pvclust <-
 ProportionLitterEuropeHeatMap_pvclust
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-# png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
-# ProportionLitterEuropeHeatMap_pvclust
-# dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_HeatMap_pvclust.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+  print(ProportionLitterEuropeHeatMap_pvclust)
+  dev.off()
+}
 ```
 
 Dendrogram with the values
 
 ```{r}
-# Save the plot
-#png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_Clustering_Percentage.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 10) # Descomentar para guardar
 # Dendrograma con valores AU (rojo) y BP (verde) en cada nodo
 plot(pv_result)
 pvrect(pv_result, alpha = 0.95)  # recuadra los clusters con AU >= 95%
-#dev.off() # Descomentar para guardar
+
+# Save the plot
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Proportion_Litter_Europe_Clustering_Percentage.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 10)
+  plot(pv_result)
+  pvrect(pv_result, alpha = 0.95)
+  dev.off()
+}
 ```
 
 
@@ -1159,11 +1174,13 @@ Eventhough, the more important (differential across countries) litter components
 varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination", type = 2)
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Random_Forest_Importance.png", width = 20, height = 16, units = "cm", pointsize = 10, bg = "white", res = 150)
-varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination", , type = 2)
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Random_Forest_Importance.png", width = 20, height = 16, units = "cm", pointsize = 10, bg = "white", res = 150)
+  varImpPlot(rf, main="Random Forest: Litter‐type Importance for Country Discrimination", , type = 2)
+  dev.off()
+}
 ```
 
 This plot of variable importance importance is telling us:
@@ -1289,11 +1306,13 @@ PCA_Litter_Country2
 
 
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-PCA_Litter_Country2
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  print(PCA_Litter_Country2)
+  dev.off()
+}
 ```
 
 And the most important Items for the two forst principal components are:
@@ -1305,13 +1324,15 @@ fviz_contrib(pca_prcomp, choice = "var", axes = 1, top = 10) +
   ggtitle("Top 10 variables contributing to PC1")
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Top10_PC1_PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-# Bar‐plot of top 10 contributors to PC1
-fviz_contrib(pca_prcomp, choice = "var", axes = 1, top = 10) +
-  ggtitle("Top 10 variables contributing to PC1")
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Top10_PC1_PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  # Bar‐plot of top 10 contributors to PC1
+  print(fviz_contrib(pca_prcomp, choice = "var", axes = 1, top = 10) +
+    ggtitle("Top 10 variables contributing to PC1"))
+  dev.off()
+}
 ```
 
 
@@ -1320,13 +1341,15 @@ dev.off()
 fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
   ggtitle("Top 10 variables contributing to PC2")
 ```
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Top10_PC2_PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-# Bar‐plot of top 10 contributors to PC2
-fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
-  ggtitle("Top 10 variables contributing to PC2")
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Top10_PC2_PCA_Litter_Country.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  # Bar‐plot of top 10 contributors to PC2
+  print(fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
+    ggtitle("Top 10 variables contributing to PC2"))
+  dev.off()
+}
 ```
 
 * **Non-Metric Multidimensional Scaling - nMDS**
@@ -1469,9 +1492,11 @@ SUP_Average_litter_type <-
 print(SUP_Average_litter_type)
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-ggsave(filename = "Average_SUP_GroupB.png", plot = SUP_Average_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.6, width = 35, height = 25, units = "cm", dpi = 150, limitsize = FALSE)
+if (save_figures) {
+  ggsave(filename = "Average_SUP_GroupB.png", plot = SUP_Average_litter_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.6, width = 35, height = 25, units = "cm", dpi = 150, limitsize = FALSE)
+}
 ```
 
 ###### SUP type abundance per country
@@ -1529,9 +1554,11 @@ GroupB_SingleUsePlastic_data_validated %>%
 SUP_Average_litter_type_country
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-ggsave(filename = "Average_SUP_Country_GroupB.png", plot = SUP_Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
+if (save_figures) {
+  ggsave(filename = "Average_SUP_Country_GroupB.png", plot = SUP_Average_litter_type_country, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
+}
 ```
 
 
@@ -1597,9 +1624,11 @@ ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
 print(Country_contribution_SUP_type)
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-ggsave(filename = "Country_contribution_SUP_type.png", plot = Country_contribution_SUP_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) {
+  ggsave(filename = "Country_contribution_SUP_type.png", plot = Country_contribution_SUP_type, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+}
 ```
 
 <!--
@@ -1716,11 +1745,13 @@ print(ProportionSUPEuropeHeatMap)
 ```
 
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Proportion_SUP_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
-ProportionSUPEuropeHeatMap
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Proportion_SUP_Europe_HeatMap.png", width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+  print(ProportionSUPEuropeHeatMap)
+  dev.off()
+}
 ```
 
 <!--
@@ -1939,11 +1970,13 @@ Even though, the more important (differential across countries) litter component
 varImpPlot(rf_SUP, main="Random Forest: 'Sigle Use Plastic-type' Importance for Country Discrimination", type = 2)
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Random_Forest_Importance_SUP.png", width = 22, height = 12, units = "cm", pointsize = 10, bg = "white", res = 150)
-varImpPlot(rf_SUP, main="Random Forest: 'Sigle Use Plastic-type' Importance for Country Discrimination", type = 2)
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Random_Forest_Importance_SUP.png", width = 22, height = 12, units = "cm", pointsize = 10, bg = "white", res = 150)
+  varImpPlot(rf_SUP, main="Random Forest: 'Sigle Use Plastic-type' Importance for Country Discrimination", type = 2)
+  dev.off()
+}
 ```
 
 This plot of variable importance importance is telling us:
@@ -2054,11 +2087,13 @@ SUP_PCA_Litter_Country2 <-
 SUP_PCA_Litter_Country2
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-SUP_PCA_Litter_Country2
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  print(SUP_PCA_Litter_Country2)
+  dev.off()
+}
 ```
 
 And the most important Items for the two forst principal components are:
@@ -2070,13 +2105,15 @@ fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 1, top = 10) +
   ggtitle("Top 10 variables contributing to PC1")
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Top10_PC1_PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-# Bar‐plot of top 10 contributors to PC1
-fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 1, top = 10) +
-  ggtitle("Top 10 variables contributing to PC1")
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Top10_PC1_PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  # Bar‐plot of top 10 contributors to PC1
+  print(fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 1, top = 10) +
+    ggtitle("Top 10 variables contributing to PC1"))
+  dev.off()
+}
 ```
 
 
@@ -2087,13 +2124,15 @@ fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 2, top = 10) +
 ```
 
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-png(filename = "OUTPUT/FIGURES/Top10_PC2_PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
-# Bar‐plot of top 10 contributors to PC2
-fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 2, top = 10) +
-  ggtitle("Top 10 variables contributing to PC2")
-dev.off()
+if (save_figures) {
+  png(filename = "OUTPUT/FIGURES/Top10_PC2_PCA_Litter_Country_SUP.png", width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  # Bar‐plot of top 10 contributors to PC2
+  print(fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 2, top = 10) +
+    ggtitle("Top 10 variables contributing to PC2"))
+  dev.off()
+}
 ```
 
 
@@ -2200,9 +2239,11 @@ FlowData %>%
 Floating_Macrolitter_Countries
 ```
 
-```{r, echo=FALSE, eval=FALSE}
+```{r, include=FALSE}
 # Save the plot
-ggsave(filename = "Floating_Macrolitter_Countries.png", plot = Floating_Macrolitter_Countries, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+if (save_figures) {
+  ggsave(filename = "Floating_Macrolitter_Countries.png", plot = Floating_Macrolitter_Countries, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+}
 ```
 
 
