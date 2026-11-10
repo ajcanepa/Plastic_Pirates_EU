@@ -11,6 +11,9 @@ output:
     keep_md: false
   md_document: # usar esto para el .md rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", output_format = "md_document")
     variant: gfm 
+always_allow_html: true # allows interactive tables (DT) in the .md (shown as images if webshot2 is installed)
+# The Knit button renders both outputs (.html and .md) in one go
+knit: (function(input, ...) rmarkdown::render(input, output_format = "all", envir = globalenv()))
 ---
 
 
@@ -403,8 +406,8 @@ Scatter_LW <-
               colour = "grey70", linetype = "dotted") +
   geom_vline(xintercept = lim_L, linetype = "dashed", colour = "grey40") +
   geom_hline(yintercept = lim_W, linetype = "dashed", colour = "grey40") +
-  geom_jitter(aes(fill = Extreme), shape = 21, size = 2.5, alpha = 0.8,
-              width = 0.02, height = 0.02) +
+  geom_point(aes(fill = Extreme), shape = 21, size = 2.5, alpha = 0.8,
+             position = position_jitter(width = 0.02, height = 0.02, seed = 123)) +
   scale_x_log10(labels = label_comma()) +
   scale_y_log10(labels = label_comma()) +
   scale_fill_manual(values = c("None" = "grey80", "Length" = "#4A90E2",
@@ -437,7 +440,9 @@ Sampling_effort_country <-
   dplyr::mutate(Variable = recode(Variable, Length_m = "Length (m)", Width_m = "Width (m)")) %>%
   ggplot(aes(x = CountryResponsible, y = Value)) +
   geom_boxplot(fill = "#B8D4F0", outlier.shape = NA) +
-  geom_jitter(width = 0.15, size = 1, alpha = 0.4) +
+  # Horizontal jitter only, so the plotted values are not altered
+  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 123),
+             size = 1, alpha = 0.4) +
   scale_y_log10(labels = label_comma()) +
   facet_wrap(~ Variable, scales = "free_y") +
   labs(x = NULL, y = "Value (log scale)") +
@@ -948,6 +953,7 @@ mat <- Data_prop_eu %>%
   as.matrix()
 
 # 2. Calcular el clustering con bootstrap (nboot = 1000 recomendado para publicación)
+set.seed(123)  # reproducible bootstrap (AU/BP values)
 pv_result <- pvclust(mat, method.hclust = "ward.D2",
                      method.dist = "euclidean", nboot = 1000)
 

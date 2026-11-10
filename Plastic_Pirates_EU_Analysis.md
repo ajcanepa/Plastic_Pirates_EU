@@ -14,59 +14,205 @@ Loading R packages necessary to perform the **EDA**.
 
 #### Numer of samplings per year and country
 
-- Table
+  - Table
 
-<!-- -->
+<!-- end list -->
 
-    ## # A tibble: 29 × 3
+    ## # A tibble: 28 × 3
     ## # Groups:   CountryResponsible [12]
     ##    CountryResponsible SamplingYear Num_Sampling
-    ##    <fct>                     <int>        <int>
-    ##  1 austria                    2021            1
-    ##  2 austria                    2022           17
-    ##  3 austria                    2023           58
-    ##  4 austria                    2024           66
-    ##  5 belgium                    2022           22
-    ##  6 belgium                    2024           31
-    ##  7 bulgaria                   2023           10
-    ##  8 germany                    2022           75
-    ##  9 germany                    2023           11
-    ## 10 germany                    2024            6
-    ## # ℹ 19 more rows
+    ##    <chr>                     <int>        <int>
+    ##  1 austria                    2022           13
+    ##  2 austria                    2023           54
+    ##  3 austria                    2024           62
+    ##  4 belgium                    2022           22
+    ##  5 belgium                    2024           31
+    ##  6 bulgaria                   2023           10
+    ##  7 germany                    2022           73
+    ##  8 germany                    2023           11
+    ##  9 germany                    2024            6
+    ## 10 greece                     2022            8
+    ## # ℹ 18 more rows
 
-- Plot
+  - Plot
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/EDACountriesPlot-1.png)<!-- -->
 
 #### Numer of Rivers sampled per year and country
 
-- Table
+  - Table
 
-<!-- -->
+<!-- end list -->
 
-    ## # A tibble: 29 × 3
+    ## # A tibble: 28 × 3
     ## # Groups:   CountryResponsible [12]
     ##    CountryResponsible SamplingYear Rivers
-    ##    <fct>                     <int>  <int>
-    ##  1 austria                    2021      1
-    ##  2 austria                    2022     10
-    ##  3 austria                    2023     35
-    ##  4 austria                    2024     35
-    ##  5 belgium                    2022     12
-    ##  6 belgium                    2024     18
-    ##  7 bulgaria                   2023      1
-    ##  8 germany                    2022     58
-    ##  9 germany                    2023     10
-    ## 10 germany                    2024      5
-    ## # ℹ 19 more rows
+    ##    <chr>                     <int>  <int>
+    ##  1 austria                    2022     10
+    ##  2 austria                    2023     35
+    ##  3 austria                    2024     35
+    ##  4 belgium                    2022     12
+    ##  5 belgium                    2024     18
+    ##  6 bulgaria                   2023      1
+    ##  7 germany                    2022     58
+    ##  8 germany                    2023     10
+    ##  9 germany                    2024      5
+    ## 10 greece                     2022      7
+    ## # ℹ 18 more rows
 
-- Plot (without numbers)
+  - Plot (without numbers)
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/EDARiversPlot-1.png)<!-- -->
 
-- Plot (with numbers)
+  - Plot (with numbers)
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/EDARiversPlotNum-1.png)<!-- -->
+
+Crearemos una sola figura con las dos gráficas.
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+\#\#\# Sampling Effort Description
+
+The sampling effort of each Group B survey is defined by the size of the
+riverbank area searched, recorded in two attributes:
+
+  - `RiversideWasteVariety_Results_LengthOfRiverbankSearchedM`: length
+    of the riverbank searched (m).
+  - `RiversideWasteVariety_Results_WidthOfRiverbankSearchedM`: width of
+    the riverbank searched (m).
+
+According to the dataset documentation
+(`READme_info_riverbank_v2.0.0.txt`), *“Data for length and width of
+riverbank searched for group B could not always be verified by the
+experts”*. Therefore, before using them (e.g. to standardise litter
+counts per m²), we describe (i) the amount of missing values and (ii)
+their variability, looking for outliers.
+
+**Note:** the CSV codes missing values both as `"na"` and as `"NA"`.
+Both are declared as missing in `DataLoading` (`na.strings = c("na",
+"NA")`), so length and width are read as numeric. Otherwise, the width
+attribute would be read as text because of the literal `"NA"` cells.
+
+#### Missing values
+
+For each attribute we count the missing values (`NA`), and for the
+combination of both we count the *complete cases* (rows with both length
+and width). The *Incomplete* columns show how many records, and what
+percentage of the total, would be removed if we kept only complete
+cases. This is shown for the whole dataset, for the attempted samplings
+and for the validated Group B samplings (the subset used in the
+analyses).
+
+    ##                Subset   N NA Length (n) NA Length (%) NA Width (n) NA Width (%)
+    ## 1         All records 770            84          10.9           82         10.6
+    ## 2  Attempted sampling 742            56           7.5           54          7.3
+    ## 3 Validated (Group B) 545             8           1.5           14          2.6
+    ##   NA Both (n) Incomplete (n) Incomplete (%) Complete cases (n)
+    ## 1          74             92           11.9                678
+    ## 2          46             64            8.6                678
+    ## 3           7             15            2.8                530
+    ##   Complete cases (%)
+    ## 1               88.1
+    ## 2               91.4
+    ## 3               97.2
+
+In the validated Group B dataset, 15 out of 545 samplings (2.8%) lack
+the length, the width or both. Keeping only complete cases would remove
+that share of the data.
+
+Missing values per country (validated Group B samplings), to check
+whether they are concentrated in a few countries:
+
+    ## # A tibble: 12 × 6
+    ##    CountryResponsible     N `NA Length (n)` `NA Width (n)` `Incomplete (n)`
+    ##    <chr>              <int>           <int>          <int>            <int>
+    ##  1 Italy                 51               2              5                5
+    ##  2 Slovenia              24               1              1                2
+    ##  3 Portugal              45               2              3                3
+    ##  4 Germany               84               1              3                3
+    ##  5 Spain                 86               2              2                2
+    ##  6 Austria               70               0              0                0
+    ##  7 Belgium               49               0              0                0
+    ##  8 Bulgaria              10               0              0                0
+    ##  9 Greece                11               0              0                0
+    ## 10 Hungary               15               0              0                0
+    ## 11 Latvia                10               0              0                0
+    ## 12 Lithuania             90               0              0                0
+    ## # ℹ 1 more variable: `Incomplete (%)` <dbl>
+
+#### Variability and outliers
+
+Descriptive statistics of the validated Group B samplings. Zero values
+are also counted, since a searched length or width of 0 m is not
+plausible.
+
+Both attributes are strongly concentrated around a few “standard” values
+(most samplings searched about 50 m × 20 m) and have long right tails.
+Under these conditions Tukey’s IQR rule is not useful: the width IQR is
+very narrow (15–20 m), so the rule flags around a quarter of the
+samplings as outliers, even on a log scale. Instead, we flag as
+**extreme values** those below the lower or above the upper percentile
+set in `pct_limits` (by default the 1st and 99th percentiles), plus all
+zero values. The limits can be changed to make the criterion more or
+less strict.
+
+    ## # A tibble: 3 × 13
+    ##   Variable     n  `NA` Zeros   Min P_low    Q1 Median   Mean    Q3 P_high    Max
+    ##   <fct>    <int> <int> <int> <dbl> <dbl> <dbl>  <dbl>  <dbl> <dbl>  <dbl>  <dbl>
+    ## 1 Length_m   537     8     2     0  7.21    40     50   91.4    85   700  1.37e3
+    ## 2 Width_m    531    14     2     0  2       15     20   24.3    20   100  1.5 e3
+    ## 3 Area_m2    530    15     2     0 36.7    600   1000 4287.   1600 16988. 1.05e6
+    ## # ℹ 1 more variable: `Extreme (n)` <int>
+
+Both attributes are strongly right-skewed (the mean is much higher than
+the median), so the histograms use a logarithmic x-axis. Zero values
+cannot be shown on a log scale and are excluded from the plots (they are
+counted in the table above). The solid line marks the median and the
+dashed lines the percentile limits. The scatter plot combines both
+attributes; the grey diagonal lines show constant searched areas (100,
+1,000, 10,000 and 100,000 m²).
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/SamplingEffortPlot-1.png)<!-- -->
+
+Distribution of length and width per country, to check whether outliers
+are specific to some countries (zero values excluded):
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/SamplingEffortCountryPlot-1.png)<!-- -->
+
+List of the validated samplings with extreme values (outside the
+percentile limits, or zero) in length or width, ordered by searched
+area, for manual checking:
+
+    ##    DatasetID CountryResponsible SamplingYear   SamplingRiver Length_m Width_m
+    ## 1    pt_6762           Portugal         2023    Pinhão River    700.0  1500.0
+    ## 2    at_6953            Austria         2023      Halterbach    900.0   300.0
+    ## 3    de_6249            Germany         2022    Lauter River    180.0   102.0
+    ## 4    at_7163            Austria         2024            Ager    890.0    20.0
+    ## 5    de_6326            Germany         2022     Hunte River    962.0    15.0
+    ## 6    be_6325            Belgium         2022   Scheldt River   1370.0     6.0
+    ## 7    be_7292            Belgium         2024     Kleine Nete     15.0   200.0
+    ## 8    be_6444            Belgium         2022      Yser River    800.0     2.0
+    ## 9    it_6572              Italy         2022     Tiber River      5.0    20.0
+    ## 10   lv_7074             Latvia         2023           Vaive      6.2     6.2
+    ## 11   pt_6608           Portugal         2023 Carenque Stream      1.9     7.0
+    ## 12   be_6516            Belgium         2022    Dommel River      0.0     0.0
+    ## 13   it_7104              Italy         2023     Tiber River      0.0     0.0
+    ## 14   it_6552              Italy         2022     Carabollace      5.0      NA
+    ##      Area_m2        Extreme
+    ## 1  1.050e+06          Width
+    ## 2  2.700e+05 Length & Width
+    ## 3  1.836e+04          Width
+    ## 4  1.780e+04         Length
+    ## 5  1.443e+04         Length
+    ## 6  8.220e+03         Length
+    ## 7  3.000e+03          Width
+    ## 8  1.600e+03         Length
+    ## 9  1.000e+02         Length
+    ## 10 3.844e+01         Length
+    ## 11 1.330e+01         Length
+    ## 12 0.000e+00 Length & Width
+    ## 13 0.000e+00 Length & Width
+    ## 14        NA         Length
 
 ### Most common types and quantities of litter per region? (Group B: riverbanks; Group C: floating litter)
 
@@ -77,7 +223,7 @@ see how many samplings were performed.
 
     ## RiversideWasteVariety_AttemptedSampling
     ##   0   1 
-    ##  27 756
+    ##  26 742
 
 To work with the `RiversideWasteVariety_` data, we need to filter the
 dataset to include only those rows where
@@ -91,26 +237,27 @@ This represents the percentage of validated data among the total number
 of sampling beign attempted.
 
     ##   total_rows total_valid pct_valid_total pct_valid_percent
-    ## 1        785         551            70.2             70.2%
+    ## 1        770         545            70.8             70.8%
 
     ## # A tibble: 12 × 7
-    ##    CountryResponsible total_rows total_valid `pct_valid_total(%)` total_attempts valid_among_attempts pct_valid_among_attempts(…¹
-    ##    <chr>                   <int>       <int>                <dbl>          <int>                <int>                       <dbl>
-    ##  1 Austria                   142          74                 52.1            128                   74                        57.8
-    ##  2 Belgium                    53          49                 92.5             52                   49                        94.2
-    ##  3 Bulgaria                   10          10                100               10                   10                       100  
-    ##  4 Germany                    92          86                 93.5             91                   86                        94.5
-    ##  5 Greece                     12          11                 91.7             11                   11                       100  
-    ##  6 Hungary                    16          15                 93.8             16                   15                        93.8
-    ##  7 Italy                      58          51                 87.9             55                   51                        92.7
-    ##  8 Latvia                     19          10                 52.6             19                   10                        52.6
-    ##  9 Lithuania                 136          90                 66.2            133                   90                        67.7
-    ## 10 Portugal                   79          45                 57               77                   45                        58.4
-    ## 11 Slovenia                   26          24                 92.3             25                   24                        96  
-    ## 12 Spain                     142          86                 60.6            139                   86                        61.9
-    ## # ℹ abbreviated name: ¹​`pct_valid_among_attempts(%)`
+    ##    CountryResponsible total_rows total_valid `pct_valid_total(%)` total_attempts
+    ##    <chr>                   <int>       <int>                <dbl>          <int>
+    ##  1 Austria                   129          70                 54.3            116
+    ##  2 Belgium                    53          49                 92.5             52
+    ##  3 Bulgaria                   10          10                100               10
+    ##  4 Germany                    90          84                 93.3             89
+    ##  5 Greece                     12          11                 91.7             11
+    ##  6 Hungary                    16          15                 93.8             16
+    ##  7 Italy                      58          51                 87.9             55
+    ##  8 Latvia                     19          10                 52.6             19
+    ##  9 Lithuania                 136          90                 66.2            133
+    ## 10 Portugal                   79          45                 57               77
+    ## 11 Slovenia                   26          24                 92.3             25
+    ## 12 Spain                     142          86                 60.6            139
+    ## # ℹ 2 more variables: valid_among_attempts <int>,
+    ## #   `pct_valid_among_attempts(%)` <dbl>
 
-![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ##### Most common types/quantities of litter
 
@@ -118,11 +265,11 @@ Firstly, we will pick up data to answer the question about group B. Only
 some variables are taken from the general dataset.
 
 The, Attributes’ names are so complicated to work that I’ll remote the
-preceding information **RiversideWasteVariety_Results\_** which is
+preceding information **RiversideWasteVariety\_Results\_** which is
 common to all attributes; and finally to work with only the validated
 `Group B` dataset we create:
 
-**CAUTION**! There are some `NAs` values in the litter items that are
+**CAUTION**\! There are some `NAs` values in the litter items that are
 probably incorrect since the groups did find other items.
 
 After meeting and email from Charlotte, we realise that NA in group B
@@ -134,9 +281,9 @@ for some items it’s really a zero. So we update these columns replacing
 We will obtain the plot for the most common (average abundance) litter
 type, as a table and then as a plot.
 
-![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
-
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ###### Litter type abundance per country
 
@@ -146,100 +293,124 @@ If we now want to visualize the contribution per each country, we have:
 
 ###### Litter type Proportion I - “Across‑type” proportions
 
-- The first approach will be a “*Across‑type*” proportions.
-  - For each litter type, what fraction comes from each country? (not
-    from an european total)
-  - total abundance of that litter type over each total country.
+  - The first approach will be a “*Across‑type*” proportions.
+      - For each litter type, what fraction comes from each country?
+        (not from an european total)
+      - total abundance of that litter type over each total country.
 
-<!-- -->
+<!-- end list -->
 
     ## # A tibble: 300 × 5
-    ##    CountryResponsible Litter_type              Total_Abundance Global_Total Prop_Country
-    ##    <fct>              <chr>                              <dbl>        <dbl>        <dbl>
-    ##  1 austria            AluminiumFoil                        246         1636      0.150  
-    ##  2 austria            Balloons                              12          126      0.0952 
-    ##  3 austria            BottleCaps                           503         2501      0.201  
-    ##  4 austria            CigaretteButts                      2915        12962      0.225  
-    ##  5 austria            CottonBuds                             6          396      0.0152 
-    ##  6 austria            GlassBottles                         209         1462      0.143  
-    ##  7 austria            GlassPieces                         2364         9527      0.248  
-    ##  8 austria            LocalWaste                           146         2343      0.0623 
-    ##  9 austria            MetalBeverageCans                    383         2551      0.150  
-    ## 10 austria            OtherUnidentifiableGlass               3          462      0.00649
+    ##    CountryResponsible Litter_type      Total_Abundance Global_Total Prop_Country
+    ##    <chr>              <chr>                      <dbl>        <dbl>        <dbl>
+    ##  1 austria            AluminiumFoil                228         1613      0.141  
+    ##  2 austria            Balloons                      11          125      0.088  
+    ##  3 austria            BottleCaps                   494         2441      0.202  
+    ##  4 austria            CigaretteButts              2773        12759      0.217  
+    ##  5 austria            CottonBuds                     4          394      0.0102 
+    ##  6 austria            GlassBottles                 192         1431      0.134  
+    ##  7 austria            GlassPieces                 2260         9387      0.241  
+    ##  8 austria            LocalWaste                   103         2296      0.0449 
+    ##  9 austria            MetalBeverageCa…             353         2521      0.140  
+    ## 10 austria            OtherUnidentifi…               3          462      0.00649
     ## # ℹ 290 more rows
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterCountryPlot-1.png)<!-- -->
 
-<!--
-* Now, considering the total of Europe
-&#10;
-```
-## # A tibble: 300 × 5
-##    CountryResponsible Litter_type              Total_Abundance European_Total Prop_of_Europe
-##    <chr>              <fct>                              <dbl>          <dbl>          <dbl>
-##  1 Austria            AluminiumFoil                        246           1636        0.150  
-##  2 Austria            Balloons                              12            126        0.0952 
-##  3 Austria            BottleCaps                           503           2501        0.201  
-##  4 Austria            CigaretteButts                      2915          12962        0.225  
-##  5 Austria            CottonBuds                             6            396        0.0152 
-##  6 Austria            GlassBottles                         209           1462        0.143  
-##  7 Austria            GlassPieces                         2364           9527        0.248  
-##  8 Austria            LocalWaste                           146           2343        0.0623 
-##  9 Austria            MetalBeverageCans                    383           2551        0.150  
-## 10 Austria            OtherUnidentifiableGlass               3            462        0.00649
-## # ℹ 290 more rows
-```
-&#10;To compare and validate the output, for each `litter_type` the `European_Total` have to be the same.
-&#10;
-```
-## # A tibble: 12 × 5
-##    CountryResponsible Litter_type   Total_Abundance European_Total Prop_of_Europe
-##    <chr>              <fct>                   <dbl>          <dbl>          <dbl>
-##  1 Austria            AluminiumFoil             246           1636       0.150   
-##  2 Belgium            AluminiumFoil              67           1636       0.0410  
-##  3 Bulgaria           AluminiumFoil               1           1636       0.000611
-##  4 Germany            AluminiumFoil             486           1636       0.297   
-##  5 Greece             AluminiumFoil              36           1636       0.0220  
-##  6 Hungary            AluminiumFoil              17           1636       0.0104  
-##  7 Italy              AluminiumFoil              53           1636       0.0324  
-##  8 Latvia             AluminiumFoil              17           1636       0.0104  
-##  9 Lithuania          AluminiumFoil             275           1636       0.168   
-## 10 Portugal           AluminiumFoil             115           1636       0.0703  
-## 11 Slovenia           AluminiumFoil              57           1636       0.0348  
-## 12 Spain              AluminiumFoil             266           1636       0.163
-```
-&#10;
-&#10;
-<img src="Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterEuropePlot-1.png" alt="" width="50%" style="display: block; margin: auto;" />
-&#10;-->
+  - Now, considering the total of Europe
 
-- HeatMaps
+<!-- end list -->
+
+    ## # A tibble: 300 × 5
+    ##    CountryResponsible Litter_type  Total_Abundance European_Total Prop_of_Europe
+    ##    <chr>              <fct>                  <dbl>          <dbl>          <dbl>
+    ##  1 Austria            AluminiumFo…             228           1613        0.141  
+    ##  2 Austria            Balloons                  11            125        0.088  
+    ##  3 Austria            BottleCaps               494           2441        0.202  
+    ##  4 Austria            CigaretteBu…            2773          12759        0.217  
+    ##  5 Austria            CottonBuds                 4            394        0.0102 
+    ##  6 Austria            GlassBottles             192           1431        0.134  
+    ##  7 Austria            GlassPieces             2260           9387        0.241  
+    ##  8 Austria            LocalWaste               103           2296        0.0449 
+    ##  9 Austria            MetalBevera…             353           2521        0.140  
+    ## 10 Austria            OtherUniden…               3            462        0.00649
+    ## # ℹ 290 more rows
+
+To compare and validate the output, for each `litter_type` the
+`European_Total` have to be the same.
+
+    ## # A tibble: 12 × 5
+    ##    CountryResponsible Litter_type  Total_Abundance European_Total Prop_of_Europe
+    ##    <chr>              <fct>                  <dbl>          <dbl>          <dbl>
+    ##  1 Austria            AluminiumFo…             228           1613       0.141   
+    ##  2 Belgium            AluminiumFo…              67           1613       0.0415  
+    ##  3 Bulgaria           AluminiumFo…               1           1613       0.000620
+    ##  4 Germany            AluminiumFo…             481           1613       0.298   
+    ##  5 Greece             AluminiumFo…              36           1613       0.0223  
+    ##  6 Hungary            AluminiumFo…              17           1613       0.0105  
+    ##  7 Italy              AluminiumFo…              53           1613       0.0329  
+    ##  8 Latvia             AluminiumFo…              17           1613       0.0105  
+    ##  9 Lithuania          AluminiumFo…             275           1613       0.170   
+    ## 10 Portugal           AluminiumFo…             115           1613       0.0713  
+    ## 11 Slovenia           AluminiumFo…              57           1613       0.0353  
+    ## 12 Spain              AluminiumFo…             266           1613       0.165
+
+<img src="Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterEuropePlot-1.png" alt="" width="50%" style="display: block; margin: auto;" />
+
+  - HeatMaps
 
 <img src="Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterEuropeHeatMap-1.png" alt="" width="80%" style="display: block; margin: auto;" />
 
+Bootstrap implementation in the dendrograms nodes. It replaces the
+previous heatmap with the dendrograms based on bootstrap values.
+
+    ## Bootstrap (r = 0.48)... Done.
+    ## Bootstrap (r = 0.6)... Done.
+    ## Bootstrap (r = 0.68)... Done.
+    ## Bootstrap (r = 0.8)... Done.
+    ## Bootstrap (r = 0.88)... Done.
+    ## Bootstrap (r = 1.0)... Done.
+    ## Bootstrap (r = 1.08)... Done.
+    ## Bootstrap (r = 1.2)... Done.
+    ## Bootstrap (r = 1.28)... Done.
+    ## Bootstrap (r = 1.4)... Done.
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+Dendrogram with the values
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+    ## png 
+    ##   2
+
 <!--
 ###### Litter type Proportion II - "Within‑country" proportions
-&#10;* The second approach will be a "*Within‑country*" proportions. 
+
+* The second approach will be a "*Within‑country*" proportions. 
   * For each country, what fraction of its total litter is each type?
   * Total abundance of all types in that country.
-&#10;
-&#10;```
+
+
+
+```
 ## # A tibble: 300 × 5
-##    CountryResponsible Litter_type              Total_Abundance Country_Total Prop_Type
-##    <fct>              <chr>                              <dbl>         <dbl>     <dbl>
-##  1 austria            AluminiumFoil                        246         12052  0.0204  
-##  2 austria            Balloons                              12         12052  0.000996
-##  3 austria            BottleCaps                           503         12052  0.0417  
-##  4 austria            CigaretteButts                      2915         12052  0.242   
-##  5 austria            CottonBuds                             6         12052  0.000498
-##  6 austria            GlassBottles                         209         12052  0.0173  
-##  7 austria            GlassPieces                         2364         12052  0.196   
-##  8 austria            LocalWaste                           146         12052  0.0121  
-##  9 austria            MetalBeverageCans                    383         12052  0.0318  
-## 10 austria            OtherUnidentifiableGlass               3         12052  0.000249
+##    CountryResponsible Litter_type        Total_Abundance Country_Total Prop_Type
+##    <chr>              <chr>                        <dbl>         <dbl>     <dbl>
+##  1 austria            AluminiumFoil                  228         11246  0.0203  
+##  2 austria            Balloons                        11         11246  0.000978
+##  3 austria            BottleCaps                     494         11246  0.0439  
+##  4 austria            CigaretteButts                2773         11246  0.247   
+##  5 austria            CottonBuds                       4         11246  0.000356
+##  6 austria            GlassBottles                   192         11246  0.0171  
+##  7 austria            GlassPieces                   2260         11246  0.201   
+##  8 austria            LocalWaste                     103         11246  0.00916 
+##  9 austria            MetalBeverageCans              353         11246  0.0314  
+## 10 austria            OtherUnidentifiab…               3         11246  0.000267
 ## # ℹ 290 more rows
 ```
-&#10;
+
+
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterCountryIIPlot-1.png)<!-- -->
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterCountryIIPlot2-1.png)<!-- -->
@@ -256,11 +427,11 @@ the community composition, we will perform a PERMANOVA test:
     ## Permutation: free
     ## Number of permutations: 999
     ## 
-    ## adonis2(formula = dist_mat ~ CountryResponsible, data = meta, permutations = 999, by = "margin")
+    ## adonis2(formula = dist_mat ~ CountryResponsible, data = meta, permutations = 999, by = "margin", na.action = na.omit)
     ##                     Df SumOfSqs      R2      F Pr(>F)    
-    ## CountryResponsible  11   27.724 0.09814 5.3324  0.001 ***
-    ## Residual           539  254.764 0.90186                  
-    ## Total              550  282.488 1.00000                  
+    ## CountryResponsible  11   27.362 0.09899 5.2535  0.001 ***
+    ## Residual           526  249.052 0.90101                  
+    ## Total              537  276.414 1.00000                  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -277,24 +448,37 @@ Forest**.
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 5
     ## 
-    ##         OOB estimate of  error rate: 62.43%
+    ##         OOB estimate of  error rate: 64.68%
     ## Confusion matrix:
-    ##           austria belgium bulgaria germany greece hungary italy latvia lithuania portugal slovenia spain class.error
-    ## austria        31       2        0      12      0       0     6      0         6        0        0    17   0.5810811
-    ## belgium         6       5        0       2      0       0     5      2        12        3        2    12   0.8979592
-    ## bulgaria        0       0        9       0      0       1     0      0         0        0        0     0   0.1000000
-    ## germany        10       3        0      41      0       0     2      0        18        6        0     6   0.5232558
-    ## greece          1       0        0       0      0       0     6      0         0        2        0     2   1.0000000
-    ## hungary         2       1        0       1      0       2     3      0         0        0        0     6   0.8666667
-    ## italy          10       3        0       4      0       0    20      0         1        1        0    12   0.6078431
-    ## latvia          2       2        0       1      0       0     0      0         5        0        0     0   1.0000000
-    ## lithuania       9       6        0      19      0       0     1      0        45        0        0    10   0.5000000
-    ## portugal        5       4        0       7      0       0     7      0         3       12        1     6   0.7333333
-    ## slovenia        4       0        0       0      0       0     5      0         1        4        0    10   1.0000000
-    ## spain          16       5        0       7      0       0     6      0         9        1        0    42   0.5116279
+    ##           austria belgium bulgaria germany greece hungary italy latvia
+    ## austria        21       3        0      14      0       0     7      0
+    ## belgium         9       4        0       2      0       0     4      0
+    ## bulgaria        0       0        9       0      0       1     0      0
+    ## germany         9       2        1      37      0       0     3      0
+    ## greece          1       0        0       1      0       0     4      0
+    ## hungary         4       1        1       0      0       3     1      0
+    ## italy           9       2        0       6      0       0    18      0
+    ## latvia          0       0        0       1      0       0     0      0
+    ## lithuania       8       1        0      25      0       0     2      0
+    ## portugal        5       4        0       6      0       0     8      0
+    ## slovenia        3       1        0       0      0       1     5      0
+    ## spain          11       3        0       8      0       1     8      0
+    ##           lithuania portugal slovenia spain class.error
+    ## austria           5        1        0    19   0.7000000
+    ## belgium          14        0        0    14   0.9148936
+    ## bulgaria          0        0        0     0   0.1000000
+    ## germany          22        5        0     5   0.5595238
+    ## greece            0        2        0     3   1.0000000
+    ## hungary           0        0        0     5   0.8000000
+    ## italy             3        2        1    10   0.6470588
+    ## latvia            5        0        0     2   1.0000000
+    ## lithuania        45        0        0     8   0.4943820
+    ## portugal          6       10        1     5   0.7777778
+    ## slovenia          1        3        1     9   0.9583333
+    ## spain             9        2        0    42   0.5000000
 
 Decisions have to be taken carefully since the prediction accuracy is
-very low (0.38). Furthermore, the estimated error rate (OOB) is high, so
+very low (0.35). Furthermore, the estimated error rate (OOB) is high, so
 conclusion have to be taken with care.
 
 Eventhough, the more important (differential across countries) litter
@@ -309,11 +493,12 @@ This plot of variable importance importance is telling us:
   * **MDA** is generally the more reliable gauge of predictive importance, since it directly measures impact on OOB‐accuracy.
 -->
 
-- A large `MeanDecreaseGini` (**MDG**) means that X frequently appears
-  in high‑up the tree splits and yields big purity gains → it’s
-  structurally important to partitioning the data.
-  - **MDG** tells you which features the trees “prefer” splitting on.
-- **Principal Component Analysis**
+  - A large `MeanDecreaseGini` (**MDG**) means that X frequently appears
+    in high‑up the tree splits and yields big purity gains → it’s
+    structurally important to partitioning the data.
+      - **MDG** tells you which features the trees “prefer” splitting
+        on.
+  - **Principal Component Analysis**
 
 We will perform a Principal Component Analysis (PCA) to see correlation
 among litter items and *possible* associations with countries
@@ -322,12 +507,12 @@ among litter items and *possible* associations with countries
 
 And the most important Items for the two forst principal components are:
 
-- First PC
-  ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/PC1VarImport-1.png)<!-- -->
+  - First PC
+    ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/PC1VarImport-1.png)<!-- -->
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/PC2VarImport-1.png)<!-- -->
 
-- **Non-Metric Multidimensional Scaling - nMDS**
+  - **Non-Metric Multidimensional Scaling - nMDS**
 
 We will perform a Non-Metric Multidimensional Scaling (nMDS) to see
 correlation among litter items and *possible* associations with
@@ -336,32 +521,31 @@ countries.
 We can re-use the distance matrix using the hellinger‐transformed data
 (`comm_hel`) and then perform the nMDS.
 
-    ## [1] 7
+    ## [1] 0
 
-    ## [1]  84  88 202 205 309 324 400
+    ## integer(0)
 
-    ## Run 0 stress 0.2879233 
-    ## Run 1 stress 0.2892463 
-    ## Run 2 stress 0.2891349 
-    ## Run 3 stress 0.2883955 
-    ## ... Procrustes: rmse 0.008112982  max resid 0.09888423 
-    ## Run 4 stress 0.2986248 
-    ## Run 5 stress 0.2936857 
-    ## Run 6 stress 0.2928485 
-    ## Run 7 stress 0.2996566 
-    ## Run 8 stress 0.2958115 
-    ## Run 9 stress 0.2896938 
-    ## Run 10 stress 0.2934799 
-    ## Run 11 stress 0.2897592 
-    ## Run 12 stress 0.2980122 
-    ## Run 13 stress 0.2896273 
-    ## Run 14 stress 0.2898469 
-    ## Run 15 stress 0.2907951 
-    ## Run 16 stress 0.2990182 
-    ## Run 17 stress 0.3004775 
-    ## Run 18 stress 0.2993824 
-    ## Run 19 stress 0.2885904 
-    ## Run 20 stress 0.2892856 
+    ## Run 0 stress 0.2884093 
+    ## Run 1 stress 0.2897636 
+    ## Run 2 stress 0.289213 
+    ## Run 3 stress 0.2927784 
+    ## Run 4 stress 0.2999241 
+    ## Run 5 stress 0.2893695 
+    ## Run 6 stress 0.2902012 
+    ## Run 7 stress 0.305738 
+    ## Run 8 stress 0.2962467 
+    ## Run 9 stress 0.2889845 
+    ## Run 10 stress 0.288933 
+    ## Run 11 stress 0.2898935 
+    ## Run 12 stress 0.2926103 
+    ## Run 13 stress 0.3003172 
+    ## Run 14 stress 0.2898649 
+    ## Run 15 stress 0.2987554 
+    ## Run 16 stress 0.2911705 
+    ## Run 17 stress 0.2894898 
+    ## Run 18 stress 0.2925373 
+    ## Run 19 stress 0.2910448 
+    ## Run 20 stress 0.290997 
     ## *** Best solution was not repeated -- monoMDS stopping criteria:
     ##     17: no. of iterations >= maxit
     ##      3: stress ratio > sratmax
@@ -369,12 +553,12 @@ We can re-use the distance matrix using the hellinger‐transformed data
 Now, we calculate the scores for the sites (samples) and add the
 metadata to be able to visualize the nMDS with the country information.
 
-![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 To see which countries are more similar than others, we can calculate
 the centroids of each country in the NMDS space and then plot them.
 
-![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 From the above plot, we can say that the non-metric multidimensional
 scaling ordination based on Bray–Curtis dissimilarities of
@@ -394,64 +578,94 @@ differences among otherwise similar profiles.
 
 We wil take as a subset the single use plastic (`SUP`) for the group B.
 
-    ##   DatasetID CountryResponsible SamplingCampaign SamplingYear SamplingCoordinatesLatitude SamplingCoordinatesLongitude
-    ## 1   at_6270            austria      autumn 2022         2022                    48.04275                     14.42192
-    ## 2   at_6297            austria      autumn 2022         2022                    48.26034                     13.03440
-    ## 3   at_6382            austria      autumn 2022         2022                    47.11828                     13.81419
-    ## 4   at_6393            austria      autumn 2022         2022                    46.58301                     13.84115
-    ## 5   at_6429            austria      autumn 2022         2022                    48.21108                     16.43973
-    ## 6   at_6429            austria      autumn 2022         2022                    48.21108                     16.43973
-    ##   SamplingRiverSystem SamplingParticipants RiversideWasteVariety_AttemptedSampling RiversideWasteVariety_Qualified PlasticBags
-    ## 1              Danube                    9                                       1                               1           2
-    ## 2              Danube                    8                                       1                               1           0
-    ## 3              Danube                   20                                       1                               1           0
-    ## 4              Danube                   38                                       1                               1          34
-    ## 5              Danube                   20                                       1                               1           7
-    ## 6              Danube                   20                                       1                               1           7
-    ##   PlasticBottles PlasticLids TakeawayFastFood PlasticCutleryPlates PlasticPackagingSweets CottonBuds WetWipesSanitaryProducts
-    ## 1              0           0                2                    0                      1          0                        1
-    ## 2              1           4                1                    1                     14          0                        3
-    ## 3              0           0                0                    0                      2          0                        0
-    ## 4             22          13                2                    0                     34          0                        0
-    ## 5             22          17                9                    3                     10          2                        7
-    ## 6             22          17                9                    3                     10          2                        7
-    ##   Polystyrene
-    ## 1           0
-    ## 2           0
-    ## 3           1
-    ## 4           0
-    ## 5           6
-    ## 6           6
+    ##   DatasetID CountryResponsible SamplingCampaign SamplingYear
+    ## 1   at_6270            austria      autumn 2022         2022
+    ## 2   at_6297            austria      autumn 2022         2022
+    ## 3   at_6382            austria      autumn 2022         2022
+    ## 4   at_6393            austria      autumn 2022         2022
+    ## 5   at_6429            austria      autumn 2022         2022
+    ## 6   at_6448            austria      autumn 2022         2022
+    ##   SamplingCoordinatesLatitude SamplingCoordinatesLongitude SamplingRiverSystem
+    ## 1                    48.04275                     14.42192              Danube
+    ## 2                    48.26034                     13.03440              Danube
+    ## 3                    47.11828                     13.81419              Danube
+    ## 4                    46.58301                     13.84115              Danube
+    ## 5                    48.21108                     16.43973              Danube
+    ## 6                    46.60477                     14.27800              Danube
+    ##   SamplingParticipants RiversideWasteVariety_AttemptedSampling
+    ## 1                    9                                       1
+    ## 2                    8                                       1
+    ## 3                   20                                       1
+    ## 4                   38                                       1
+    ## 5                   20                                       1
+    ## 6                   16                                       1
+    ##   RiversideWasteVariety_Qualified PlasticBags PlasticBottles PlasticLids
+    ## 1                               1           2              0           0
+    ## 2                               1           0              1           4
+    ## 3                               1           0              0           0
+    ## 4                               1          34             22          13
+    ## 5                               1           7             22          17
+    ## 6                               1           3              4           1
+    ##   TakeawayFastFood PlasticCutleryPlates PlasticPackagingSweets CottonBuds
+    ## 1                2                    0                      1          0
+    ## 2                1                    1                     14          0
+    ## 3                0                    0                      2          0
+    ## 4                2                    0                     34          0
+    ## 5                9                    3                     10          2
+    ## 6                3                    0                      1          0
+    ##   WetWipesSanitaryProducts Polystyrene
+    ## 1                        1           0
+    ## 2                        3           0
+    ## 3                        0           1
+    ## 4                        0           0
+    ## 5                        7           6
+    ## 6                        0           0
 
-    ##    DatasetID   CountryResponsible    SamplingCampaign  SamplingYear  SamplingCoordinatesLatitude SamplingCoordinatesLongitude
-    ##  at_6429:  2   lithuania: 90      autumn 2021:  0     Min.   :2022   Min.   :37.18               Min.   :-9.309              
-    ##  at_6463:  2   germany  : 86      autumn 2022:198     1st Qu.:2022   1st Qu.:42.03               1st Qu.: 2.946              
-    ##  at_6972:  2   spain    : 86      autumn 2023:144     Median :2023   Median :48.07               Median :12.331              
-    ##  at_6977:  2   austria  : 74      autumn 2024: 50     Mean   :2023   Mean   :47.47               Mean   :10.912              
-    ##  de_6237:  2   italy    : 51      spring 2022:  1     3rd Qu.:2024   3rd Qu.:51.33               3rd Qu.:16.923              
-    ##  de_6457:  2   belgium  : 49      spring 2023: 26     Max.   :2024   Max.   :57.75               Max.   :27.488              
-    ##  (Other):539   (Other)  :115      spring 2024:132                                                                            
-    ##  SamplingRiverSystem SamplingParticipants RiversideWasteVariety_AttemptedSampling RiversideWasteVariety_Qualified
-    ##  Length:551          Min.   :  2.00       Min.   :1                               Min.   :1                      
-    ##  Class :character    1st Qu.: 13.00       1st Qu.:1                               1st Qu.:1                      
-    ##  Mode  :character    Median : 19.00       Median :1                               Median :1                      
-    ##                      Mean   : 19.58       Mean   :1                               Mean   :1                      
-    ##                      3rd Qu.: 24.00       3rd Qu.:1                               3rd Qu.:1                      
-    ##                      Max.   :250.00       Max.   :1                               Max.   :1                      
-    ##                      NA's   :10                                                                                  
-    ##   PlasticBags      PlasticBottles     PlasticLids      TakeawayFastFood  PlasticCutleryPlates PlasticPackagingSweets
-    ##  Min.   :  0.000   Min.   :  0.000   Min.   :  0.000   Min.   :  0.000   Min.   : 0.000       Min.   :  0.000       
-    ##  1st Qu.:  0.000   1st Qu.:  0.000   1st Qu.:  0.000   1st Qu.:  0.000   1st Qu.: 0.000       1st Qu.:  1.000       
-    ##  Median :  3.000   Median :  1.000   Median :  1.000   Median :  0.000   Median : 0.000       Median :  4.000       
-    ##  Mean   :  7.506   Mean   :  6.334   Mean   :  3.991   Mean   :  2.828   Mean   : 1.044       Mean   :  9.984       
-    ##  3rd Qu.:  7.000   3rd Qu.:  4.000   3rd Qu.:  4.000   3rd Qu.:  2.500   3rd Qu.: 1.000       3rd Qu.: 11.500       
-    ##  Max.   :196.000   Max.   :576.000   Max.   :115.000   Max.   :102.000   Max.   :49.000       Max.   :121.000       
-    ##                                                                                                                     
+    ##    DatasetID   CountryResponsible    SamplingCampaign  SamplingYear 
+    ##  at_6270:  1   Length   :545      autumn 2021:  0     Min.   :2022  
+    ##  at_6297:  1   N.unique : 12      autumn 2022:194     1st Qu.:2022  
+    ##  at_6382:  1   N.blank  :  0      autumn 2023:142     Median :2023  
+    ##  at_6393:  1   Min.nchar:  5      autumn 2024: 50     Mean   :2023  
+    ##  at_6429:  1   Max.nchar:  9      spring 2022:  1     3rd Qu.:2024  
+    ##  at_6448:  1                      spring 2023: 26     Max.   :2024  
+    ##  (Other):539                      spring 2024:132                   
+    ##  SamplingCoordinatesLatitude SamplingCoordinatesLongitude SamplingRiverSystem
+    ##  Min.   :37.18               Min.   :-9.309               Length   :545      
+    ##  1st Qu.:42.03               1st Qu.: 2.879               N.unique : 45      
+    ##  Median :48.01               Median :12.250               N.blank  :  0      
+    ##  Mean   :47.47               Mean   :10.871               Min.nchar:  2      
+    ##  3rd Qu.:51.39               3rd Qu.:17.470               Max.nchar: 27      
+    ##  Max.   :57.75               Max.   :27.488                                  
+    ##                                                                              
+    ##  SamplingParticipants RiversideWasteVariety_AttemptedSampling
+    ##  Min.   :  2.00       Min.   :1                              
+    ##  1st Qu.: 13.00       1st Qu.:1                              
+    ##  Median : 19.00       Median :1                              
+    ##  Mean   : 19.58       Mean   :1                              
+    ##  3rd Qu.: 24.00       3rd Qu.:1                              
+    ##  Max.   :250.00       Max.   :1                              
+    ##  NAs    :9                                                   
+    ##  RiversideWasteVariety_Qualified  PlasticBags      PlasticBottles   
+    ##  Min.   :1                       Min.   :  0.000   Min.   :  0.000  
+    ##  1st Qu.:1                       1st Qu.:  0.000   1st Qu.:  0.000  
+    ##  Median :1                       Median :  3.000   Median :  1.000  
+    ##  Mean   :1                       Mean   :  7.543   Mean   :  6.306  
+    ##  3rd Qu.:1                       3rd Qu.:  7.000   3rd Qu.:  4.000  
+    ##  Max.   :1                       Max.   :196.000   Max.   :576.000  
+    ##                                                                     
+    ##   PlasticLids     TakeawayFastFood  PlasticCutleryPlates PlasticPackagingSweets
+    ##  Min.   :  0.00   Min.   :  0.000   Min.   : 0.000       Min.   :  0.00        
+    ##  1st Qu.:  0.00   1st Qu.:  0.000   1st Qu.: 0.000       1st Qu.:  1.00        
+    ##  Median :  1.00   Median :  0.000   Median : 0.000       Median :  4.00        
+    ##  Mean   :  3.96   Mean   :  2.791   Mean   : 1.048       Mean   :  9.91        
+    ##  3rd Qu.:  4.00   3rd Qu.:  2.000   3rd Qu.: 1.000       3rd Qu.: 11.00        
+    ##  Max.   :115.00   Max.   :102.000   Max.   :49.000       Max.   :121.00        
+    ##                                                                                
     ##    CottonBuds       WetWipesSanitaryProducts  Polystyrene     
     ##  Min.   :  0.0000   Min.   :   0.00          Min.   :  0.000  
     ##  1st Qu.:  0.0000   1st Qu.:   0.00          1st Qu.:  0.000  
     ##  Median :  0.0000   Median :   0.00          Median :  0.000  
-    ##  Mean   :  0.7187   Mean   :  11.97          Mean   :  6.563  
+    ##  Mean   :  0.7229   Mean   :  12.07          Mean   :  6.554  
     ##  3rd Qu.:  0.0000   3rd Qu.:   2.00          3rd Qu.:  2.000  
     ##  Max.   :145.0000   Max.   :1897.00          Max.   :423.000  
     ## 
@@ -460,7 +674,7 @@ We wil take as a subset the single use plastic (`SUP`) for the group B.
 
 We will obtain the plot for the most common (average abundance) Single
 Use Plastic type
-![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
 ###### SUP type abundance per country
 
@@ -470,83 +684,95 @@ If we now want to visualize the contribution per each country, we have:
 
 ###### SUP type Proportion I - “Across‑type” proportions
 
-- The first approach will be a “*Across‑type*” proportions.
-  - total abundance of that litter type over each total country.
+  - The first approach will be a “*Across‑type*” proportions.
+      - total abundance of that litter type over each total country.
 
 <!--
     * For each litter type, what fraction comes from each country? (not from an european total) 
     -->
 
     ## # A tibble: 108 × 5
-    ##    CountryResponsible Litter_type              Total_Abundance Global_Total Prop_Country
-    ##    <fct>              <chr>                              <dbl>        <dbl>        <dbl>
-    ##  1 austria            CottonBuds                             6          396      0.0152 
-    ##  2 austria            PlasticBags                          386         4136      0.0933 
-    ##  3 austria            PlasticBottles                       263         3490      0.0754 
-    ##  4 austria            PlasticCutleryPlates                  34          575      0.0591 
-    ##  5 austria            PlasticLids                          249         2199      0.113  
-    ##  6 austria            PlasticPackagingSweets               736         5501      0.134  
-    ##  7 austria            Polystyrene                          259         3616      0.0716 
-    ##  8 austria            TakeawayFastFood                     130         1558      0.0834 
-    ##  9 austria            WetWipesSanitaryProducts             182         6598      0.0276 
-    ## 10 belgium            CottonBuds                             3          396      0.00758
+    ##    CountryResponsible Litter_type      Total_Abundance Global_Total Prop_Country
+    ##    <chr>              <chr>                      <dbl>        <dbl>        <dbl>
+    ##  1 austria            CottonBuds                     4          394      0.0102 
+    ##  2 austria            PlasticBags                  379         4111      0.0922 
+    ##  3 austria            PlasticBottles               214         3437      0.0623 
+    ##  4 austria            PlasticCutleryP…              31          571      0.0543 
+    ##  5 austria            PlasticLids                  216         2158      0.100  
+    ##  6 austria            PlasticPackagin…             688         5401      0.127  
+    ##  7 austria            Polystyrene                  215         3572      0.0602 
+    ##  8 austria            TakeawayFastFood              99         1521      0.0651 
+    ##  9 austria            WetWipesSanitar…             163         6579      0.0248 
+    ## 10 belgium            CottonBuds                     3          394      0.00761
     ## # ℹ 98 more rows
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterCountryPlotSUP-1.png)<!-- -->
 
 <!--
-&#10;* Now, considering the total of Europe
-&#10;
+
+* Now, considering the total of Europe
+
+
 ```
 ## # A tibble: 108 × 5
-##    CountryResponsible Litter_type              Total_Abundance European_Total Prop_of_Europe
-##    <chr>              <fct>                              <dbl>          <dbl>          <dbl>
-##  1 Austria            CottonBuds                             6            396        0.0152 
-##  2 Austria            PlasticBags                          386           4136        0.0933 
-##  3 Austria            PlasticBottles                       263           3490        0.0754 
-##  4 Austria            PlasticCutleryPlates                  34            575        0.0591 
-##  5 Austria            PlasticLids                          249           2199        0.113  
-##  6 Austria            PlasticPackagingSweets               736           5501        0.134  
-##  7 Austria            Polystyrene                          259           3616        0.0716 
-##  8 Austria            TakeawayFastFood                     130           1558        0.0834 
-##  9 Austria            WetWipesSanitaryProducts             182           6598        0.0276 
-## 10 Belgium            CottonBuds                             3            396        0.00758
+##    CountryResponsible Litter_type  Total_Abundance European_Total Prop_of_Europe
+##    <chr>              <fct>                  <dbl>          <dbl>          <dbl>
+##  1 Austria            CottonBuds                 4            394        0.0102 
+##  2 Austria            PlasticBags              379           4111        0.0922 
+##  3 Austria            PlasticBott…             214           3437        0.0623 
+##  4 Austria            PlasticCutl…              31            571        0.0543 
+##  5 Austria            PlasticLids              216           2158        0.100  
+##  6 Austria            PlasticPack…             688           5401        0.127  
+##  7 Austria            Polystyrene              215           3572        0.0602 
+##  8 Austria            TakeawayFas…              99           1521        0.0651 
+##  9 Austria            WetWipesSan…             163           6579        0.0248 
+## 10 Belgium            CottonBuds                 3            394        0.00761
 ## # ℹ 98 more rows
 ```
-&#10;
-&#10;
-&#10;
+
+
+
+
+
+
 -->
 
-- HeatMaps
+  - HeatMaps
 
 <img src="Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterEuropeHeatMapSUP-1.png" alt="" width="80%" style="display: block; margin: auto;" />
 
 <!--
-&#10;###### SUP type Proportion II - "Within‑country" proportions
-&#10;* The second approach will be a "*Within‑country*" proportions. 
+
+###### SUP type Proportion II - "Within‑country" proportions
+
+* The second approach will be a "*Within‑country*" proportions. 
   * For each country, what fraction of its total litter is each type?
   * Total abundance of all types in that country.
-&#10;
-&#10;```
+
+
+
+```
 ## # A tibble: 108 × 5
-##    CountryResponsible Litter_type              Total_Abundance Country_Total Prop_Type
-##    <fct>              <chr>                              <dbl>         <dbl>     <dbl>
-##  1 austria            CottonBuds                             6          2245   0.00267
-##  2 austria            PlasticBags                          386          2245   0.172  
-##  3 austria            PlasticBottles                       263          2245   0.117  
-##  4 austria            PlasticCutleryPlates                  34          2245   0.0151 
-##  5 austria            PlasticLids                          249          2245   0.111  
-##  6 austria            PlasticPackagingSweets               736          2245   0.328  
-##  7 austria            Polystyrene                          259          2245   0.115  
-##  8 austria            TakeawayFastFood                     130          2245   0.0579 
-##  9 austria            WetWipesSanitaryProducts             182          2245   0.0811 
-## 10 belgium            CottonBuds                             3          1319   0.00227
+##    CountryResponsible Litter_type        Total_Abundance Country_Total Prop_Type
+##    <chr>              <chr>                        <dbl>         <dbl>     <dbl>
+##  1 austria            CottonBuds                       4          2009   0.00199
+##  2 austria            PlasticBags                    379          2009   0.189  
+##  3 austria            PlasticBottles                 214          2009   0.107  
+##  4 austria            PlasticCutleryPla…              31          2009   0.0154 
+##  5 austria            PlasticLids                    216          2009   0.108  
+##  6 austria            PlasticPackagingS…             688          2009   0.342  
+##  7 austria            Polystyrene                    215          2009   0.107  
+##  8 austria            TakeawayFastFood                99          2009   0.0493 
+##  9 austria            WetWipesSanitaryP…             163          2009   0.0811 
+## 10 belgium            CottonBuds                       3          1319   0.00227
 ## # ℹ 98 more rows
 ```
-&#10;
-&#10;
-&#10;![](Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterCountryIIPlot2SUP-1.png)<!-- -->
+
+
+
+
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/ProportionLitterCountryIIPlot2SUP-1.png)<!-- -->
 
 –\>
 
@@ -560,11 +786,11 @@ the community composition, we will perform a PERMANOVA test:
     ## Permutation: free
     ## Number of permutations: 999
     ## 
-    ## adonis2(formula = dist_mat_SUP ~ CountryResponsible, data = meta, permutations = 999, by = "margin")
+    ## adonis2(formula = dist_mat_SUP ~ CountryResponsible, data = meta_SUP, permutations = 999, by = "margin")
     ##                     Df SumOfSqs      R2      F Pr(>F)    
-    ## CountryResponsible  11   23.006 0.09697 5.2616  0.001 ***
-    ## Residual           539  214.252 0.90303                  
-    ## Total              550  237.258 1.00000                  
+    ## CountryResponsible  11   23.275 0.10276 5.3932  0.001 ***
+    ## Residual           518  203.232 0.89724                  
+    ## Total              529  226.507 1.00000                  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
@@ -589,13 +815,15 @@ We can look for **heterocedasticity** among countries
     ## No. of Negative Eigenvalues: 0
     ## 
     ## Average distance to median:
-    ##   austria   belgium  bulgaria   germany    greece   hungary     italy    latvia lithuania  portugal  slovenia     spain 
-    ##    0.6196    0.6059    0.5416    0.5887    0.4907    0.5711    0.6412    0.5485    0.5783    0.6154    0.5959    0.6310 
+    ##   austria   belgium  bulgaria   germany    greece   hungary     italy    latvia 
+    ##    0.6174    0.5851    0.5416    0.5891    0.4907    0.5711    0.6384    0.4790 
+    ## lithuania  portugal  slovenia     spain 
+    ##    0.5726    0.6068    0.5959    0.6272 
     ## 
     ## Eigenvalues for PCoA axes:
     ## (Showing 8 of 9 eigenvalues)
     ##  PCoA1  PCoA2  PCoA3  PCoA4  PCoA5  PCoA6  PCoA7  PCoA8 
-    ## 63.710 39.977 35.962 29.495 22.832 18.822 15.019  9.756
+    ## 62.576 39.391 35.044 29.197 22.517 18.480 10.848  6.789
 
     ## 
     ## Permutation test for homogeneity of multivariate dispersions
@@ -603,9 +831,11 @@ We can look for **heterocedasticity** among countries
     ## Number of permutations: 999
     ## 
     ## Response: Distances
-    ##            Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)
-    ## Groups     11  0.4642 0.042201 1.5106    999  0.144
-    ## Residuals 539 15.0577 0.027936
+    ##            Df  Sum Sq  Mean Sq      F N.Perm Pr(>F)  
+    ## Groups     11  0.5355 0.048686 1.6889    999  0.076 .
+    ## Residuals 518 14.9326 0.028827                       
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
 The **heterocedasticity** is significant, so we must be carefully
 conclude about the inter-countries differences. There is a Country
@@ -626,24 +856,37 @@ Forest**.
     ##                      Number of trees: 500
     ## No. of variables tried at each split: 3
     ## 
-    ##         OOB estimate of  error rate: 73.68%
+    ##         OOB estimate of  error rate: 76.04%
     ## Confusion matrix:
-    ##           austria belgium bulgaria germany greece hungary italy latvia lithuania portugal slovenia spain class.error
-    ## austria        15       3        0      14      0       0     5      0        21        5        1    10   0.7972973
-    ## belgium         3       9        1       5      0       0     4      0        15        2        0    10   0.8163265
-    ## bulgaria        2       1        5       0      0       0     2      0         0        0        0     0   0.5000000
-    ## germany        10       3        0      32      0       1     6      0        22        4        0     8   0.6279070
-    ## greece          2       0        0       0      0       1     7      0         0        0        1     0   1.0000000
-    ## hungary         2       1        1       0      0       4     5      0         2        0        0     0   0.7333333
-    ## italy           7       4        0       8      0       2    17      0         5        0        1     7   0.6666667
-    ## latvia          2       2        0       1      0       0     0      0         4        0        0     1   1.0000000
-    ## lithuania      12       9        0      20      0       0     4      0        35        1        1     8   0.6111111
-    ## portugal        9       6        1       6      0       0     4      0         6        6        1     6   0.8666667
-    ## slovenia        2       1        0       2      1       0     6      0         5        4        1     2   0.9583333
-    ## spain          11      10        1      15      0       1     9      0        13        3        2    21   0.7558140
+    ##           austria belgium bulgaria germany greece hungary italy latvia
+    ## austria        11       4        0      10      0       0     8      0
+    ## belgium         5       3        1       9      0       0     5      0
+    ## bulgaria        1       1        5       1      0       0     2      0
+    ## germany         7       2        0      27      0       1     6      0
+    ## greece          1       0        0       0      0       1     7      0
+    ## hungary         2       1        1       1      0       3     3      0
+    ## italy           7       3        0       4      0       1    19      0
+    ## latvia          1       1        0       4      0       0     0      0
+    ## lithuania      12       7        0      17      0       0     6      0
+    ## portugal        8       2        0       6      0       0     5      0
+    ## slovenia        3       1        0       3      1       0     4      0
+    ## spain          11      10        1      19      0       1     8      0
+    ##           lithuania portugal slovenia spain class.error
+    ## austria          19        4        2    12   0.8428571
+    ## belgium          10        4        0     7   0.9318182
+    ## bulgaria          0        0        0     0   0.5000000
+    ## germany          26        3        0    11   0.6746988
+    ## greece            0        1        1     0   1.0000000
+    ## hungary           3        1        0     0   0.8000000
+    ## italy             5        2        1     8   0.6200000
+    ## latvia            2        0        0     0   1.0000000
+    ## lithuania        33        2        1    10   0.6250000
+    ## portugal          7        7        1     7   0.8372093
+    ## slovenia          6        3        0     3   1.0000000
+    ## spain            12        2        1    19   0.7738095
 
 Decisions have to be taken carefully since the prediction accuracy is
-very low (0.26). Furthermore, the estimated error rate (OOB) is high, so
+very low (0.24). Furthermore, the estimated error rate (OOB) is high, so
 conclusion have to be taken with care.
 
 Even though, the more important (differential across countries) litter
@@ -653,21 +896,21 @@ components are:
 
 This plot of variable importance importance is telling us:
 
-- A large `MeanDecreaseAccuracy` (**MDA**) means that, when you break
-  the relationship between that predictor and the response, the model’s
-  accuracy suffers a lot → it’s an important predictor for correct
-  country assignments.
+  - A large `MeanDecreaseAccuracy` (**MDA**) means that, when you break
+    the relationship between that predictor and the response, the
+    model’s accuracy suffers a lot → it’s an important predictor for
+    correct country assignments.
 
-- **MDA** is generally the more reliable gauge of predictive importance,
-  since it directly measures impact on OOB‐accuracy.
+  - **MDA** is generally the more reliable gauge of predictive
+    importance, since it directly measures impact on OOB‐accuracy.
 
-- A large `MeanDecreaseGini` (**MDG**) means that X frequently appears
-  in high‑up the tree splits and yields big purity gains → it’s
-  structurally important to partitioning the data.
-
-  - **MDG** is faster to compute and tells you which features the trees
-    “prefer” splitting on, but can overweight high–cardinality or
-    continuous variables.
+  - A large `MeanDecreaseGini` (**MDG**) means that X frequently appears
+    in high‑up the tree splits and yields big purity gains → it’s
+    structurally important to partitioning the data.
+    
+      - **MDG** is faster to compute and tells you which features the
+        trees “prefer” splitting on, but can overweight high–cardinality
+        or continuous variables.
 
 Finally, we will perform a Principal Component Analysis (PCA) to see
 correlation among litter items and *possible* associations with
@@ -677,8 +920,8 @@ countries
 
 And the most important Items for the two forst principal components are:
 
-- First PC
-  ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/PC1VarImportSUP-1.png)<!-- -->
+  - First PC
+    ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/PC1VarImportSUP-1.png)<!-- -->
 
 ![](Plastic_Pirates_EU_Analysis_files/figure-gfm/PC2VarImportSUP-1.png)<!-- -->
 
@@ -687,65 +930,111 @@ And the most important Items for the two forst principal components are:
 ### Data loading
 
     ## # A tibble: 375 × 15
-    ##    DatasetID CountryResponsible SamplingYear SamplingAttempted DatasetQualified SamplingDate SamplingCoordinatesLatitude
-    ##    <fct>     <chr>                     <dbl>             <dbl>            <dbl> <date>                             <dbl>
-    ##  1 at_6270   Austria                    2022                 1                1 2022-10-18                          48.0
-    ##  2 at_6297   Austria                    2022                 1                1 2022-10-22                          48.3
-    ##  3 at_6349   Austria                    2022                 1                1 2022-10-19                          48.1
-    ##  4 at_6372   Austria                    2022                 1                1 2022-11-10                          48.3
-    ##  5 at_6382   Austria                    2022                 1                1 2022-11-08                          47.1
-    ##  6 at_6393   Austria                    2022                 1                1 2022-11-09                          46.6
-    ##  7 at_6414   Austria                    2022                 1                1 2022-11-11                          48.2
-    ##  8 at_6448   Austria                    2022                 1                1 2022-11-11                          46.6
-    ##  9 at_6703   Austria                    2023                 1                1 2023-05-10                          48.4
-    ## 10 at_6718   Austria                    2023                 1                1 2023-05-24                          48.8
+    ##    DatasetID CountryResponsible SamplingYear SamplingAttempted DatasetQualified
+    ##    <fct>     <chr>                     <dbl>             <dbl>            <dbl>
+    ##  1 at_6270   Austria                    2022                 1                1
+    ##  2 at_6297   Austria                    2022                 1                1
+    ##  3 at_6349   Austria                    2022                 1                1
+    ##  4 at_6372   Austria                    2022                 1                1
+    ##  5 at_6382   Austria                    2022                 1                1
+    ##  6 at_6393   Austria                    2022                 1                1
+    ##  7 at_6414   Austria                    2022                 1                1
+    ##  8 at_6448   Austria                    2022                 1                1
+    ##  9 at_6703   Austria                    2023                 1                1
+    ## 10 at_6718   Austria                    2023                 1                1
     ## # ℹ 365 more rows
-    ## # ℹ 8 more variables: SamplingCoordinatesLongitude <dbl>, SamplingRiverSystem <fct>, FloatingMacro_AttemptedSampling <dbl>,
-    ## #   FloatingMacro_Qualified <dbl>, FloatingMacro_ObservationTimeInMinutes <dbl>, FloatingMacro_RiverWidth <fct>,
-    ## #   FloatingMacro_ObservedWidth <fct>, FloatingMacro_AmountOfFloatingMacrolitter <dbl>
+    ## # ℹ 10 more variables: SamplingDate <date>, SamplingCoordinatesLatitude <dbl>,
+    ## #   SamplingCoordinatesLongitude <dbl>, SamplingRiverSystem <fct>,
+    ## #   FloatingMacro_AttemptedSampling <dbl>, FloatingMacro_Qualified <dbl>,
+    ## #   FloatingMacro_ObservationTimeInMinutes <dbl>,
+    ## #   FloatingMacro_RiverWidth <fct>, FloatingMacro_ObservedWidth <fct>,
+    ## #   FloatingMacro_AmountOfFloatingMacrolitter <dbl>
 
 #### Sampling Effor for Floating Data
 
-![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
 #### Macrolitter Flow calculation
 
 The variable `FlowMacrolitter` is represented as the Number of floating
-macrolitter $`m^{-1}`$ $`h^{-1}`$.
+macrolitter \(m^{-1}\) \(h^{-1}\).
 
     ## # A tibble: 375 × 18
-    ##    DatasetID CountryResponsible SamplingYear SamplingAttempted DatasetQualified SamplingDate SamplingCoordinatesLatitude
-    ##    <fct>     <chr>                     <dbl>             <dbl>            <dbl> <date>                             <dbl>
-    ##  1 at_6270   Austria                    2022                 1                1 2022-10-18                          48.0
-    ##  2 at_6297   Austria                    2022                 1                1 2022-10-22                          48.3
-    ##  3 at_6349   Austria                    2022                 1                1 2022-10-19                          48.1
-    ##  4 at_6372   Austria                    2022                 1                1 2022-11-10                          48.3
-    ##  5 at_6382   Austria                    2022                 1                1 2022-11-08                          47.1
-    ##  6 at_6393   Austria                    2022                 1                1 2022-11-09                          46.6
-    ##  7 at_6414   Austria                    2022                 1                1 2022-11-11                          48.2
-    ##  8 at_6448   Austria                    2022                 1                1 2022-11-11                          46.6
-    ##  9 at_6703   Austria                    2023                 1                1 2023-05-10                          48.4
-    ## 10 at_6718   Austria                    2023                 1                1 2023-05-24                          48.8
+    ##    DatasetID CountryResponsible SamplingYear SamplingAttempted DatasetQualified
+    ##    <fct>     <chr>                     <dbl>             <dbl>            <dbl>
+    ##  1 at_6270   Austria                    2022                 1                1
+    ##  2 at_6297   Austria                    2022                 1                1
+    ##  3 at_6349   Austria                    2022                 1                1
+    ##  4 at_6372   Austria                    2022                 1                1
+    ##  5 at_6382   Austria                    2022                 1                1
+    ##  6 at_6393   Austria                    2022                 1                1
+    ##  7 at_6414   Austria                    2022                 1                1
+    ##  8 at_6448   Austria                    2022                 1                1
+    ##  9 at_6703   Austria                    2023                 1                1
+    ## 10 at_6718   Austria                    2023                 1                1
     ## # ℹ 365 more rows
-    ## # ℹ 11 more variables: SamplingCoordinatesLongitude <dbl>, SamplingRiverSystem <fct>, FloatingMacro_AttemptedSampling <dbl>,
-    ## #   FloatingMacro_Qualified <dbl>, FloatingMacro_ObservationTimeInMinutes <dbl>, FloatingMacro_RiverWidth <fct>,
-    ## #   FloatingMacro_ObservedWidth <fct>, FloatingMacro_AmountOfFloatingMacrolitter <dbl>, TimeInHours <dbl>, RiverWidth <dbl>,
-    ## #   FlowMacrolitter <dbl>
+    ## # ℹ 13 more variables: SamplingDate <date>, SamplingCoordinatesLatitude <dbl>,
+    ## #   SamplingCoordinatesLongitude <dbl>, SamplingRiverSystem <fct>,
+    ## #   FloatingMacro_AttemptedSampling <dbl>, FloatingMacro_Qualified <dbl>,
+    ## #   FloatingMacro_ObservationTimeInMinutes <dbl>,
+    ## #   FloatingMacro_RiverWidth <fct>, FloatingMacro_ObservedWidth <fct>,
+    ## #   FloatingMacro_AmountOfFloatingMacrolitter <dbl>, TimeInHours <dbl>, …
 
 #### Macrolitter Flow Visualization
 
 ##### Differences across countries
 
-![](Plastic_Pirates_EU_Analysis_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+Notes on the figures:
 
-- **Statistical test**
+  - **All sampling years are always shown** for every country.
+    Country-year combinations without valid data are labelled **n.d.**
+    (no data). This covers both years without floating samplings and
+    years where the flow could not be calculated (e.g. the river width
+    is missing).
+  - The number above each box is the number of valid samplings (*n*).
+  - Most flow values are exactly 0, so the y-axis uses a **square-root
+    scale**. This spreads out the small values near zero while keeping
+    the zeros, which a log scale cannot show. All observations are drawn
+    as points over the boxes.
+  - No observations are removed from the plot. The previous version used
+    `scale_y_continuous(limits = c(0, 1))`, which **dropped** the values
+    above 1 before computing the boxplots.
 
-  - Generalize linear mixed model (Tweedie)
+<!-- end list -->
 
-  Family error distribution was selected due to the data restriction
-  (only positive values with high numbers of zeroes)
+    ## # A tibble: 27 × 5
+    ##    CountryResponsible SamplingYear n_samplings n_valid label
+    ##    <chr>              <fct>              <int>   <int> <chr>
+    ##  1 Austria            2022                   8       8 8    
+    ##  2 Austria            2023                  38      36 36   
+    ##  3 Austria            2024                  35      33 33   
+    ##  4 Belgium            2022                  16       0 n.d. 
+    ##  5 Belgium            2023                   0       0 n.d. 
+    ##  6 Belgium            2024                  19      18 18   
+    ##  7 Greece             2022                   8       8 8    
+    ##  8 Greece             2023                   2       2 2    
+    ##  9 Greece             2024                   2       1 1    
+    ## 10 Hungary            2022                  14       8 8    
+    ## # ℹ 17 more rows
 
-<!-- -->
+  - Boxplots per country, with the sampling years nested within each
+    country on the x-axis:
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/FloatingMacrolitterCountries-1.png)<!-- -->
+
+  - Same data with one panel per sampling year (`facet_grid`), to
+    compare countries within each year:
+
+![](Plastic_Pirates_EU_Analysis_files/figure-gfm/FloatingMacrolitterCountriesYears-1.png)<!-- -->
+
+  - **Statistical test**
+    
+      - Generalize linear mixed model (Tweedie)
+    
+    Family error distribution was selected due to the data restriction
+    (only positive values with high numbers of zeroes)
+
+<!-- end list -->
 
     ##  Family: tweedie  ( log )
     ## Formula:          FlowMacrolitter ~ CountryResponsible
@@ -781,9 +1070,9 @@ macrolitter $`m^{-1}`$ $`h^{-1}`$.
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-- Posthoc with multple comparisons
+  - Posthoc with multple comparisons
 
-<!-- -->
+<!-- end list -->
 
     ##  contrast                ratio       SE  df null z.ratio p.value
     ##  Austria / Belgium    9.00e+00 9.00e+00 Inf    1   2.139  0.4464
