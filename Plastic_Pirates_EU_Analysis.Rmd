@@ -18,7 +18,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 
 # Set to TRUE to (re)write all figures to OUTPUT/FIGURES when rendering or running the Rmd
-save_figures <- FALSE
+save_figures <- TRUE
 ```
 
 
@@ -2219,22 +2219,74 @@ FlowData
 
 ##### Differences across countries
 
-```{r}
-Floating_Macrolitter_Countries <- 
-FlowData %>%
- # group_by(CountryResponsible, SamplingYear) %>% 
- #  dplyr::summarise(Av_FlowMacrolitter = mean(FlowMacrolitter, na.rm = TRUE), 
- #                   SE_FlowMacrolitter = sd(FlowMacrolitter, na.rm = TRUE)/sqrt(n()), .groups = "drop") %>% 
-  #ggplot(., aes(x = reorder(CountryResponsible, -Av_FlowMacrolitter), y = Av_FlowMacrolitter)) +
-  ggplot(., aes(x = CountryResponsible, y = FlowMacrolitter)) +
-  # geom_errorbar(aes(ymin = Av_FlowMacrolitter - SE_FlowMacrolitter, ymax = Av_FlowMacrolitter + SE_FlowMacrolitter), width = 0.2) +
-  # geom_bar(stat = "identity") +
-  geom_boxplot(na.rm = TRUE, aes(fill = factor(SamplingYear))) +
-  scale_y_continuous(limits = c(0, 1), expand = c(0.01,0)) +
-  #geom_text(aes(label = sprintf("%.1f", round(Av_Abundance, digits = 1))), vjust = 1.4, size = 3.5, colour = "white") +
-  labs(x = "",  y = expression(Floating~macrolitter~(m^{-1}~h^{-1})), title = '', subtitle = "", fill = "Sampling Year") +
+Notes on the figures:
+
+* **All sampling years are always shown** for every country. Country-year combinations without valid data are labelled **n.d.** (no data). This covers both years without floating samplings and years where the flow could not be calculated (e.g. the river width is missing).
+* The number above each box is the number of valid samplings (*n*).
+* Most flow values are exactly 0, so the y-axis uses a **square-root scale**. This spreads out the small values near zero while keeping the zeros, which a log scale cannot show. All observations are drawn as points over the boxes.
+* No observations are removed from the plot. The previous version used `scale_y_continuous(limits = c(0, 1))`, which **dropped** the values above 1 before computing the boxplots.
+
+```{r FlowPlotData, message=FALSE, warning=FALSE}
+# Sampling years and colours (same palette as the rest of the document)
+flow_years  <- sort(unique(FlowData$SamplingYear))
+year_colors <- c("2021" = "#E0FFFF", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")
+
+# Valid observations only (flow could be calculated)
+Flow_plot_data <-
+  FlowData %>%
+  dplyr::filter(!is.na(FlowMacrolitter)) %>%
+  dplyr::mutate(SamplingYear = factor(SamplingYear, levels = flow_years))
+
+# Number of samplings and valid values for every country-year combination,
+# including those without any sampling (n = 0)
+Flow_n <-
+  FlowData %>%
+  dplyr::mutate(SamplingYear = factor(SamplingYear, levels = flow_years)) %>%
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(n_samplings = n(),
+            n_valid     = sum(!is.na(FlowMacrolitter)),
+            .groups = "drop") %>%
+  complete(CountryResponsible, SamplingYear,
+           fill = list(n_samplings = 0L, n_valid = 0L)) %>%
+  dplyr::mutate(label = if_else(n_valid == 0, "n.d.", as.character(n_valid)))
+
+# Common y-axis (square-root scale, keeps the zeros)
+flow_y_scale <-
+  scale_y_sqrt(breaks = c(0, 0.05, 0.25, 0.5, 1, 2, 4, 6),
+               expand = expansion(mult = c(0.02, 0.12)))
+
+Flow_n
+```
+
+* Boxplots per country, with the sampling years nested within each country on the x-axis:
+
+```{r FloatingMacrolitterCountries, message=FALSE, warning=FALSE, fig.width=12, fig.height=6}
+Floating_Macrolitter_Countries <-
+  ggplot(Flow_plot_data, aes(x = SamplingYear, y = FlowMacrolitter, fill = SamplingYear)) +
+  geom_boxplot(outlier.shape = NA, width = 0.7) +
+  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 123),
+             size = 0.8, alpha = 0.4) +
+  # n (valid samplings) above each box, or "n.d." when there are no data
+  geom_text(data = Flow_n,
+            aes(x = SamplingYear, y = Inf, label = label,
+                fontface = if_else(n_valid == 0, "italic", "plain")),
+            inherit.aes = FALSE, vjust = 1.5, size = 2.6) +
+  # One panel per country; years nested below, country names under the years
+  facet_grid(. ~ CountryResponsible, switch = "x") +
+  scale_x_discrete(drop = FALSE) +
+  flow_y_scale +
+  scale_fill_manual(values = year_colors, drop = FALSE) +
+  labs(x = NULL,
+       y = expression(Floating~macrolitter~(m^{-1}~h^{-1})~"(square-root scale)"),
+       fill = "Sampling Year") +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
+  theme(strip.placement  = "outside",
+        strip.background = element_blank(),
+        strip.text       = element_text(face = "bold", size = 9),
+        panel.spacing.x  = unit(0.15, "lines"),
+        panel.border     = element_rect(colour = "grey80", fill = NA),
+        axis.text.x      = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 8),
+        legend.position  = "none")
 
 Floating_Macrolitter_Countries
 ```
@@ -2242,7 +2294,45 @@ Floating_Macrolitter_Countries
 ```{r, include=FALSE}
 # Save the plot
 if (save_figures) {
-  ggsave(filename = "Floating_Macrolitter_Countries.png", plot = Floating_Macrolitter_Countries, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+  ggsave(filename = "Floating_Macrolitter_Countries.png", plot = Floating_Macrolitter_Countries, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 26, height = 13, units = "cm", dpi = 300, limitsize = FALSE)
+}
+```
+
+* Same data with one panel per sampling year (`facet_grid`), to compare countries within each year:
+
+```{r FloatingMacrolitterCountriesYears, message=FALSE, warning=FALSE, fig.width=10, fig.height=9}
+Floating_Macrolitter_Countries_Years <-
+  ggplot(Flow_plot_data, aes(x = CountryResponsible, y = FlowMacrolitter, fill = SamplingYear)) +
+  geom_boxplot(outlier.shape = NA, width = 0.6) +
+  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 123),
+             size = 0.8, alpha = 0.4) +
+  # n (valid samplings) above each box, or "n.d." when there are no data
+  geom_text(data = Flow_n,
+            aes(x = CountryResponsible, y = Inf, label = label,
+                fontface = if_else(n_valid == 0, "italic", "plain")),
+            inherit.aes = FALSE, vjust = 1.5, size = 2.8) +
+  # One row per sampling year (all years kept, even without data)
+  facet_grid(SamplingYear ~ ., drop = FALSE) +
+  scale_x_discrete(drop = FALSE) +
+  flow_y_scale +
+  scale_fill_manual(values = year_colors, drop = FALSE) +
+  labs(x = NULL,
+       y = expression(Floating~macrolitter~(m^{-1}~h^{-1})~"(square-root scale)"),
+       fill = "Sampling Year") +
+  theme_classic() +
+  theme(strip.background = element_rect(fill = "grey95", colour = "grey60"),
+        strip.text       = element_text(face = "bold"),
+        panel.border     = element_rect(colour = "grey80", fill = NA),
+        axis.text.x      = element_text(angle = 45, hjust = 1),
+        legend.position  = "none")
+
+Floating_Macrolitter_Countries_Years
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  ggsave(filename = "Floating_Macrolitter_Countries_Years.png", plot = Floating_Macrolitter_Countries_Years, path = paste(getwd(), "/OUTPUT/FIGURES", sep = ""), scale = 1, width = 20, height = 18, units = "cm", dpi = 300, limitsize = FALSE)
 }
 ```
 
