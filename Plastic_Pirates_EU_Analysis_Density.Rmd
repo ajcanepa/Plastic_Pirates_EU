@@ -1,0 +1,2679 @@
+---
+title: "Plastic Pirates EU Analysis - Litter density (items/m²)"
+author: "Dr. Antonio Canepa-Oneto & Dr. Patricia De La Fuente-Gamero"
+date: "`r Sys.Date()`"
+output:
+  html_document: # rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", "html_document")
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    df_print: paged
+    keep_md: false
+  md_document: # usar esto para el .md rmarkdown::render("Plastic_Pirates_EU_Analysis.Rmd", output_format = "md_document")
+    variant: gfm 
+always_allow_html: true # allows interactive tables (DT) in the .md (shown as images if webshot2 is installed)
+# The Knit button renders both outputs (.html and .md) in one go
+knit: (function(input, ...) rmarkdown::render(input, output_format = "all", envir = globalenv()))
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+# Set to TRUE to (re)write all figures to OUTPUT/FIGURES/DENSITY when rendering or running the Rmd
+save_figures <- TRUE
+
+# Figures of this (density) version go to their own folder, so the figures of
+# Plastic_Pirates_EU_Analysis.Rmd (absolute frequencies) are not overwritten
+fig_dir <- file.path(getwd(), "OUTPUT", "FIGURES", "DENSITY")
+if (save_figures) dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
+
+# Area filters for the Group B (riverside) samplings
+max_length_m <- 1000  # samplings with a searched length above this value (m) are removed
+max_width_m  <- Inf   # no width limit by default (change it to also remove very wide areas)
+```
+
+**Density version.** This document repeats all the analyses of `Plastic_Pirates_EU_Analysis.Rmd`, but every Riverside (Group B) litter count is standardised by the searched area and expressed as **items/m²**. The area of each sampling is length × width of the riverbank searched. Samplings with a missing length or width, a searched length above `r max_length_m` m, or a zero area are removed completely. The Floating data section is unchanged.
+
+
+# Data Analysis
+
+## Loading Packages
+
+Loading R packages necessary to perform the __EDA__.
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(readxl)
+library(writexl)
+library(DT)
+library(patchwork)
+library(lubridate)
+library(scales)
+library(vegan)       # decostand(), rda(), adonis2()
+library(factoextra)  # fviz_pca_biplot(), fviz_dend()
+library(pvclust)
+library(randomForest)
+library(RColorBrewer)
+library(tidyHeatmap) # Requieres ComplexHeatmap --> BiocManager::install("ComplexHeatmap")
+library(stringr)
+library(glmmTMB) 
+library(emmeans)
+library(multcomp)
+```
+
+## Data loading
+
+```{r DataLoading, message=FALSE, warning=FALSE}
+# Cargamos los datos incorporando las modificaciones para trabajar con él
+# https://zenodo.org/records/15535434
+# Cuidado con el nombre de los ríos, hay besòs y bessos.
+Riverbank <- 
+  read.csv(file = "PlasticPirates_Riverbank_data/Riverbank_data_v2.0.0.csv", header = TRUE, sep = ",", na.strings = c("na", "NA")) %>% 
+  dplyr::mutate(SamplingDate = lubridate::ymd(SamplingDate)) %>% 
+  dplyr::mutate(across(where(is.character), as.factor))
+```
+
+## Pre-proccessing
+
+```{r RiversName, message=FALSE, warning=FALSE}
+# Loading the rivers' dictionary
+Riverbank_dictionary <- read_excel("Riverbank_data_v2.1.xlsx", sheet = "Final vocabulary clean")
+
+Riverbank <-
+  Riverbank %>%
+  # The dictionary has one row per river AND country (e.g. "donau" for Austria and Germany),
+  # so joining only by river would duplicate those samplings
+  left_join(Riverbank_dictionary, by = c("SamplingRiver", "CountryResponsible" = "Country"),
+            relationship = "many-to-one") %>%
+    #dplyr::select(SamplingRiver, Corrected_river_English, SamplingRiverSystem, River_basin, everything()) %>% 
+    dplyr::mutate(River_basin = str_remove(River_basin, regex("\\s+Basin$", ignore_case = TRUE))) %>% 
+  dplyr::mutate(SamplingRiver = coalesce(Corrected_river_English, SamplingRiver),
+         SamplingRiverSystem = River_basin) %>% 
+  dplyr::select(-c("No", "Corrected_river", "Corrected_river_English", "River_basin", "Count of SamplingRiver")) %>%
+  # 2021 has a single (non-validated) sampling from one country, so it is excluded from the whole analysis
+  dplyr::filter(SamplingYear != 2021)
+
+```
+
+
+## RESEARCH QUESTIONS
+
+### Citizens Description
+
+#### Numer of samplings per year and country
+
+* Table 
+
+```{r EDACountries, message=FALSE, warning=FALSE}
+Riverbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Num_Sampling = n())
+```
+
+* Plot
+
+```{r EDACountriesPlot, message=FALSE, warning=FALSE}
+Temp_Num_Samp_Campaigns <- 
+Riverbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Num_Sampling = n(), .groups = 'drop') %>%
+    # Capitalizar primera letra de cada país
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  # Crear todas las combinaciones posibles de país y año
+  complete(CountryResponsible, SamplingYear, fill = list(Num_Sampling = 0)) %>%
+  # Ordenar por total acumulado
+  #dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Num_Sampling, sum)) %>%
+  ggplot(aes(x = CountryResponsible, y = Num_Sampling, fill = factor(SamplingYear))) +
+  geom_bar(stat = "identity", position = "dodge", colour = 'black') +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  # Paleta de colores con intensidad creciente hacia 2024
+  scale_fill_manual(values = c("2021" = "#E0FFFF", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(x = "", 
+       y = "Number of samplings campaigns",
+       fill = "Sampling Year")
+
+Temp_Num_Samp_Campaigns
+
+if (save_figures) ggsave(filename = "Temporal_Number_Campaigns_Density.png", plot = Temp_Num_Samp_Campaigns, path = fig_dir, scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+#### Numer of Rivers sampled per year and country
+
+*  Table
+
+```{r EDARivers, message=FALSE, warning=FALSE}
+Riverbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Rivers = n_distinct(SamplingRiver))
+```
+
+* Plot (without numbers)
+
+```{r EDARiversPlot, message=FALSE, warning=FALSE}
+Riverbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
+  # Capitalizar primera letra de cada país
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  # Crear todas las combinaciones posibles de país y año
+  complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) %>%
+  # Ordenar por total acumulado de ríos
+  #dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum)) %>%
+  ggplot(aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
+  geom_bar(stat = "identity", position = "dodge", colour = 'black') +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  # Paleta de colores con intensidad creciente hacia 2024
+  scale_fill_manual(values = c("2021" = "#E0FFFF", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(x = "", 
+       y = "Number of rivers",
+       fill = "Sampling Year")
+```
+
+* Plot (with numbers)
+
+```{r EDARiversPlotNum, message=FALSE, warning=FALSE}
+# Preparar los datos
+plot_data <- 
+  Riverbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(Rivers = n_distinct(SamplingRiver), .groups = 'drop') %>%
+  # Capitalizar primera letra de cada país
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  # Crear todas las combinaciones posibles de país y año
+  complete(CountryResponsible, SamplingYear, fill = list(Rivers = 0)) #%>%
+  # Ordenar por total acumulado de ríos
+  #dplyr::mutate(CountryResponsible = reorder(CountryResponsible, -Rivers, sum))
+
+# Crear el gráfico
+Num_rios_year <- 
+ggplot(plot_data, aes(x = CountryResponsible, y = Rivers, fill = factor(SamplingYear))) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), colour = "black") +
+# Etiquetas encima de cada barra
+  geom_text(aes(label = Rivers), position = position_dodge(width = 0.9), vjust = -0.3, # coloca el texto encima
+    color = "black", # color negro como quieres 
+    fontface = "bold", size = 3
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "right") +
+  scale_fill_manual(values = c(
+    "2021" = "#E0FFFF",
+    "2022" = "#B8D4F0",
+    "2023" = "#4A90E2",
+    "2024" = "#1E3A8A"
+  )) +
+# Más espacio arriba para que no se corten las etiquetas
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(x = "", y = "Number of rivers", fill = "Sampling Year")
+
+print(Num_rios_year)
+
+if (save_figures) ggsave(filename = "Temporal_Number_Rivers_Density.png", plot = Num_rios_year, path = fig_dir, scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+Crearemos una sola figura con las dos gráficas.
+
+```{r}
+# Gráfica combinada
+Sampling_effort <-
+  Temp_Num_Samp_Campaigns + Num_rios_year +
+  plot_layout(ncol = 2, widths = c(1.4, 1.6), guides = "collect") &
+  theme(plot.margin = ggplot2::margin(t = 5, r = 11, b = 5, l = 11, unit = "pt"),
+  legend.box.spacing  = unit(-8, "pt"),
+  legend.position = "bottom")  # o "right", "top", "left"
+
+print(Sampling_effort)
+
+if (save_figures) ggsave(filename = "Sampling_effort_combined_Density.png", plot = Sampling_effort, path = fig_dir, scale = 2, width = 20, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+### Sampling Effort Description
+
+The sampling effort of each Group B survey is defined by the size of the riverbank area searched, recorded in two attributes:
+
+* `RiversideWasteVariety_Results_LengthOfRiverbankSearchedM`: length of the riverbank searched (m).
+* `RiversideWasteVariety_Results_WidthOfRiverbankSearchedM`: width of the riverbank searched (m).
+
+According to the dataset documentation (`READme_info_riverbank_v2.0.0.txt`), *"Data for length and width of riverbank searched for group B could not always be verified by the experts"*. Therefore, before using them (e.g. to standardise litter counts per m²), we describe (i) the amount of missing values and (ii) their variability, looking for outliers.
+
+**Note:** the CSV codes missing values both as `"na"` and as `"NA"`. Both are declared as missing in `DataLoading` (`na.strings = c("na", "NA")`), so length and width are read as numeric. Otherwise, the width attribute would be read as text because of the literal `"NA"` cells.
+
+```{r SamplingEffortData, message=FALSE, warning=FALSE}
+# Sampling effort dataset with short column names
+Sampling_effort_data <-
+  Riverbank %>%
+  dplyr::transmute(
+    DatasetID,
+    CountryResponsible = str_to_title(CountryResponsible),
+    SamplingYear,
+    SamplingRiver,
+    # Same criteria as GroupB_data_validated (NA counts as FALSE)
+    Attempted = coalesce(RiversideWasteVariety_AttemptedSampling == 1, FALSE),
+    Validated = coalesce(RiversideWasteVariety_AttemptedSampling == 1 &
+                           RiversideWasteVariety_Qualified == 1, FALSE),
+    Length_m = RiversideWasteVariety_Results_LengthOfRiverbankSearchedM,
+    Width_m  = RiversideWasteVariety_Results_WidthOfRiverbankSearchedM,
+    Area_m2  = Length_m * Width_m
+  )
+
+# Validated subset (the one used in the Group B analyses)
+Sampling_effort_validated <- Sampling_effort_data %>% dplyr::filter(Validated)
+```
+
+#### Missing values
+
+For each attribute we count the missing values (`NA`), and for the combination of both we count the *complete cases* (rows with both length and width). The *Incomplete* columns show how many records, and what percentage of the total, would be removed if we kept only complete cases. This is shown for the whole dataset, for the attempted samplings and for the validated Group B samplings (the subset used in the analyses).
+
+```{r SamplingEffortNA, message=FALSE, warning=FALSE}
+# Summary of missing values (n and %) for length, width and their combination
+na_summary <- function(data, subset_name) {
+  data %>%
+    summarise(
+      Subset                 = subset_name,
+      N                      = n(),
+      `NA Length (n)`        = sum(is.na(Length_m)),
+      `NA Length (%)`        = round(100 * mean(is.na(Length_m)), 1),
+      `NA Width (n)`         = sum(is.na(Width_m)),
+      `NA Width (%)`         = round(100 * mean(is.na(Width_m)), 1),
+      `NA Both (n)`          = sum(is.na(Length_m) & is.na(Width_m)),
+      `Incomplete (n)`       = sum(is.na(Length_m) | is.na(Width_m)),
+      `Incomplete (%)`       = round(100 * mean(is.na(Length_m) | is.na(Width_m)), 1),
+      `Complete cases (n)`   = sum(!is.na(Length_m) & !is.na(Width_m)),
+      `Complete cases (%)`   = round(100 * mean(!is.na(Length_m) & !is.na(Width_m)), 1)
+    )
+}
+
+Sampling_effort_NA <-
+  bind_rows(
+    na_summary(Sampling_effort_data, "All records"),
+    na_summary(dplyr::filter(Sampling_effort_data, Attempted), "Attempted sampling"),
+    na_summary(Sampling_effort_validated, "Validated (Group B)")
+  )
+
+Sampling_effort_NA
+```
+
+In the validated Group B dataset, `r Sampling_effort_NA$"Incomplete (n)"[3]` out of `r Sampling_effort_NA$N[3]` samplings (`r Sampling_effort_NA$"Incomplete (%)"[3]`%) lack the length, the width or both. Keeping only complete cases would remove that share of the data.
+
+Missing values per country (validated Group B samplings), to check whether they are concentrated in a few countries:
+
+```{r SamplingEffortNACountry, message=FALSE, warning=FALSE}
+Sampling_effort_validated %>%
+  group_by(CountryResponsible) %>%
+  summarise(
+    N                    = n(),
+    `NA Length (n)`      = sum(is.na(Length_m)),
+    `NA Width (n)`       = sum(is.na(Width_m)),
+    `Incomplete (n)`     = sum(is.na(Length_m) | is.na(Width_m)),
+    `Incomplete (%)`     = round(100 * mean(is.na(Length_m) | is.na(Width_m)), 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(`Incomplete (%)`))
+```
+
+#### Variability and outliers
+
+Descriptive statistics of the validated Group B samplings. Zero values are also counted, since a searched length or width of 0 m is not plausible.
+
+Both attributes are strongly concentrated around a few "standard" values (most samplings searched about 50 m × 20 m) and have long right tails. Under these conditions Tukey's IQR rule is not useful: the width IQR is very narrow (15–20 m), so the rule flags around a quarter of the samplings as outliers, even on a log scale. Instead, we flag as **extreme values** those below the lower or above the upper percentile set in `pct_limits` (by default the 1st and 99th percentiles), plus all zero values. The limits can be changed to make the criterion more or less strict.
+
+```{r SamplingEffortStats, message=FALSE, warning=FALSE}
+# Percentiles defining the extreme values (change them for a more/less strict criterion)
+pct_limits <- c(0.01, 0.99)
+
+Sampling_effort_stats <-
+  Sampling_effort_validated %>%
+  dplyr::select(Length_m, Width_m, Area_m2) %>%
+  pivot_longer(everything(), names_to = "Variable", values_to = "Value") %>%
+  dplyr::mutate(Variable = factor(Variable, levels = c("Length_m", "Width_m", "Area_m2"))) %>%
+  group_by(Variable) %>%
+  summarise(
+    n            = sum(!is.na(Value)),
+    `NA`         = sum(is.na(Value)),
+    Zeros        = sum(Value == 0, na.rm = TRUE),
+    Min          = min(Value, na.rm = TRUE),
+    P_low        = quantile(Value, pct_limits[1], na.rm = TRUE),
+    Q1           = quantile(Value, 0.25, na.rm = TRUE),
+    Median       = median(Value, na.rm = TRUE),
+    Mean         = round(mean(Value, na.rm = TRUE), 1),
+    Q3           = quantile(Value, 0.75, na.rm = TRUE),
+    P_high       = quantile(Value, pct_limits[2], na.rm = TRUE),
+    Max          = max(Value, na.rm = TRUE),
+    `Extreme (n)` = sum(Value < P_low | Value > P_high | Value == 0, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+Sampling_effort_stats
+```
+
+Both attributes are strongly right-skewed (the mean is much higher than the median), so the histograms use a logarithmic x-axis. Zero values cannot be shown on a log scale and are excluded from the plots (they are counted in the table above). The solid line marks the median and the dashed lines the percentile limits. The scatter plot combines both attributes; the grey diagonal lines show constant searched areas (100, 1,000, 10,000 and 100,000 m²).
+
+```{r SamplingEffortPlot, message=FALSE, warning=FALSE, fig.width=12, fig.height=9}
+# Limits (percentiles) and medians for the figures
+get_stat <- function(var, stat) {
+  Sampling_effort_stats %>% dplyr::filter(Variable == var) %>% pull(all_of(stat))
+}
+lim_L <- c(get_stat("Length_m", "P_low"), get_stat("Length_m", "P_high"))
+lim_W <- c(get_stat("Width_m",  "P_low"), get_stat("Width_m",  "P_high"))
+med_L <- get_stat("Length_m", "Median")
+med_W <- get_stat("Width_m",  "Median")
+
+# Classify each sampling as extreme in length, width or both
+Sampling_effort_validated <-
+  Sampling_effort_validated %>%
+  dplyr::mutate(
+    Extreme_L = Length_m < lim_L[1] | Length_m > lim_L[2] | Length_m == 0,
+    Extreme_W = Width_m  < lim_W[1] | Width_m  > lim_W[2] | Width_m  == 0,
+    # A missing value does not count as extreme; NA only when both are missing
+    Extreme   = case_when(
+      is.na(Extreme_L) & is.na(Extreme_W)                     ~ NA_character_,
+      coalesce(Extreme_L, FALSE) & coalesce(Extreme_W, FALSE) ~ "Length & Width",
+      coalesce(Extreme_L, FALSE)                              ~ "Length",
+      coalesce(Extreme_W, FALSE)                              ~ "Width",
+      TRUE                                                    ~ "None"
+    ),
+    Extreme = factor(Extreme, levels = c("None", "Length", "Width", "Length & Width"))
+  )
+
+Sampling_effort_plot_data <-
+  Sampling_effort_validated %>%
+  dplyr::filter(Length_m > 0, Width_m > 0) %>%
+  arrange(Extreme)  # extreme values are drawn on top
+
+# Length histogram
+Hist_length <-
+  Sampling_effort_validated %>%
+  dplyr::filter(Length_m > 0) %>%
+  ggplot(aes(x = Length_m)) +
+  geom_histogram(bins = 40, fill = "#4A90E2", colour = "black") +
+  geom_vline(xintercept = med_L, linewidth = 0.8) +
+  geom_vline(xintercept = lim_L, linetype = "dashed", linewidth = 0.8) +
+  scale_x_log10(labels = label_comma()) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  labs(x = "Length of riverbank searched (m, log scale)", y = "Number of samplings") +
+  theme_classic()
+
+# Width histogram
+Hist_width <-
+  Sampling_effort_validated %>%
+  dplyr::filter(Width_m > 0) %>%
+  ggplot(aes(x = Width_m)) +
+  geom_histogram(bins = 40, fill = "#B8D4F0", colour = "black") +
+  geom_vline(xintercept = med_W, linewidth = 0.8) +
+  geom_vline(xintercept = lim_W, linetype = "dashed", linewidth = 0.8) +
+  scale_x_log10(labels = label_comma()) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  labs(x = "Width of riverbank searched (m, log scale)", y = "Number of samplings") +
+  theme_classic()
+
+# Length vs width scatter plot, with constant-area lines (L * W = A  ->  W = A / L)
+Scatter_LW <-
+  ggplot(Sampling_effort_plot_data, aes(x = Length_m, y = Width_m)) +
+  geom_abline(intercept = log10(c(1e2, 1e3, 1e4, 1e5)), slope = -1,
+              colour = "grey70", linetype = "dotted") +
+  geom_vline(xintercept = lim_L, linetype = "dashed", colour = "grey40") +
+  geom_hline(yintercept = lim_W, linetype = "dashed", colour = "grey40") +
+  geom_point(aes(fill = Extreme), shape = 21, size = 2.5, alpha = 0.8,
+             position = position_jitter(width = 0.02, height = 0.02, seed = 123)) +
+  scale_x_log10(labels = label_comma()) +
+  scale_y_log10(labels = label_comma()) +
+  scale_fill_manual(values = c("None" = "grey80", "Length" = "#4A90E2",
+                               "Width" = "#E69F00", "Length & Width" = "#D55E00")) +
+  labs(x = "Length of riverbank searched (m, log scale)",
+       y = "Width of riverbank searched (m, log scale)",
+       fill = "Extreme value") +
+  theme_classic() +
+  theme(legend.position = "bottom")
+
+# Combined figure: histograms on top, scatter plot below
+Sampling_effort_area <-
+  (Hist_length + Hist_width) / Scatter_LW +
+  plot_layout(heights = c(1, 1.6)) +
+  plot_annotation(tag_levels = "A")
+
+print(Sampling_effort_area)
+
+if (save_figures) ggsave(filename = "Sampling_effort_area_Density.png", plot = Sampling_effort_area, path = fig_dir, scale = 1.5, width = 20, height = 16, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+Distribution of length and width per country, to check whether outliers are specific to some countries (zero values excluded):
+
+```{r SamplingEffortCountryPlot, message=FALSE, warning=FALSE, fig.width=12, fig.height=6}
+Sampling_effort_country <-
+  Sampling_effort_validated %>%
+  dplyr::select(CountryResponsible, Length_m, Width_m) %>%
+  pivot_longer(c(Length_m, Width_m), names_to = "Variable", values_to = "Value") %>%
+  dplyr::filter(Value > 0) %>%
+  dplyr::mutate(Variable = recode(Variable, Length_m = "Length (m)", Width_m = "Width (m)")) %>%
+  ggplot(aes(x = CountryResponsible, y = Value)) +
+  geom_boxplot(fill = "#B8D4F0", outlier.shape = NA) +
+  # Horizontal jitter only, so the plotted values are not altered
+  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 123),
+             size = 1, alpha = 0.4) +
+  scale_y_log10(labels = label_comma()) +
+  facet_wrap(~ Variable, scales = "free_y") +
+  labs(x = NULL, y = "Value (log scale)") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+print(Sampling_effort_country)
+```
+
+List of the validated samplings with extreme values (outside the percentile limits, or zero) in length or width, ordered by searched area, for manual checking:
+
+```{r SamplingEffortOutliers, message=FALSE, warning=FALSE}
+Sampling_effort_outliers <-
+  Sampling_effort_validated %>%
+  dplyr::filter(Extreme_L | Extreme_W) %>%
+  dplyr::select(DatasetID, CountryResponsible, SamplingYear, SamplingRiver,
+                Length_m, Width_m, Area_m2, Extreme) %>%
+  arrange(desc(Area_m2))
+
+Sampling_effort_outliers
+```
+
+#### Area filter for density (items/m²)
+
+To express the litter counts as densities, each validated Group B sampling is divided by its searched area (`Area_m2 = Length_m × Width_m`). Samplings are removed completely when:
+
+* the length or the width is missing (`NA`);
+* the searched length is above `r max_length_m` m (`max_length_m`), or the width is above `max_width_m` (no limit by default);
+* the area is 0 (a length or width of 0 m), because the density cannot be calculated.
+
+```{r AreaFilter, message=FALSE, warning=FALSE}
+Area_filter <-
+  Sampling_effort_validated %>%
+  dplyr::mutate(
+    Reason = case_when(
+      is.na(Length_m) | is.na(Width_m)           ~ "Missing length or width",
+      Length_m > max_length_m                    ~ paste0("Length > ", max_length_m, " m"),
+      Width_m  > max_width_m                     ~ paste0("Width > ", max_width_m, " m"),
+      Area_m2 == 0                               ~ "Zero area",
+      TRUE                                       ~ "Kept"
+    ),
+    Keep = Reason == "Kept"
+  )
+
+# DatasetID of the samplings used in all density analyses
+Area_kept_IDs <- Area_filter %>% dplyr::filter(Keep) %>% pull(DatasetID)
+
+# Number of samplings per reason
+Area_filter %>% count(Reason, name = "Samplings")
+
+# Removed samplings, for manual checking
+Area_filter %>%
+  dplyr::filter(!Keep) %>%
+  dplyr::select(DatasetID, CountryResponsible, SamplingYear, SamplingRiver,
+                Length_m, Width_m, Area_m2, Reason) %>%
+  arrange(Reason, CountryResponsible)
+```
+
+Validated Group B samplings kept per country after the area filter:
+
+```{r AreaFilterCountry, message=FALSE, warning=FALSE}
+Area_filter %>%
+  group_by(CountryResponsible) %>%
+  summarise(Validated = n(),
+            Kept      = sum(Keep),
+            Removed   = sum(!Keep),
+            `Removed (%)` = round(100 * mean(!Keep), 1),
+            .groups = "drop")
+```
+
+Out of `r nrow(Area_filter)` validated Group B samplings, `r sum(Area_filter$Keep)` are kept and `r sum(!Area_filter$Keep)` are removed. The sampling description above (campaigns, rivers and validation rates) uses all records, because it does not depend on the litter counts.
+
+
+
+### Most common types and quantities of litter per region? (Group B: riverbanks; Group C: floating litter)
+
+#### Group B: Riverside Waste
+
+Statistics of the variable `RiversideWasteVariety_AttemptedSampling` to see how many samplings were performed.
+```{r GroupB, warning=FALSE, message=FALSE, eval=TRUE}
+Riverbank %>% 
+  dplyr::select(RiversideWasteVariety_AttemptedSampling) %>% 
+  table()
+```
+
+To work with the `RiversideWasteVariety_` data, we need to filter the dataset to include only those rows where `RiversideWasteVariety_AttemptedSampling` is 1 (indicating that a sampling was attempted) and `RiversideWasteVariety_Qualified` is also 1 (indicating that the sampling was qualified).
+
+```{r GroupBData, warning=FALSE, message=FALSE, eval=FALSE}
+Riverbank %>% 
+  dplyr::filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
+```
+
+##### Percentage of qualified samplings
+
+This represents the percentage of validated data among the total number of sampling beign attempted.
+```{r}
+Riverbank %>%
+  summarise(
+    total_rows = n(),
+    total_valid = sum(
+      RiversideWasteVariety_AttemptedSampling == 1 &
+      RiversideWasteVariety_Qualified == 1,
+      na.rm = TRUE
+    ),
+    pct_valid_total = round((total_valid / total_rows) * 100, digits = 1),
+    pct_valid_percent = paste(round((total_valid / total_rows) * 100, 1), "%", sep = "")
+  )
+```
+
+```{r}
+validated_pct_by_country <- 
+  Riverbank %>% 
+  group_by(CountryResponsible) %>% 
+  summarise(total_rows = n(),
+            total_valid = sum(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
+    `pct_valid_total(%)`        = round((total_valid / total_rows) * 100,1),
+    total_attempts         = sum(RiversideWasteVariety_AttemptedSampling == 1, na.rm = TRUE),
+    valid_among_attempts   = sum(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
+    `pct_valid_among_attempts(%)` = round((valid_among_attempts / total_attempts) * 100,1), .groups = "drop") %>% 
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible))
+
+validated_pct_by_country
+```
+
+```{r, fig.width= 10}
+Percent_Validated_Records_Country_year <-
+Riverbank %>% 
+  group_by(CountryResponsible, SamplingYear) %>% 
+  summarise(
+    n_attempted = sum(RiversideWasteVariety_AttemptedSampling == 1, na.rm = TRUE),
+    n_validated = sum(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
+    pct_validated = if_else(n_attempted > 0, n_validated / n_attempted * 100, 0),
+    .groups = "drop"
+  ) %>% 
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+  complete(CountryResponsible, SamplingYear,
+           fill = list(n_attempted   = 0,
+                       n_validated   = 0,
+                       pct_validated = 0)
+  ) %>% 
+  dplyr::filter(SamplingYear > 2021)  %>% 
+  # dplyr::mutate(CountryResponsible = reorder(CountryResponsible,-pct_validated, FUN = mean)) %>% 
+  ggplot(aes(
+    x    = CountryResponsible,
+    y    = pct_validated,
+    fill = factor(SamplingYear)
+  )) +
+    geom_col(
+      position = "dodge",
+      colour  = "black"
+    ) +
+  geom_text(aes(label = paste0("(",n_attempted,")")),
+              position = position_dodge(width = 0.9),
+              vjust    = -0.3,
+              size     = 3
+    ) +
+  # geom_text(aes(label = paste0("(", n_attempted, ")")),
+  #           position = position_dodge(width = 0.9),
+  #           vjust    = -0.3,
+  #           size     = 2.8) +
+    scale_fill_manual(
+      values = c(
+        "2021" = "#E0FFFF",
+        "2022" = "#B8D4F0",
+        "2023" = "#4A90E2",
+        "2024" = "#1E3A8A"
+      ),
+      name = "Sampling Year"
+    ) +
+    scale_y_continuous(
+      labels = percent_format(scale = 1),
+      expand = expansion(mult = c(0, 0.05))
+    ) +
+    labs(
+      x     = NULL,
+      y     = "Validated sampling (%)",
+      title = NULL  # no titles in the paper; was: "Percentage of validated records (sampling events) per country and year"
+    ) +
+    theme_classic(base_size = 12) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      plot.title  = element_text(hjust = 0.5)
+    )
+
+print(Percent_Validated_Records_Country_year)
+
+# Guardamos la gráfica
+if (save_figures) ggsave(filename = "Percentage_Validated_Sampling_Country_Year_Density.png", plot = Percent_Validated_Records_Country_year, path = fig_dir, scale = 1.9, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+
+```
+
+###### Manuscript values: validation rates (Sampling Effort)
+
+Validation rate (% of attempted Group B samplings that were validated) per country and year, as in Fig. 2C, and the lowest rate among the countries described in the manuscript as having high validation rates.
+
+```{r ManuscriptValidationRates, message=FALSE, warning=FALSE}
+# Validation rate per country and year (same definition as Fig. 2C)
+Validation_country_year <-
+  Riverbank %>%
+  dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(
+    n_attempted   = sum(RiversideWasteVariety_AttemptedSampling == 1, na.rm = TRUE),
+    n_validated   = sum(RiversideWasteVariety_AttemptedSampling == 1 &
+                          RiversideWasteVariety_Qualified == 1, na.rm = TRUE),
+    pct_validated = round(100 * n_validated / n_attempted, 1),
+    .groups = "drop"
+  )
+
+# Wide table: one column per year
+Validation_country_year %>%
+  dplyr::select(CountryResponsible, SamplingYear, pct_validated) %>%
+  pivot_wider(names_from = SamplingYear, values_from = pct_validated)
+
+# Countries with high validation rates in the manuscript: lowest country-year rate
+high_validation <- c("Greece", "Germany", "Italy", "Slovenia", "Hungary", "Belgium", "Bulgaria")
+
+Validation_country_year %>%
+  dplyr::filter(CountryResponsible %in% high_validation, n_attempted > 0) %>%
+  arrange(pct_validated) %>%
+  head(5)
+```
+
+##### Most common types/quantities of litter
+
+```{r, warning=FALSE, message=FALSE, eval=FALSE}
+
+Riverbank %>% 
+  dplyr::filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1)
+
+```
+
+Firstly, we will pick up data to answer the question about group B. Only some variables are taken from the general dataset.
+
+```{r, warning=FALSE, message=FALSE}
+# GroupB dataset
+GroupB_data <- 
+  Riverbank %>% 
+  dplyr::select(DatasetID, CountryResponsible, SamplingCampaign, SamplingYear, SamplingCoordinatesLatitude, SamplingCoordinatesLongitude, SamplingRiverSystem, SamplingParticipants, RiversideWasteVariety_AttemptedSampling, RiversideWasteVariety_Qualified:RiversideWasteVariety_Results_ResultsComment)
+
+```
+
+The, Attributes' names are so complicated to work that I'll remote the preceding information **RiversideWasteVariety_Results_** which is common to all attributes; and finally to work with only the validated `Group B` dataset we create:
+
+```{r, warning=FALSE, message=FALSE}
+# GroupB dataset
+GroupB_data_validated <- 
+  Riverbank %>% 
+  dplyr::select(DatasetID, CountryResponsible, SamplingCampaign, SamplingYear, SamplingCoordinatesLatitude, SamplingCoordinatesLongitude, SamplingRiverSystem, SamplingParticipants, RiversideWasteVariety_AttemptedSampling, RiversideWasteVariety_Qualified:RiversideWasteVariety_Results_ResultsComment) %>% 
+  dplyr::filter(RiversideWasteVariety_AttemptedSampling == 1 & RiversideWasteVariety_Qualified == 1) %>% 
+  # Primero quitamos `RiversideWasteVariety_Results_`
+  rename_with(
+    .cols = starts_with("RiversideWasteVariety_Results_"),
+    # solo seleccionamos los tipos de residuos
+    .fn = ~ gsub("RiversideWasteVariety_Results_", "", .) # Mantenemos la ultima extensión del nombre
+  )
+
+#GroupB_data_validated
+
+# Después de la reunión del día 20260212, decidimos que hay que quitar la variable `SingleUsePlasticTotal`.
+GroupB_data_validated <-
+  GroupB_data_validated %>% 
+  dplyr::select(!SingleUsePlasticTotal)
+```
+
+**CAUTION**!
+There are some `NAs` values in the litter items that are probably incorrect since the groups did find other items. 
+```{r, eval=FALSE}
+summary(GroupB_data_validated)
+```
+
+After meeting and email from Charlotte, we realise that NA in group B for some items it's really a zero. So we update these columns replacing `NA` values with a `0`.
+
+```{r}
+GroupB_data_validated <-
+  GroupB_data_validated %>% 
+  dplyr::mutate(across(PlasticBags:LocalWaste, ~replace_na(., 0)))
+```
+
+**Standardisation to density (items/m²).** We keep only the samplings that passed the area filter (`AreaFilter` chunk) and divide every litter count by the searched area. From here on, all Group B values (`PlasticBags` … `LocalWaste`) are densities in items/m².
+
+```{r DensityStandardisation}
+GroupB_data_validated <-
+  GroupB_data_validated %>%
+  dplyr::filter(DatasetID %in% Area_kept_IDs) %>%
+  dplyr::mutate(Area_m2 = LengthOfRiverbankSearchedM * WidthOfRiverbankSearchedM,
+                .after = LocalWaste) %>%
+  dplyr::mutate(across(c(PlasticBags:LocalWaste, `TotalNumber.incl.SUP.`), ~ .x / Area_m2))
+
+# Check: no missing, infinite or zero areas left
+stopifnot(all(is.finite(GroupB_data_validated$Area_m2)), all(GroupB_data_validated$Area_m2 > 0))
+
+nrow(GroupB_data_validated)
+summary(GroupB_data_validated$Area_m2)
+```
+
+
+###### Litter type density (items/m²)
+
+We will obtain the plot for the most common (average density, items/m²) litter type, as a table and then as a plot.
+
+```{r}
+Litter_Average_table <-
+GroupB_data_validated %>% 
+  dplyr::select(CountryResponsible, SamplingYear, PlasticBags:LocalWaste) %>%  
+  pivot_longer(
+    cols = PlasticBags:LocalWaste,
+    names_to = "Litter_type",
+    values_to = "Abundance") %>% 
+  group_by(Litter_type) %>% 
+  dplyr::summarise(Av_Abundance = round(mean(Abundance, na.rm = TRUE), 2),
+                   SE_Abundance = round(sd(Abundance, na.rm = TRUE)/sqrt(n()), 2)) %>% 
+                    arrange(desc(Av_Abundance))
+
+datatable(Litter_Average_table)
+
+```
+
+
+
+```{r}
+# Average litter type
+Average_litter_type <- 
+  GroupB_data_validated %>% 
+  dplyr::select(CountryResponsible, SamplingYear, PlasticBags:LocalWaste) %>%  
+  pivot_longer(
+    cols = PlasticBags:LocalWaste,
+    names_to = "Litter_type",
+    values_to = "Abundance") %>% 
+  group_by(Litter_type) %>% 
+  dplyr::summarise(Av_Abundance = mean(Abundance, na.rm = TRUE), 
+                   SE_Abundance = sd(Abundance, na.rm = TRUE)/sqrt(n())) %>% 
+  ggplot(., aes(x = reorder(Litter_type, -Av_Abundance), y = Av_Abundance)) +
+  geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance, ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  #geom_text(aes(label = sprintf("%.1f", round(Av_Abundance, digits = 1))), vjust = 1.4, size = 3.5, colour = "white") +
+  labs(x = "",  y = expression(Litter~density~(items~m^{-2})~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
+
+print(Average_litter_type)
+
+if (save_figures) ggsave(filename = "Average_Waste_Category_GroupB_Density.png", plot = Average_litter_type, path = fig_dir, scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+
+###### Litter type density per country
+
+If we now want to visualize the contribution per each country, we have:
+
+```{r AverageLitterCountry, message=FALSE, warning=FALSE, fig.height=25, fig.width=20}
+# Average litter type
+Average_litter_type_country <- 
+GroupB_data_validated %>% 
+  dplyr::select(CountryResponsible, PlasticBags:LocalWaste) %>%  
+  pivot_longer(
+    PlasticBags:LocalWaste,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>% 
+  # 1) group by country AND type
+  group_by(CountryResponsible, Litter_type) %>% 
+  summarise(
+    Av_Abundance = mean(Abundance, na.rm = TRUE),
+    SE_Abundance = sd(Abundance,   na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>% 
+  # title‐case country, reorder types by their overall mean if you like
+  dplyr::mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type       = reorder(Litter_type, -Av_Abundance)
+  ) %>% 
+  # 2) plot bars first, then error bars
+  ggplot(aes(x = Litter_type, y = Av_Abundance)) +
+  #geom_col(fill = "lightgray", colour = "black") +
+  geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance,
+                    ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  geom_col(fill = "lightgray", colour = "black") +
+  facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
+  labs(x = "", y = expression(Litter~density~(items~m^{-2})~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
+  # theme_classic() +
+  # theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +
+  theme_classic(base_size = 16) +
+  theme(
+    # rotate axis labels, center title, etc.
+    axis.text.x     = element_text(angle = 65, hjust = 1),
+    plot.title      = element_text(hjust = 0.5),
+    strip.background = element_rect(
+      fill   = "lightgrey",  # background color
+      color  = "black",      # border color
+      size   = 0.5           # border thickness
+    ),
+    strip.text       = element_text(
+      colour = "black",      # text color
+      face   = "bold"        # make it stand out
+    )
+  )
+
+Average_litter_type_country
+
+# Save the plot
+if (save_figures) ggsave(filename = "Average_Waste_Category_Country_GroupB_Density.png", plot = Average_litter_type_country, path = fig_dir, scale = 1, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+###### Manuscript values: mean ± s.e. and n (Fig. 3 and Fig. 4)
+
+Mean ± standard error (items/m², four decimals) and number of validated samplings (*n*) for the litter categories and countries cited in the Results section.
+
+```{r ManuscriptLitterMeanSE, message=FALSE, warning=FALSE}
+# Mean ± s.e. and n per litter category, optionally grouped by other variables (e.g. country)
+litter_mean_se <- function(data, cols, ...) {
+  data %>%
+    dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>%
+    pivot_longer({{ cols }}, names_to = "Litter_type", values_to = "Abundance") %>%
+    group_by(..., Litter_type) %>%
+    summarise(n    = n(),
+              Mean = mean(Abundance),
+              SE   = sd(Abundance) / sqrt(n()),
+              .groups = "drop") %>%
+    dplyr::mutate(Manuscript = sprintf("%.4f ± %.4f, n = %d", Mean, SE, n))
+}
+
+# Whole validated dataset (Fig. 3)
+Litter_overall_mean_se <-
+  litter_mean_se(GroupB_data_validated, PlasticBags:LocalWaste) %>%
+  arrange(desc(Mean))
+
+Litter_overall_mean_se %>% head(4)
+
+# Per country (Fig. 4): category-country pairs cited in the manuscript, in the same order
+Litter_country_mean_se <-
+  litter_mean_se(GroupB_data_validated, PlasticBags:LocalWaste, CountryResponsible)
+
+Litter_cited_pairs <- tribble(
+  ~Litter_type,                 ~CountryResponsible,
+  "CigaretteButts",             "Bulgaria",
+  "CigaretteButts",             "Austria",
+  "CigaretteButts",             "Germany",
+  "CigaretteButts",             "Lithuania",
+  "GlassPieces",                "Austria",
+  "GlassPieces",                "Germany",
+  "GlassPieces",                "Italy",
+  "GlassPieces",                "Portugal",
+  "GlassPieces",                "Lithuania",
+  "PlasticBottles",             "Hungary",
+  "PlasticBottles",             "Greece",
+  "PlasticBags",                "Greece",
+  "Polystyrene",                "Slovenia",
+  "WetWipesSanitaryProducts",   "Spain",
+  "PlasticPackagingSweets",     "Belgium",
+  "OtherUnidentifiablePlastic", "Belgium"
+)
+
+Litter_cited_pairs %>%
+  left_join(Litter_country_mean_se, by = c("Litter_type", "CountryResponsible")) %>%
+  dplyr::select(Litter_type, CountryResponsible, Manuscript)
+```
+
+###### Litter type Proportion I - "Across‑type" proportions
+
+* The first approach will be a "*Across‑type*" proportions. 
+  * For each litter type, what fraction comes from each country? (not from an european total)
+  * total abundance of that litter type over each total country.
+
+
+```{r ProportionLitterCountry, message=FALSE, warning=FALSE}
+Prop_Liter_Country <- 
+  GroupB_data_validated %>%
+  # 1) pivot to long form
+  pivot_longer(
+    cols      = PlasticBags:LocalWaste,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  # 2) sum abundance by (Country, Type)
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # 3) compute, per type, the global total
+  group_by(Litter_type) %>%
+  dplyr::mutate(
+    Global_Total   = sum(Total_Abundance),
+    Prop_Country   = Total_Abundance / Global_Total
+  ) %>%
+  ungroup()
+
+Prop_Liter_Country
+```
+
+
+```{r ProportionLitterCountryPlot, message=FALSE, warning=FALSE}
+# Example 100%-stacked bar
+Country_contribution_litter_type <- 
+Prop_Liter_Country %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(
+    values = brewer.pal(12, "Paired"),
+    name   = "Country"
+  ) +
+  labs(
+    x = "Litter type",
+    y = "Share of total density (%)",
+    title = NULL  # no titles in the paper; was: "Country contributions to each litter type"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
+  coord_flip()
+
+print(Country_contribution_litter_type)
+
+# Save the plot
+if (save_figures) ggsave(filename = "Country_contribution_litter_type_Density.png", plot = Country_contribution_litter_type, path = fig_dir, scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+
+* Now, considering the total of Europe
+
+```{r ProportionLitterEurope, warning=FALSE, message=FALSE}
+# 1) Pivot, sum by country & type, then compute each country’s share of the European total
+Data_prop_eu <- 
+  GroupB_data_validated %>%
+  pivot_longer(
+    cols      = PlasticBags:LocalWaste,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(Litter_type) %>%
+  dplyr::mutate(
+    European_Total   = sum(Total_Abundance),
+    Prop_of_Europe   = Total_Abundance / European_Total
+  ) %>%
+  ungroup() %>%
+  # optional: title‑case and reorder types by overall Prop for consistent ordering
+  dplyr::mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type        = reorder(Litter_type, -Prop_of_Europe)
+  )
+
+Data_prop_eu
+```
+
+To compare and validate the output, for each `litter_type` the `European_Total` have to be the same.
+
+```{r ProportionLitterEuropeValidation, warning=FALSE, message=FALSE}
+# To compare and validate the output, for each `litter_type` the `European_Total` have to be the same.
+Data_prop_eu %>% 
+  dplyr::filter(Litter_type == "AluminiumFoil")
+```
+
+```{r ProportionLitterEuropePlotStacked, warning=FALSE, message=FALSE, out.width='100%', fig.align='center', eval=FALSE}
+# Example 100%-stacked bar
+Data_prop_eu %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = Litter_type, y = Prop_of_Europe, fill = CountryResponsible)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(
+    values = brewer.pal(12, "Paired"),
+    name   = "Country"
+  ) +
+  labs(
+    x = "Litter type",
+    y = "Share of global density",
+    title = NULL  # no titles in the paper; was: "Country contributions to each litter type (Europe as basis)"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
+  coord_flip()
+```
+
+
+```{r ProportionLitterEuropePlot, warning=FALSE, message=FALSE, out.width='50%', fig.align='center'}
+#x11()
+# 2) Faceted bar chart of proportion (country share of European total)
+# 2) plot with fixed scales and text labels
+ggplot(Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_text( # comment if you don't need the numbers above the bars
+    #aes(label = percent(Prop_of_Europe, accuracy = 0.1), suffix = "%"),
+    aes(label = round((Prop_of_Europe*100), 1)),
+    angle   = 45,       # rotate labels 45°
+    hjust   = 0,        # left‑align text relative to its anchor
+    vjust   = -0.3,     # nudge it a bit above the bar
+    size  = 2.7          # adjust text size as needed
+  ) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.15))  # extra 15% headroom for labels
+  ) +
+  facet_wrap(~ CountryResponsible, ncol = 3, scales = "fixed") +
+  labs(
+    x        = NULL,
+    y        = "Share of European total (%)",
+    title    = NULL,  # no titles in the paper; was: "Country contributions to each litter type"
+    subtitle = NULL  # no titles in the paper; was: "Proportion of European total abundance for each category"
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    axis.text.x      = element_text(angle = 65, hjust = 1),
+    strip.background = element_rect(fill = "lightgrey", colour = "black"),
+    strip.text       = element_text(face = "bold")
+  )
+```
+
+* HeatMaps
+
+```{r ProportionLitterEuropeHeatMap, warning=FALSE, message=FALSE, out.width='80%', fig.align='center'}
+ProportionLitterEuropeHeatMap <- 
+Data_prop_eu %>%
+  heatmap(
+    .row           = Litter_type,
+    .column        = CountryResponsible,
+    .value         = Prop_of_Europe,
+    scale          = "column", # can be "none" (by default) or "row", "column" or "both". (#column keeps the z‑scaling)
+    # a three‑colour gradient: low→mid→high
+     cluster_rows      = FALSE,        # <- elimina el dendrograma de Litter_type
+    palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
+    name           = "Relative \nimportance (%)",
+    column_title   = "Country",
+    row_title      = "Litter type",
+    row_names_side    = "left",        # <- nombres de fila a la izquierda
+    row_title_side    = "left",        # <- título del eje Y también a la izquierda
+    show_row_names = TRUE,
+    show_column_names = TRUE
+  )
+
+print(ProportionLitterEuropeHeatMap)
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Proportion_Litter_Europe_HeatMap_Density.png"), width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+  print(ProportionLitterEuropeHeatMap)
+  dev.off()
+}
+```
+
+Bootstrap implementation in the dendrograms nodes. It replaces the previous heatmap with the dendrograms based on bootstrap values.
+
+```{r}
+#library(pvclust)
+
+# 1. Preparar la matriz de datos en formato wide (países como columnas)
+mat <- Data_prop_eu %>%
+  pivot_wider(id_cols = Litter_type,
+              names_from = CountryResponsible,
+              values_from = Prop_of_Europe) %>%
+  column_to_rownames("Litter_type") %>%
+  as.matrix()
+
+# 2. Calcular el clustering con bootstrap (nboot = 1000 recomendado para publicación)
+set.seed(123)  # reproducible bootstrap (AU/BP values)
+pv_result <- pvclust(mat, method.hclust = "ward.D2",
+                     method.dist = "euclidean", nboot = 1000)
+
+# 3. Extraer el dendrograma con los valores AU
+dend_with_bootstrap <- as.dendrogram(pv_result)
+
+# 4. Pasar el dendrograma personalizado a tidyHeatmap
+ProportionLitterEuropeHeatMap_pvclust <-
+  Data_prop_eu %>%
+  heatmap(
+    .row           = Litter_type,
+    .column        = CountryResponsible,
+    .value         = Prop_of_Europe,
+    scale          = "column",
+    cluster_rows   = FALSE,
+    cluster_columns = dend_with_bootstrap,   # <- dendrograma con bootstrap
+    row_names_side = "left",
+    row_title_side = "left",
+    palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
+    name           = "Relative \nimportance (%)",
+    column_title   = "Country",
+    row_title      = "Litter type",
+    show_row_names    = TRUE,
+    show_column_names = TRUE
+  )
+
+ProportionLitterEuropeHeatMap_pvclust
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Proportion_Litter_Europe_HeatMap_pvclust_Density.png"), width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+  print(ProportionLitterEuropeHeatMap_pvclust)
+  dev.off()
+}
+```
+
+Dendrogram with the values
+
+```{r}
+# Dendrograma con valores AU (rojo) y BP (verde) en cada nodo
+plot(pv_result, main = "", sub = "", xlab = "")  # no titles in the paper; was: default pvclust title, subtitle and x label
+pvrect(pv_result, alpha = 0.95)  # recuadra los clusters con AU >= 95%
+
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Proportion_Litter_Europe_Clustering_Percentage_Density.png"), width = 25, height = 20, units = "cm", res = 300, pointsize = 10)
+  plot(pv_result, main = "", sub = "", xlab = "")  # no titles in the paper; was: default pvclust title, subtitle and x label
+  pvrect(pv_result, alpha = 0.95)
+  dev.off()
+}
+```
+
+
+
+<!--
+###### Litter type Proportion II - "Within‑country" proportions
+
+* The second approach will be a "*Within‑country*" proportions. 
+  * For each country, what fraction of its total litter is each type?
+  * Total abundance of all types in that country.
+
+
+```{r ProportionLitterCountryII, message=FALSE, warning=FALSE}
+Prop_Liter_Country2 <- 
+  GroupB_data_validated %>%
+  # 1) pivot to long
+  pivot_longer(
+    cols      = PlasticBags:LocalWaste,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  # 2) sum by (Country, Type)
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # 3) compute, per country, that country’s total
+  group_by(CountryResponsible) %>%
+  dplyr::mutate(
+    Country_Total = sum(Total_Abundance),
+    Prop_Type     = Total_Abundance / Country_Total
+  ) %>%
+  ungroup()
+
+Prop_Liter_Country2
+```
+
+
+```{r ProportionLitterCountryIIPlot, message=FALSE, warning=FALSE}
+# Example 100%-stacked bar per country
+Prop_Liter_Country2 %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = CountryResponsible, y = Prop_Type, fill = Litter_type)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    x = "Country",
+    y = "Share of country’s total",
+    title = NULL  # no titles in the paper; was: "Composition of litter types within each country"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1))
+```
+
+
+```{r ProportionLitterCountryIIPlot2, message=FALSE, warning=FALSE}
+  # 2) plot bars first, then error bars
+Prop_Liter_Country2 %>% 
+  # 1) group by country AND type
+  group_by(CountryResponsible, Litter_type) %>% 
+  summarise(
+    Av_Proportion = mean(Prop_Type, na.rm = TRUE),
+    SE_Proportion = sd(Prop_Type,   na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>% 
+  # title‐case country, reorder types by their overall mean if you like
+  dplyr::mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type       = reorder(Litter_type, -Av_Proportion)
+  ) %>% 
+  ggplot(data = ., aes(x = Litter_type, y = Av_Proportion)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_errorbar(aes(ymin = Av_Proportion - SE_Proportion,
+                    ymax = Av_Proportion + SE_Proportion), width = 0.2) +
+  facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
+  labs(x = "", y = "Litter density (items/m², mean)", title = '', subtitle = "") +
+  # theme_classic() +
+  # theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +
+  theme_classic(base_size = 16) +
+  theme(
+    # rotate axis labels, center title, etc.
+    axis.text.x     = element_text(angle = 65, hjust = 1),
+    plot.title      = element_text(hjust = 0.5),
+    strip.background = element_rect(
+      fill   = "lightgrey",  # background color
+      color  = "black",      # border color
+      size   = 0.5           # border thickness
+    ),
+    strip.text       = element_text(
+      colour = "black",      # text color
+      face   = "bold"        # make it stand out
+    )
+  )
+
+```
+
+-->
+
+###### Multivariate Perspective
+
+
+**Note on the Hellinger transformation.** The Hellinger transformation divides each value by the total of its row (sampling) before taking the square root, so it removes any constant that multiplies a whole row. Dividing a sampling by its area is such a constant, so the Hellinger-transformed matrix is the same whether we start from counts or from densities. Therefore the PERMANOVA, betadisper, Random Forest, PCA and nMDS below differ from the absolute-frequency version **only because of the samplings removed by the area filter**, not because of the standardisation itself.
+
+```{r DataPreparationMultivariate}
+# assume your data is in a data.frame called `df`
+# and has at least:
+#   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
+# Replace the NA values for 0. --> Probably the default behaviour?
+df <- GroupB_data_validated %>% 
+  dplyr::select(DatasetID, CountryResponsible, PlasticBags:LocalWaste) %>% 
+  drop_na()
+# mutate_all(funs(replace_na(.,0)))
+
+# Filas sin ningún residuo (no se pueden transformar con Hellinger)
+empty <- rowSums(dplyr::select(df, PlasticBags:LocalWaste)) == 0
+# df %>% dplyr::filter(empty)   # para documentar qué muestreos se excluyen
+
+df <- df %>% dplyr::filter(!empty)
+
+# isolate metadata + community matrix
+meta <- df %>% dplyr::select(DatasetID, CountryResponsible)
+comm <- df %>% dplyr::select(PlasticBags:LocalWaste)
+
+# Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
+comm_hel <- decostand(comm, method = "hellinger", na.rm = TRUE)
+```
+
+
+In order to see if there are significant differences across country in the community composition, we will perform a PERMANOVA test:
+
+```{r PermanovaTest, message=FALSE, warning=FALSE}
+# 2a) Compute distance and hierarchical clustering (Ward’s D2)
+dist_mat <- vegdist(comm_hel, method = "euclid", na.rm = TRUE)
+
+# 3a) PERMANOVA: test if composition differs by Country
+set.seed(42)
+
+perm1 <- adonis2(dist_mat ~ CountryResponsible, data = meta, 
+                 permutations = 999, by = "margin", na.action = na.omit)
+print(perm1)
+```
+
+So, we conclude that there are significant differences among countries.
+
+We can look for **heterocedasticity** among countries (homogeneity of multivariate dispersions), since PERMANOVA can also detect differences in dispersion and not only in location:
+
+```{r betadisperOverall, message=FALSE, warning=FALSE}
+Overall_Disper <- betadisper(dist_mat, meta$CountryResponsible)
+
+Overall_Disper
+
+set.seed(42)  # reproducible permutation test
+Overall_Disper_test <- permutest(Overall_Disper, permutations = 999)
+
+Overall_Disper_test
+```
+
+The multivariate dispersion `r if (Overall_Disper_test$tab[1, "Pr(>F)"] < 0.05) "**differs significantly**" else "**does not differ significantly**"` among countries (betadisper; F = `r round(Overall_Disper_test$tab[1, "F"], 2)`, p = `r Overall_Disper_test$tab[1, "Pr(>F)"]`)`r if (Overall_Disper_test$tab[1, "Pr(>F)"] < 0.05) ", so part of the PERMANOVA result may reflect differences in within-country variability rather than only in composition" else ""`.
+
+But what are the items that explain these differences? 
+
+The answer will be addressed by performing a **Multivariate Random Forest**.
+
+```{r MultRandFor, message=FALSE, warning=FALSE}
+# 3b) Multivariate Random Forest:  
+#     predict Country from composition → variable importance
+set.seed(42)  # reproducible random forest
+rf <- randomForest(
+  x      = comm_hel,
+  y      = as.factor(meta$CountryResponsible),
+  ntree  = 500,
+  importance = TRUE
+)
+
+print(rf)
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+# Random Forest Evaluation
+# El Mean Decrease Gini mide cuánto contribuye cada variable a la pureza de los nodos
+importance_df <- as.data.frame(importance(rf))
+importance_df$Variable <- rownames(importance_df)
+
+# Accuracy
+cm <- rf$confusion
+accuracy <- sum(diag(cm[,-ncol(cm)])) / sum(cm[,-ncol(cm)])
+```
+
+Decisions have to be taken carefully since the prediction accuracy is very low (`r round(accuracy, 2)`). Furthermore, the estimated error rate (OOB) is high, so conclusion have to be taken with care. 
+
+Eventhough, the more important (differential across countries) litter components are:
+
+```{r RFVarImport, message=FALSE, warning=FALSE, out.width="80%"}
+varImpPlot(rf, main = "", type = 2)  # no titles in the paper; was: "Random Forest: Litter‐type Importance for Country Discrimination"
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Random_Forest_Importance_Density.png"), width = 20, height = 16, units = "cm", pointsize = 10, bg = "white", res = 150)
+  varImpPlot(rf, main = "", , type = 2)  # no titles in the paper; was: "Random Forest: Litter‐type Importance for Country Discrimination"
+  dev.off()
+}
+```
+
+This plot of variable importance importance is telling us:
+
+<!--
+*  A large `MeanDecreaseAccuracy` (**MDA**) means that, when you break the relationship between that predictor and the response, the model’s accuracy suffers a lot → it’s an important predictor for correct country assignments. 
+  * **MDA** is generally the more reliable gauge of predictive importance, since it directly measures impact on OOB‐accuracy.
+-->
+
+* A large `MeanDecreaseGini` (**MDG**) means that X frequently appears in high‑up the tree splits and yields big purity gains → it’s structurally important to partitioning the data. 
+  * **MDG** tells you which features the trees “prefer” splitting on.
+
+* **Principal Component Analysis**
+
+We will perform a Principal Component Analysis (PCA) to see correlation among litter items and *possible* associations with countries
+
+```{r PCA, warning=FALSE, message=FALSE}
+# ─── 1) PCA (and optional RDA constrained by Country) ───────────────────────────
+# 1a) Unconstrained PCA on Hellinger data
+# pca1 <- rda(comm_hel)  
+# 
+# summary(pca1)
+# 
+# plot(pca1)
+
+# (re)compute PCA with prcomp
+pca_prcomp <- prcomp(comm_hel, scale. = TRUE)
+
+#summary(pca_prcomp)
+```
+
+
+```{r PCAplot, warning=FALSE, message=FALSE, echo=FALSE, eval=FALSE}
+# 1b) Quick biplot via factoextra
+PCA_Litter_Country <- 
+fviz_pca_biplot(pca_prcomp,
+                geom.ind    = "point",            # show sites as points
+                col.ind     = meta$CountryResponsible %>% str_to_title(), 
+                palette.ind = "jco",              # color‐blind‐friendly palette
+                addEllipses = FALSE,               # 95% CI per country
+                label      = "var",               # show arrows for variables
+                repel      = TRUE
+) +
+  labs(title = NULL,  # no titles in the paper; was: "PCA of Litter Composition (Hellinger‐transformed)"
+       subtitle = NULL) +  # no titles in the paper; was: "Points = samples colored by Country; arrows = litter types"
+  theme_minimal(base_size = 14)
+
+PCA_Litter_Country
+```
+
+
+```{r PCAplot2, warning=FALSE, message=FALSE}
+# Para el gráfico calcularemos los centroides y los pintaremos de manera diferencial
+
+# Calcular centroides manualmente
+scores <- as.data.frame(pca_prcomp$x)
+scores$Country <- meta$CountryResponsible %>% str_to_title()
+
+centroids <- 
+  scores %>%
+  group_by(Country) %>%
+  summarise(PC1 = mean(PC1),
+            PC2 = mean(PC2))
+
+# Definir niveles y paleta de colores para puntos y centroides, una sola vez
+meta$Country <- factor(str_to_title(meta$CountryResponsible))
+
+# Definir niveles únicos y ordenados
+countries <- levels(meta$Country)
+
+# Crear paleta manual coherente
+my_palette <- setNames(
+  brewer.pal(length(countries), "Set3"),
+  countries
+)
+
+# PCA con puntos pequeños (color)
+p <- fviz_pca_biplot(
+  pca_prcomp,
+  geom.ind   = "point",
+  col.ind    = meta$Country,
+  addEllipses = FALSE,
+  label      = "var",
+  repel      = TRUE,
+  pointsize  = 2.5,
+  pointshape = 16,
+  alpha.ind  = 0.6
+)
+
+# Añadir centroides (fill)
+# scores <- as.data.frame(pca_prcomp$x) # Esto ya estaba
+# scores$Country <- meta$Country # Esto ya estaba
+# 
+# centroids <- 
+#   scores %>% 
+#   dplyr::group_by(Country) %>% 
+#   dplyr::summarise(PC1 = mean(PC1),
+#                    PC2 = mean(PC2))
+
+
+PCA_Litter_Country2 <- 
+# x11()
+p +
+  geom_point(data = centroids,
+             aes(x = PC1, y = PC2, fill = Country),
+             shape = 21,
+             size = 5,
+             color = "black",
+             stroke = 1.2) +
+  
+  scale_color_manual(values = my_palette, drop = FALSE) +
+  scale_fill_manual(values = my_palette, drop = FALSE) +
+  
+  labs(title = NULL,  # no titles in the paper; was: "PCA of Litter Composition (Hellinger‐transformed)"
+       subtitle = NULL,  # no titles in the paper; was: "Small points = samples; Large points = country centroids"
+       color = "Country",
+       fill = "Country") +
+  
+  theme_minimal(base_size = 14)
+
+PCA_Litter_Country2
+```
+
+
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "PCA_Litter_Country_Density.png"), width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  print(PCA_Litter_Country2)
+  dev.off()
+}
+```
+
+And the most important Items for the two forst principal components are:
+
+* First PC
+```{r PC1VarImport, message=FALSE, warning=FALSE}
+# Bar‐plot of top 10 contributors to PC1
+fviz_contrib(pca_prcomp, choice = "var", axes = 1, top = 10) +
+  ggtitle(NULL)  # no titles in the paper; was: "Top 10 variables contributing to PC1"
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Top10_PC1_PCA_Litter_Country_Density.png"), width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  # Bar‐plot of top 10 contributors to PC1
+  print(fviz_contrib(pca_prcomp, choice = "var", axes = 1, top = 10) +
+    ggtitle(NULL))  # no titles in the paper; was: "Top 10 variables contributing to PC1"
+  dev.off()
+}
+```
+
+
+```{r PC2VarImport, message=FALSE, warning=FALSE}
+# Bar‐plot of top 10 contributors to PC2
+fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
+  ggtitle(NULL)  # no titles in the paper; was: "Top 10 variables contributing to PC2"
+```
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Top10_PC2_PCA_Litter_Country_Density.png"), width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  # Bar‐plot of top 10 contributors to PC2
+  print(fviz_contrib(pca_prcomp, choice = "var", axes = 2, top = 10) +
+    ggtitle(NULL))  # no titles in the paper; was: "Top 10 variables contributing to PC2"
+  dev.off()
+}
+```
+
+* **Non-Metric Multidimensional Scaling - nMDS**
+
+We will perform a Non-Metric Multidimensional Scaling (nMDS) to see correlation among litter items and *possible* associations with countries.
+
+We can re-use the distance matrix using the hellinger‐transformed data (`comm_hel`) and then perform the nMDS.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# En la matriz de comm hay columnas con todo 0 (vacías) que pueden causar problemas en el análisis multivariante, así que las eliminamos antes de hacer el nMDS.
+# Filas con todo 0 (vacías)
+empty_rows <- which(rowSums(comm, na.rm = TRUE) == 0)
+
+length(empty_rows)   # para ver cuántas hay
+empty_rows           # opcional: ver índices concretos
+
+# Eliminar esas filas de comm y de meta a la vez
+if (length(empty_rows) > 0) {
+  comm1 <- comm[-empty_rows, , drop = FALSE]
+  meta1 <- meta[-empty_rows, , drop = FALSE]
+} else {
+  # comm ya viene sin filas vacías (filtradas en DataPreparationMultivariate)
+  comm1 <- comm
+  meta1 <- meta
+}
+
+# Repetimos la transformación Hellinger sobre la nueva matriz de comunidad sin filas vacías.
+comm_hel1 <- decostand(comm1, method = "hellinger") #esto ya estaba definido.
+
+set.seed(123)  # reproducibilidad
+
+nmds <- metaMDS(
+  comm_hel1,                 # matriz de comunidad (Hellinger‐transformed)
+  distance      = "bray",  # típico en comunidad
+  k             = 2,       # nº de dimensiones
+  autotransform = FALSE    # ya transformaste con Hellinger
+)
+
+```
+
+Now, we calculate the scores for the sites (samples) and add the metadata to be able to visualize the nMDS with the country information.
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# scores de sitios
+site_scores <- as.data.frame(scores(nmds, display = "sites"))  # NMDS1, NMDS2, ...
+
+site_scores <- site_scores %>% 
+  mutate(
+    SampleID = rownames(.)
+  )
+
+# añadimos CountryResponsible alineando por fila
+site_scores <- site_scores %>% 
+  bind_cols(meta1)  # meta está en el mismo orden que comm/site_scores
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ggplot(site_scores, aes(x = NMDS1, y = NMDS2, colour = CountryResponsible)) +
+  geom_point(size = 3, alpha = 0.8) +
+  theme_minimal() +
+  coord_equal() +
+  labs(x = "NMDS1", y = "NMDS2")
+```
+
+To see which countries are more similar than others, we can calculate the centroids of each country in the NMDS space and then plot them.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# centroides (medias) por país en el espacio NMDS
+country_centroids <- site_scores %>% 
+  group_by(CountryResponsible) %>% 
+  summarise(
+    NMDS1 = mean(NMDS1, na.rm = TRUE),
+    NMDS2 = mean(NMDS2, na.rm = TRUE),
+    n     = dplyr::n()
+  )
+
+ggplot() +
+  geom_point(data = site_scores,
+             aes(x = NMDS1, y = NMDS2, colour = CountryResponsible),
+             alpha = 0.3, size = 2) +
+  geom_point(data = country_centroids,
+             aes(x = NMDS1, y = NMDS2, fill = CountryResponsible),
+             size = 5, shape = 21, colour = "black") +
+  ggrepel::geom_text_repel(
+    data = country_centroids,
+    aes(x = NMDS1, y = NMDS2, label = CountryResponsible),
+    size = 3
+  ) +
+  coord_equal() +
+  theme_minimal() +
+  labs(x = "NMDS1", y = "NMDS2")
+```
+
+From the above plot, we can say that the non-metric multidimensional scaling ordination based on Bray–Curtis dissimilarities of Hellinger-transformed litter composition revealed a clear gradient along the first two NMDS axes. Countries are arranged in a roughly linear sequence in this ordination space, indicating systematic shifts in the relative contribution of the different litter categories rather than discrete clusters. This pattern suggests that national litter profiles form a continuum, with some countries showing more similar compositions and therefore grouping closer together, while others occupy more distant positions along the gradient. Taken together, the NMDS indicates that between-country variation in litter is primarily structured along one dominant compositional axis, with a secondary axis capturing finer differences among otherwise similar profiles.
+
+
+
+#### Group B: Single Use Plastic - Riverside Waste
+
+We wil take as a subset the single use plastic (`SUP`) for the group B.
+
+```{r, warning=FALSE, message=FALSE}
+# GroupB dataset
+GroupB_SingleUsePlastic_data_validated <- 
+  GroupB_data_validated %>% 
+  dplyr::select(DatasetID:Polystyrene) # Seleccionamos metadata y los Single Use Plastic
+
+head(GroupB_SingleUsePlastic_data_validated)
+
+```
+
+```{r}
+summary(GroupB_SingleUsePlastic_data_validated)
+```
+
+
+###### SUP type density (items/m²)
+
+We will obtain the plot for the most common (average density, items/m²) Single Use Plastic type
+```{r}
+# Average litter type
+SUP_Average_litter_type <- 
+  GroupB_SingleUsePlastic_data_validated %>% 
+  dplyr::select(CountryResponsible, SamplingYear, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    cols = PlasticBags:Polystyrene,
+    names_to = "Litter_type",
+    values_to = "Abundance") %>% 
+  group_by(Litter_type) %>% 
+  dplyr::summarise(Av_Abundance = mean(Abundance, na.rm = TRUE), 
+                   SE_Abundance = sd(Abundance, na.rm = TRUE)/sqrt(n())) %>% 
+  ggplot(., aes(x = reorder(Litter_type, -Av_Abundance), y = Av_Abundance)) +
+  geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance, ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  #geom_text(aes(label = sprintf("%.1f", round(Av_Abundance, digits = 1))), vjust = 1.4, size = 3.5, colour = "white") +
+  labs(x = "", y = expression(Single~use~plastic~density~(items~m^{-2})~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
+
+print(SUP_Average_litter_type)
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  ggsave(filename = "Average_SUP_GroupB_Density.png", plot = SUP_Average_litter_type, path = fig_dir, scale = 0.6, width = 35, height = 25, units = "cm", dpi = 150, limitsize = FALSE)
+}
+```
+
+###### SUP type density per country
+
+If we now want to visualize the contribution per each country, we have:
+
+```{r AverageLitterCountrySUP, message=FALSE, warning=FALSE, fig.height=25, fig.width=20}
+# Average litter type
+SUP_Average_litter_type_country <- 
+GroupB_SingleUsePlastic_data_validated %>% 
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    PlasticBags:Polystyrene,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>% 
+  # 1) group by country AND type
+  group_by(CountryResponsible, Litter_type) %>% 
+  summarise(
+    Av_Abundance = mean(Abundance, na.rm = TRUE),
+    SE_Abundance = sd(Abundance,   na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>% 
+  # title‐case country, reorder types by their overall mean if you like
+  dplyr::mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    #Litter_type       = reorder(Litter_type, -Av_Abundance) # Reordenando el eje X (poco util)
+    Litter_type       = Litter_type
+  ) %>% 
+  # 2) plot bars first, then error bars
+  ggplot(aes(x = reorder(Litter_type, -Av_Abundance), y = Av_Abundance)) +
+  geom_errorbar(aes(ymin = Av_Abundance - SE_Abundance,
+                    ymax = Av_Abundance + SE_Abundance), width = 0.2) +
+  geom_col(fill = "lightgray", colour = "black") +
+  facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
+  labs(x = "", y = expression(Single~use~plastic~density~(items~m^{-2})~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
+  # theme_classic() +
+  # theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +
+  theme_classic(base_size = 16) +
+  theme(
+    # rotate axis labels, center title, etc.
+    axis.text.x     = element_text(angle = 65, hjust = 1),
+    plot.title      = element_text(hjust = 0.5),
+    strip.background = element_rect(
+      fill   = "lightgrey",  # background color
+      color  = "black",      # border color
+      size   = 0.5           # border thickness
+    ),
+    strip.text       = element_text(
+      colour = "black",      # text color
+      face   = "bold"        # make it stand out
+    )
+  )
+
+SUP_Average_litter_type_country
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  ggsave(filename = "Average_SUP_Country_GroupB_Density.png", plot = SUP_Average_litter_type_country, path = fig_dir, scale = 1, width = 40, height = 30, units = "cm", dpi = 150, limitsize = FALSE)
+}
+```
+
+
+###### Manuscript values: SUP mean ± s.e. and n (Fig. 8 and Fig. 9)
+
+Mean ± standard error (items/m², four decimals) and *n* for the SUP categories and countries cited in the Results section (uses `litter_mean_se()`, defined in the Group B section).
+
+```{r ManuscriptSUPMeanSE, message=FALSE, warning=FALSE}
+# Whole validated dataset (Fig. 8)
+SUP_overall_mean_se <-
+  litter_mean_se(GroupB_SingleUsePlastic_data_validated, PlasticBags:Polystyrene) %>%
+  arrange(desc(Mean))
+
+SUP_overall_mean_se %>% head(3)
+
+# Per country (Fig. 9): category-country pairs cited in the manuscript, in the same order
+SUP_country_mean_se <-
+  litter_mean_se(GroupB_SingleUsePlastic_data_validated, PlasticBags:Polystyrene, CountryResponsible)
+
+SUP_cited_pairs <- tribble(
+  ~Litter_type,       ~CountryResponsible,
+  "PlasticBags",      "Italy",
+  "PlasticBags",      "Greece",
+  "Polystyrene",      "Portugal",
+  "Polystyrene",      "Slovenia",
+  "PlasticBottles",   "Hungary",
+  "PlasticBottles",   "Greece",
+  "PlasticLids",      "Bulgaria",
+  "TakeawayFastFood", "Bulgaria"
+)
+
+SUP_cited_pairs %>%
+  left_join(SUP_country_mean_se, by = c("Litter_type", "CountryResponsible")) %>%
+  dplyr::select(Litter_type, CountryResponsible, Manuscript)
+```
+
+###### SUP type Proportion I - "Across‑type" proportions
+
+* The first approach will be a "*Across‑type*" proportions. 
+    * total abundance of that litter type over each total country. 
+
+<!--
+    * For each litter type, what fraction comes from each country? (not from an european total) 
+    -->
+
+
+
+```{r ProportionLitterCountrySUP, message=FALSE, warning=FALSE}
+SUP_Prop_Liter_Country <- 
+  GroupB_SingleUsePlastic_data_validated %>% 
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    PlasticBags:Polystyrene,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  # 2) sum abundance by (Country, Type)
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # 3) compute, per type, the global total
+  group_by(Litter_type) %>%
+  dplyr::mutate(
+    Global_Total   = sum(Total_Abundance),
+    Prop_Country   = Total_Abundance / Global_Total
+  ) %>%
+  ungroup()
+
+SUP_Prop_Liter_Country
+```
+
+
+```{r ProportionLitterCountryPlotSUP, message=FALSE, warning=FALSE}
+# Example 100%-stacked bar
+Country_contribution_SUP_type <- 
+SUP_Prop_Liter_Country %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = Litter_type, y = Prop_Country, fill = CountryResponsible)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(
+    values = brewer.pal(12, "Paired"),
+    name   = "Country"
+  ) +
+  labs(
+    x = "Single use plastic type",
+    y = "Share of total density (%)",
+    title = NULL  # no titles in the paper; was: "Country contributions to each litter type"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
+  coord_flip()
+
+print(Country_contribution_SUP_type)
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  ggsave(filename = "Country_contribution_SUP_type_Density.png", plot = Country_contribution_SUP_type, path = fig_dir, scale = 0.5, width = 40, height = 30, units = "cm", dpi = 300, limitsize = FALSE)
+}
+```
+
+<!--
+
+* Now, considering the total of Europe
+
+```{r ProportionLitterEuropeSUP, warning=FALSE, message=FALSE}
+# 1) Pivot, sum by country & type, then compute each country’s share of the European total
+SUP_Data_prop_eu <- 
+  GroupB_SingleUsePlastic_data_validated %>% 
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    PlasticBags:Polystyrene,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(Litter_type) %>%
+  dplyr::mutate(
+    European_Total   = sum(Total_Abundance),
+    Prop_of_Europe   = Total_Abundance / European_Total
+  ) %>%
+  ungroup() %>%
+  # optional: title‑case and reorder types by overall Prop for consistent ordering
+  dplyr::mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type        = reorder(Litter_type, -Prop_of_Europe)
+  )
+
+SUP_Data_prop_eu
+```
+
+```{r ProportionLitterEuropePlotStackedSUP, warning=FALSE, message=FALSE, out.width='100%', fig.align='center', eval=FALSE}
+# Example 100%-stacked bar
+SUP_Data_prop_eu %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = Litter_type, y = Prop_of_Europe, fill = CountryResponsible)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  scale_fill_manual(
+    values = brewer.pal(12, "Paired"),
+    name   = "Country"
+  ) +
+  labs(
+    x = "Single use plastic type",
+    y = "Share of global density",
+    title = NULL  # no titles in the paper; was: "Country contributions to each litter type (Europe as basis)"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1)) +
+  coord_flip()
+```
+
+
+```{r ProportionLitterEuropePlotSUP, warning=FALSE, message=FALSE, out.width='50%', fig.align='center', eval=FALSE}
+#x11()
+# 2) Faceted bar chart of proportion (country share of European total)
+# 2) plot with fixed scales and text labels
+ggplot(SUP_Data_prop_eu, aes(x = Litter_type, y = Prop_of_Europe)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_text( # comment if you don't need the numbers above the bars
+    #aes(label = percent(Prop_of_Europe, accuracy = 0.1), suffix = "%"),
+    aes(label = round((Prop_of_Europe*100), 1)),
+    angle   = 45,       # rotate labels 45°
+    hjust   = 0,        # left‑align text relative to its anchor
+    vjust   = -0.3,     # nudge it a bit above the bar
+    size  = 2.7          # adjust text size as needed
+  ) +
+  scale_y_continuous(
+    labels = percent_format(accuracy = 1),
+    expand = expansion(mult = c(0, 0.15))  # extra 15% headroom for labels
+  ) +
+  facet_wrap(~ CountryResponsible, ncol = 3, scales = "fixed") +
+  labs(
+    x        = NULL,
+    y        = "Share of European total (%)",
+    title    = NULL,  # no titles in the paper; was: "Country contributions to each litter type"
+    subtitle = NULL  # no titles in the paper; was: "Proportion of European total abundance for each category"
+  ) +
+  theme_classic(base_size = 14) +
+  theme(
+    axis.text.x      = element_text(angle = 65, hjust = 1),
+    strip.background = element_rect(fill = "lightgrey", colour = "black"),
+    strip.text       = element_text(face = "bold")
+  )
+```
+
+-->
+
+* HeatMaps
+
+```{r ProportionLitterEuropeHeatMapSUP, warning=FALSE, message=FALSE, out.width='80%', fig.align='center'}
+ProportionSUPEuropeHeatMap <- 
+SUP_Data_prop_eu %>%
+  heatmap(
+    .row           = Litter_type,
+    .column        = CountryResponsible,
+    .value         = Prop_of_Europe,
+    scale          = "column", # can be "none" (by default) or "row", "column" or "both". (#column keeps the z‑scaling)
+    # a three‑colour gradient: low→mid→high
+    palette_value  = c("#F7FBFF", "#6BAED6", "#08306B"),
+    name           = "Relative \nimportance (%)",
+    column_title   = "Country",
+    row_title      = "Litter type",
+    show_row_names = TRUE,
+    show_column_names = TRUE
+  )
+
+print(ProportionSUPEuropeHeatMap)
+```
+
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Proportion_SUP_Europe_HeatMap_Density.png"), width = 25, height = 20, units = "cm", res = 300, pointsize = 1)
+  print(ProportionSUPEuropeHeatMap)
+  dev.off()
+}
+```
+
+<!--
+
+###### SUP type Proportion II - "Within‑country" proportions
+
+* The second approach will be a "*Within‑country*" proportions. 
+  * For each country, what fraction of its total litter is each type?
+  * Total abundance of all types in that country.
+
+
+```{r ProportionLitterCountryIISUP, message=FALSE, warning=FALSE}
+SUP_Prop_Liter_Country2 <- 
+  GroupB_SingleUsePlastic_data_validated %>% 
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene) %>%  
+  pivot_longer(
+    PlasticBags:Polystyrene,
+    names_to  = "Litter_type",
+    values_to = "Abundance"
+  ) %>%
+  # 2) sum by (Country, Type)
+  group_by(CountryResponsible, Litter_type) %>%
+  summarise(
+    Total_Abundance = sum(Abundance, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # 3) compute, per country, that country’s total
+  group_by(CountryResponsible) %>%
+  dplyr::mutate(
+    Country_Total = sum(Total_Abundance),
+    Prop_Type     = Total_Abundance / Country_Total
+  ) %>%
+  ungroup()
+
+SUP_Prop_Liter_Country2
+```
+
+
+```{r ProportionLitterCountryIIPlotSUP, message=FALSE, warning=FALSE, eval=FALSE}
+# Example 100%-stacked bar per country
+SUP_Prop_Liter_Country2 %>% 
+dplyr::mutate(CountryResponsible = str_to_title(CountryResponsible)) %>% 
+ggplot(., aes(x = CountryResponsible, y = Prop_Type, fill = Litter_type)) +
+  geom_col(position = "fill") +
+  scale_y_continuous(labels = percent_format()) +
+  labs(
+    x = "Country",
+    y = "Share of country’s total",
+    title = NULL,  # no titles in the paper; was: "Composition of litter types within each country"
+    fill = "Single use \nplastic type"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 65, hjust = 1))
+```
+
+
+```{r ProportionLitterCountryIIPlot2SUP, message=FALSE, warning=FALSE}
+  # 2) plot bars first, then error bars
+SUP_Prop_Liter_Country2 %>% 
+  # 1) group by country AND type
+  group_by(CountryResponsible, Litter_type) %>% 
+  summarise(
+    Av_Proportion = mean(Prop_Type, na.rm = TRUE),
+    SE_Proportion = sd(Prop_Type,   na.rm = TRUE) / sqrt(n()),
+    .groups = "drop"
+  ) %>% 
+  # title‐case country, reorder types by their overall mean if you like
+  dplyr::mutate(
+    CountryResponsible = str_to_title(CountryResponsible),
+    Litter_type       = reorder(Litter_type, -Av_Proportion)
+  ) %>% 
+  ggplot(data = ., aes(x = Litter_type, y = Av_Proportion)) +
+  geom_col(fill = "lightgray", colour = "black") +
+  geom_errorbar(aes(ymin = Av_Proportion - SE_Proportion,
+                    ymax = Av_Proportion + SE_Proportion), width = 0.2) +
+  facet_wrap(~ CountryResponsible, ncol   = 3, scales = "free_y") +
+  labs(x = "", y = expression(Single~use~plastic~density~(items~m^{-2})~"(mean" %+-% s.e.~")"), title = '', subtitle = "") +
+  # theme_classic() +
+  # theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +
+  theme_classic(base_size = 16) +
+  theme(
+    # rotate axis labels, center title, etc.
+    axis.text.x     = element_text(angle = 65, hjust = 1),
+    plot.title      = element_text(hjust = 0.5),
+    strip.background = element_rect(
+      fill   = "lightgrey",  # background color
+      color  = "black",      # border color
+      size   = 0.5           # border thickness
+    ),
+    strip.text       = element_text(
+      colour = "black",      # text color
+      face   = "bold"        # make it stand out
+    )
+  )
+
+```
+
+
+-->
+
+###### SUP Multivariate Perspective
+
+
+**Note on the Hellinger transformation.** The Hellinger transformation divides each value by the total of its row (sampling) before taking the square root, so it removes any constant that multiplies a whole row. Dividing a sampling by its area is such a constant, so the Hellinger-transformed matrix is the same whether we start from counts or from densities. Therefore the PERMANOVA, betadisper, Random Forest and PCA below differ from the absolute-frequency version **only because of the samplings removed by the area filter**, not because of the standardisation itself.
+
+```{r DataPreparationMultivariateSUP}
+# assume your data is in a data.frame called `df`
+# and has at least:
+#   CountryResponsible | PlasticBags | PlasticBottles | ... | LocalWaste
+
+df_SUP <- GroupB_SingleUsePlastic_data_validated %>% 
+  dplyr::select(CountryResponsible, PlasticBags:Polystyrene)
+# %>% 
+# #drop_na()
+# mutate_all(funs(replace_na(.,0)))
+
+# Filas sin ningún residuo SUP (no se pueden transformar con Hellinger: dan NaN)
+empty_SUP <- rowSums(dplyr::select(df_SUP, -CountryResponsible)) == 0
+df_SUP <- df_SUP %>% dplyr::filter(!empty_SUP)
+
+# isolate metadata + community matrix
+meta_SUP <- df_SUP %>% dplyr::select(CountryResponsible)
+comm_SUP <- df_SUP %>% dplyr::select(-CountryResponsible)
+
+# Hellinger‐transform community data (recommended for PCA/cluster/PERMANOVA)
+comm_hel_SUP <- decostand(comm_SUP, method = "hellinger")
+
+```
+
+
+In order to see if there are significant differences across country in the community composition, we will perform a PERMANOVA test:
+
+```{r PermanovaTest_SUP, message=FALSE, warning=FALSE}
+# 2a) Compute distance and hierarchical clustering (Ward’s D2)
+dist_mat_SUP <- vegdist(comm_hel_SUP, method = "euclid")
+
+# 3a) PERMANOVA: test if composition differs by Country
+set.seed(42)
+
+perm1_SUP <- adonis2(dist_mat_SUP ~ CountryResponsible, data = meta_SUP, 
+                 permutations = 999, by = "margin")
+print(perm1_SUP)
+```
+
+So, we conclude that there are significant differences among countries. The R-Square value (`r round(perm1_SUP$R2[1], 3)`) means that the country "effects" explain `r round(100 * perm1_SUP$R2[1], 1)`% of the total variability. `r round(100 * (1 - perm1_SUP$R2[1]), 1)`% is the remaining (unexplained) variability among countries. ***There is a significant country effect, but is small***.
+
+Or even better:
+**There are statistically significant multivariate differences in litter composition among countries, although the effect size is modest (R² = `r round(perm1_SUP$R2[1], 3)`).**
+
+We can look for **heterocedasticity** among countries
+
+```{r betadisper}
+SUP_Disper <- betadisper(dist_mat_SUP, meta_SUP$CountryResponsible)
+
+SUP_Disper
+```
+
+```{r betadisperSUPtest}
+set.seed(42)  # reproducible permutation test
+SUP_Disper_test <- permutest(SUP_Disper, permutations = 999)
+
+SUP_Disper_test
+```
+
+The multivariate dispersion `r if (SUP_Disper_test$tab[1, "Pr(>F)"] < 0.05) "**differs significantly**" else "**does not differ significantly**"` among countries (betadisper; F = `r round(SUP_Disper_test$tab[1, "F"], 2)`, p = `r SUP_Disper_test$tab[1, "Pr(>F)"]`)`r if (SUP_Disper_test$tab[1, "Pr(>F)"] < 0.05) ", so we must be careful when concluding about the inter-country differences" else ", so the PERMANOVA result reflects differences in composition rather than in within-country variability"`. There is a Country effect but it is small.
+
+If we need to parametrize this model, we should use a Mixed Multivariate Model (necessary?)
+
+```{r mvabund, echo=FALSE, eval=FALSE}
+# modelo lineal multivariado generalizado (PERMANOVA Multivariado)
+library(mvabund)
+
+mv_data <- mvabund(comm_matrix)
+
+fit <- manyglm(mv_data ~ CountryResponsible,
+               family = "negative.binomial")
+
+anova(fit, p.uni = "adjusted")
+
+# Modelo mixto jerárquico bayesiano
+
+brm(
+  mvbind(PlasticBags, PlasticBottles, ...) ~ 1 + (1|CountryResponsible),
+  family = negbinomial(),
+  data = data
+)
+```
+
+
+but What are the items that explains these differences? 
+
+The answer will be addressed by performing a **Multivariate Random Forest**.
+
+```{r MultRandForSUP, message=FALSE, warning=FALSE}
+# 3b) Multivariate Random Forest:  
+#     predict Country from composition → variable importance
+set.seed(42)  # reproducible random forest
+rf_SUP <- randomForest(
+  x      = comm_hel_SUP,
+  y      = as.factor(meta_SUP$CountryResponsible),
+  ntree  = 500,
+  importance = TRUE
+)
+
+print(rf_SUP)
+```
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+# Random Forest Evaluation
+# El Mean Decrease Gini mide cuánto contribuye cada variable a la pureza de los nodos
+Sup_importance_df <- as.data.frame(importance(rf_SUP))
+Sup_importance_df$Variable <- rownames(Sup_importance_df)
+
+# Accuracy
+Sup_cm <- rf_SUP$confusion
+Sup_accuracy <- sum(diag(Sup_cm[,-ncol(Sup_cm)])) / sum(Sup_cm[,-ncol(Sup_cm)])
+```
+
+Decisions have to be taken carefully since the prediction accuracy is very low (`r round(Sup_accuracy, 2)`). Furthermore, the estimated error rate (OOB) is high, so conclusion have to be taken with care. 
+
+Even though, the more important (differential across countries) litter components are:
+
+```{r RFVarImportSUP, message=FALSE, warning=FALSE}
+varImpPlot(rf_SUP, main = "", type = 2)  # no titles in the paper; was: "Random Forest: 'Sigle Use Plastic-type' Importance for Country Discrimination"
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Random_Forest_Importance_SUP_Density.png"), width = 22, height = 12, units = "cm", pointsize = 10, bg = "white", res = 150)
+  varImpPlot(rf_SUP, main = "", type = 2)  # no titles in the paper; was: "Random Forest: 'Sigle Use Plastic-type' Importance for Country Discrimination"
+  dev.off()
+}
+```
+
+This plot of variable importance importance is telling us:
+
+*  A large `MeanDecreaseAccuracy` (**MDA**) means that, when you break the relationship between that predictor and the response, the model’s accuracy suffers a lot → it’s an important predictor for correct country assignments. 
+  * **MDA** is generally the more reliable gauge of predictive importance, since it directly measures impact on OOB‐accuracy.
+
+* A large `MeanDecreaseGini` (**MDG**) means that X frequently appears in high‑up the tree splits and yields big purity gains → it’s structurally important to partitioning the data. 
+  * **MDG** is faster to compute and tells you which features the trees “prefer” splitting on, but can overweight high–cardinality or continuous variables.
+  
+Finally, we will perform a Principal Component Analysis (PCA) to see correlation among litter items and *possible* associations with countries
+
+```{r PCASUP, warning=FALSE, message=FALSE}
+# ─── 1) PCA (and optional RDA constrained by Country) ───────────────────────────
+# 1a) Unconstrained PCA on Hellinger data
+# pca1 <- rda(comm_hel)  
+# 
+# summary(pca1)
+# 
+# plot(pca1)
+
+# (re)compute PCA with prcomp
+pca_prcomp_SUP <- prcomp(comm_hel_SUP, scale. = TRUE)
+
+#summary(pca_prcomp_SUP)
+```
+
+
+```{r PCAplotSUP, warning=FALSE, message=FALSE}
+# # 1b) Quick biplot via factoextra
+# SUP_PCA_Litter_Country <- 
+# fviz_pca_biplot(pca_prcomp_SUP,
+#                 geom.ind    = "point",            # show sites as points
+#                 col.ind     = meta_SUP$CountryResponsible %>% str_to_title(), 
+#                 palette.ind = "jco",              # color‐blind‐friendly palette
+#                 addEllipses = FALSE,               # 95% CI per country
+#                 label      = "var",               # show arrows for variables
+#                 repel      = TRUE
+# ) +
+#   labs(title = "PCA of Litter Composition (Hellinger‐transformed)",
+#        subtitle = "Points = samples colored by Country; arrows = Single use plastic types") +
+#   theme_minimal(base_size = 14)
+# 
+# SUP_PCA_Litter_Country
+```
+
+
+```{r PCAplot2SUP, warning=FALSE, message=FALSE}
+# -----------------------------
+# Preparar factor y paleta común
+# -----------------------------
+meta_SUP$Country <- factor(str_to_title(meta_SUP$CountryResponsible))
+countries_sup <- levels(meta_SUP$Country)
+
+my_palette_sup <- setNames(
+  brewer.pal(length(countries_sup), "Set3"),
+  countries_sup
+)
+
+# -----------------------------
+# Crear gráfico base (p_sup) con puntos pequeños
+# -----------------------------
+p_sup <- fviz_pca_biplot(
+  pca_prcomp_SUP,
+  geom.ind    = "point",
+  col.ind     = meta_SUP$Country,
+  addEllipses = FALSE,
+  label       = "var",
+  repel       = TRUE,
+  pointsize   = 2.5,
+  pointshape  = 16,
+  alpha.ind   = 0.6
+)
+
+# -----------------------------
+# Calcular centroides manualmente
+# -----------------------------
+scores_sup <- as.data.frame(pca_prcomp_SUP$x)
+scores_sup$Country <- meta_SUP$Country
+
+centroids_sup <- scores_sup %>%
+  group_by(Country) %>%
+  summarise(
+    PC1 = mean(PC1),
+    PC2 = mean(PC2),
+    .groups = "drop"
+  )
+
+# -----------------------------
+# Añadir centroides y unificar escalas
+# -----------------------------
+SUP_PCA_Litter_Country2 <-
+  p_sup +
+  geom_point(data = centroids_sup,
+             aes(x = PC1, y = PC2, fill = Country),
+             shape = 21,
+             size = 5,
+             color = "black",
+             stroke = 1.2) +
+  scale_color_manual(values = my_palette_sup, drop = FALSE) +
+  scale_fill_manual(values = my_palette_sup, drop = FALSE) +
+  labs(title = NULL,  # no titles in the paper; was: "PCA of Litter Composition (Hellinger‐transformed)"
+       subtitle = NULL,  # no titles in the paper; was: "Points = samples colored by Country; arrows = Single use plastic types"
+       color = "Country",
+       fill  = "Country") +
+  theme_minimal(base_size = 14)
+
+SUP_PCA_Litter_Country2
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "PCA_Litter_Country_SUP_Density.png"), width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  print(SUP_PCA_Litter_Country2)
+  dev.off()
+}
+```
+
+And the most important Items for the two forst principal components are:
+
+* First PC
+```{r PC1VarImportSUP, message=FALSE, warning=FALSE}
+# Bar‐plot of top 10 contributors to PC1
+fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 1, top = 10) +
+  ggtitle(NULL)  # no titles in the paper; was: "Top 10 variables contributing to PC1"
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Top10_PC1_PCA_Litter_Country_SUP_Density.png"), width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  # Bar‐plot of top 10 contributors to PC1
+  print(fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 1, top = 10) +
+    ggtitle(NULL))  # no titles in the paper; was: "Top 10 variables contributing to PC1"
+  dev.off()
+}
+```
+
+
+```{r PC2VarImportSUP, message=FALSE, warning=FALSE}
+# Bar‐plot of top 10 contributors to PC2
+fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 2, top = 10) +
+  ggtitle(NULL)  # no titles in the paper; was: "Top 10 variables contributing to PC2"
+```
+
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  png(filename = file.path(fig_dir, "Top10_PC2_PCA_Litter_Country_SUP_Density.png"), width = 30, height = 20, units = "cm", pointsize = 12, bg = "white", res = 150)
+  # Bar‐plot of top 10 contributors to PC2
+  print(fviz_contrib(pca_prcomp_SUP, choice = "var", axes = 2, top = 10) +
+    ggtitle(NULL))  # no titles in the paper; was: "Top 10 variables contributing to PC2"
+  dev.off()
+}
+```
+
+
+###### Manuscript values: Table 2 (PERMANOVA)
+
+PERMANOVA results for the overall litter dataset (`perm1`) and the SUP subset (`perm1_SUP`), in the layout of Table 2 of the manuscript.
+
+```{r ManuscriptTable2, message=FALSE, warning=FALSE}
+# Tidy adonis2 output (one row per term)
+tidy_permanova <- function(perm, analysis) {
+  as.data.frame(perm) %>%
+    rownames_to_column("Term") %>%
+    dplyr::transmute(
+      Analysis = analysis,
+      Term     = recode(Term, CountryResponsible = "Country", Residual = "Residuals"),
+      df       = Df,
+      SS       = round(SumOfSqs, 3),
+      F        = round(F, 2),
+      R2       = round(R2, 3),
+      p_value  = `Pr(>F)`
+    )
+}
+
+Table2_PERMANOVA <-
+  bind_rows(tidy_permanova(perm1,     "Overall analysis"),
+            tidy_permanova(perm1_SUP, "Single-Use Plastics (SUP)"))
+
+Table2_PERMANOVA
+
+# Homogeneity of multivariate dispersions (betadisper) reported in the Results text
+tibble(
+  Analysis = c("Overall analysis", "Single-Use Plastics (SUP)"),
+  F        = round(c(Overall_Disper_test$tab[1, "F"], SUP_Disper_test$tab[1, "F"]), 2),
+  p_value  = c(Overall_Disper_test$tab[1, "Pr(>F)"], SUP_Disper_test$tab[1, "Pr(>F)"])
+)
+```
+
+## Floating DATA
+
+### Data loading
+
+```{r FloatingData, message=FALSE, warning=FALSE}
+# Cargamos los datos incorporando las modificaciones para trabajar con él
+# https://zenodo.org/records/15535434
+Floating_data <- read_csv("PlasticPirates_Floating_data/Floating_data_v2.0.0.csv", na = "na") %>%
+  dplyr::select(DatasetID,
+    CountryResponsible,
+    SamplingYear,
+    SamplingAttempted,
+    DatasetQualified,
+    SamplingDate,
+    SamplingCoordinatesLatitude,
+    SamplingCoordinatesLongitude,
+    SamplingRiverSystem,
+    FloatingMacro_AttemptedSampling,
+    FloatingMacro_Qualified,
+    FloatingMacro_ObservationTimeInMinutes,
+    FloatingMacro_RiverWidth,
+    FloatingMacro_ObservedWidth,
+    FloatingMacro_AmountOfFloatingMacrolitter
+  ) %>%
+  dplyr::filter(
+    SamplingAttempted == 1 &
+    DatasetQualified == 1 &
+    FloatingMacro_AttemptedSampling == 1 &
+    FloatingMacro_Qualified == 1
+  ) %>%
+  dplyr::mutate(across(where(is.character), as.factor),
+         CountryResponsible = str_to_title(CountryResponsible))
+
+Floating_data
+```
+
+#### Sampling Effor for Floating Data
+
+```{r FloatingSamplingEffort}
+Floating_Sampling_Effort <-
+Floating_data %>%
+  count(CountryResponsible, SamplingYear) %>%   # contar ambas variables
+  ungroup() %>%                                  # importante
+  complete(CountryResponsible, SamplingYear, fill = list(n = 0)) %>% 
+  ggplot(aes(x = reorder(CountryResponsible, -n),
+             y = n,
+             fill = factor(SamplingYear))) +
+  geom_col(position = "dodge", colour = "black") +
+  # Etiquetas encima de cada barra
+  geom_text(aes(label = n), position = position_dodge(width = 0.9), vjust = -0.3, # coloca el texto encima
+    color = "black", # color negro como quieres 
+    fontface = "bold", size = 3
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_manual(values = c("2021" = "#E0FFFF",
+                               "2022" = "#B8D4F0",
+                               "2023" = "#4A90E2",
+                               "2024" = "#1E3A8A")) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(x = "",
+       y = "Absolute frequency (number of sampling events)",
+       fill = "Sampling Year")
+
+Floating_Sampling_Effort
+
+# Save the plot
+if (save_figures) ggsave(filename = "Floating_Sampling_Effort_Density.png", plot = Floating_Sampling_Effort, path = fig_dir, scale = 1.3, width = 15, height = 10, units = "cm", dpi = 300, limitsize = FALSE)
+```
+
+#### Macrolitter Flow calculation
+
+The variable `FlowMacrolitter` is represented as the Number of floating macrolitter $m^{-1}$ $h^{-1}$.
+
+```{r flowCalculation, warning=FALSE, message=FALSE}
+FlowData <- 
+  Floating_data %>% 
+  dplyr::mutate(
+    TimeInHours = as.numeric(FloatingMacro_ObservationTimeInMinutes/60),
+    RiverWidth = as.numeric(FloatingMacro_ObservedWidth),
+    FlowMacrolitter = as.numeric(FloatingMacro_AmountOfFloatingMacrolitter) /(RiverWidth * TimeInHours))
+
+FlowData  
+```
+
+#### Macrolitter Flow Visualization
+
+##### Differences across countries
+
+Notes on the figures:
+
+* **All sampling years are always shown** for every country. Country-year combinations without valid data are labelled **n.d.** (no data). This covers both years without floating samplings and years where the flow could not be calculated (e.g. the river width is missing).
+* The number above each box is the number of valid samplings (*n*).
+* Most flow values are exactly 0, so the y-axis uses a **square-root scale**. This spreads out the small values near zero while keeping the zeros, which a log scale cannot show. All observations are drawn as points over the boxes.
+* No observations are removed from the plot. The previous version used `scale_y_continuous(limits = c(0, 1))`, which **dropped** the values above 1 before computing the boxplots.
+
+```{r FlowPlotData, message=FALSE, warning=FALSE}
+# Sampling years and colours (same palette as the rest of the document)
+flow_years  <- sort(unique(FlowData$SamplingYear))
+year_colors <- c("2021" = "#E0FFFF", "2022" = "#B8D4F0", "2023" = "#4A90E2", "2024" = "#1E3A8A")
+
+# Valid observations only (flow could be calculated)
+Flow_plot_data <-
+  FlowData %>%
+  dplyr::filter(!is.na(FlowMacrolitter)) %>%
+  dplyr::mutate(SamplingYear = factor(SamplingYear, levels = flow_years))
+
+# Number of samplings and valid values for every country-year combination,
+# including those without any sampling (n = 0)
+Flow_n <-
+  FlowData %>%
+  dplyr::mutate(SamplingYear = factor(SamplingYear, levels = flow_years)) %>%
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(n_samplings = n(),
+            n_valid     = sum(!is.na(FlowMacrolitter)),
+            .groups = "drop") %>%
+  complete(CountryResponsible, SamplingYear,
+           fill = list(n_samplings = 0L, n_valid = 0L)) %>%
+  dplyr::mutate(label = if_else(n_valid == 0, "n.d.", as.character(n_valid)))
+
+# Common y-axis (square-root scale, keeps the zeros)
+flow_y_scale <-
+  scale_y_sqrt(breaks = c(0, 0.05, 0.25, 0.5, 1, 2, 4, 6),
+               expand = expansion(mult = c(0.02, 0.12)))
+
+Flow_n
+```
+
+* Boxplots per country, with the sampling years nested within each country on the x-axis:
+
+```{r FloatingMacrolitterCountries, message=FALSE, warning=FALSE, fig.width=12, fig.height=6}
+Floating_Macrolitter_Countries <-
+  ggplot(Flow_plot_data, aes(x = SamplingYear, y = FlowMacrolitter, fill = SamplingYear)) +
+  geom_boxplot(outlier.shape = NA, width = 0.7) +
+  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 123),
+             size = 0.8, alpha = 0.4) +
+  # n (valid samplings) above each box, or "n.d." when there are no data
+  geom_text(data = Flow_n,
+            aes(x = SamplingYear, y = Inf, label = label,
+                fontface = if_else(n_valid == 0, "italic", "plain")),
+            inherit.aes = FALSE, vjust = 1.5, size = 2.6) +
+  # One panel per country; years nested below, country names under the years
+  facet_grid(. ~ CountryResponsible, switch = "x") +
+  scale_x_discrete(drop = FALSE) +
+  flow_y_scale +
+  scale_fill_manual(values = year_colors, drop = FALSE) +
+  labs(x = NULL,
+       y = expression(Floating~macrolitter~(m^{-1}~h^{-1})~"(square-root scale)"),
+       fill = "Sampling Year") +
+  theme_classic() +
+  theme(strip.placement  = "outside",
+        strip.background = element_blank(),
+        strip.text       = element_text(face = "bold", size = 9),
+        panel.spacing.x  = unit(0.15, "lines"),
+        panel.border     = element_rect(colour = "grey80", fill = NA),
+        axis.text.x      = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 8),
+        legend.position  = "none")
+
+Floating_Macrolitter_Countries
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  ggsave(filename = "Floating_Macrolitter_Countries_Density.png", plot = Floating_Macrolitter_Countries, path = fig_dir, scale = 1, width = 26, height = 13, units = "cm", dpi = 300, limitsize = FALSE)
+}
+```
+
+* Same data with one panel per sampling year (`facet_grid`), to compare countries within each year:
+
+```{r FloatingMacrolitterCountriesYears, message=FALSE, warning=FALSE, fig.width=10, fig.height=9}
+Floating_Macrolitter_Countries_Years <-
+  ggplot(Flow_plot_data, aes(x = CountryResponsible, y = FlowMacrolitter, fill = SamplingYear)) +
+  geom_boxplot(outlier.shape = NA, width = 0.6) +
+  geom_point(position = position_jitter(width = 0.15, height = 0, seed = 123),
+             size = 0.8, alpha = 0.4) +
+  # n (valid samplings) above each box, or "n.d." when there are no data
+  geom_text(data = Flow_n,
+            aes(x = CountryResponsible, y = Inf, label = label,
+                fontface = if_else(n_valid == 0, "italic", "plain")),
+            inherit.aes = FALSE, vjust = 1.5, size = 2.8) +
+  # One row per sampling year (all years kept, even without data)
+  facet_grid(SamplingYear ~ ., drop = FALSE) +
+  scale_x_discrete(drop = FALSE) +
+  flow_y_scale +
+  scale_fill_manual(values = year_colors, drop = FALSE) +
+  labs(x = NULL,
+       y = expression(Floating~macrolitter~(m^{-1}~h^{-1})~"(square-root scale)"),
+       fill = "Sampling Year") +
+  theme_classic() +
+  theme(strip.background = element_rect(fill = "grey95", colour = "grey60"),
+        strip.text       = element_text(face = "bold"),
+        panel.border     = element_rect(colour = "grey80", fill = NA),
+        axis.text.x      = element_text(angle = 45, hjust = 1),
+        legend.position  = "none")
+
+Floating_Macrolitter_Countries_Years
+```
+
+```{r, include=FALSE}
+# Save the plot
+if (save_figures) {
+  ggsave(filename = "Floating_Macrolitter_Countries_Years_Density.png", plot = Floating_Macrolitter_Countries_Years, path = fig_dir, scale = 1, width = 20, height = 18, units = "cm", dpi = 300, limitsize = FALSE)
+}
+```
+
+
+###### Manuscript values: low floating macrolitter densities
+
+Summary of floating macrolitter flow (items m⁻¹ h⁻¹) per country, pooling all years, to fill the sentence on the countries with low densities (Belgium, Greece, Hungary and Latvia).
+
+```{r ManuscriptFloatingLow, message=FALSE, warning=FALSE}
+Flow_country_summary <-
+  Flow_plot_data %>%
+  group_by(CountryResponsible) %>%
+  summarise(n      = n(),
+            Median = median(FlowMacrolitter),
+            Mean   = mean(FlowMacrolitter),
+            SE     = sd(FlowMacrolitter) / sqrt(n()),
+            Q75    = quantile(FlowMacrolitter, 0.75),
+            Max    = max(FlowMacrolitter),
+            .groups = "drop") %>%
+  dplyr::mutate(across(Median:Max, ~ round(.x, 3)))
+
+Flow_country_summary
+
+# Countries cited as having low densities, per year (medians and maxima)
+Flow_plot_data %>%
+  dplyr::filter(CountryResponsible %in% c("Belgium", "Greece", "Hungary", "Latvia")) %>%
+  group_by(CountryResponsible, SamplingYear) %>%
+  summarise(n = n(), Median = round(median(FlowMacrolitter), 3),
+            Max = round(max(FlowMacrolitter), 3), .groups = "drop")
+```
+
+* **Statistical test**
+
+  * Generalize linear mixed model (Tweedie)
+
+  Family error distribution was selected due to the data restriction (only positive values with high numbers of zeroes)
+
+ 
+```{r}
+Float_Macro_model <- glmmTMB(
+  FlowMacrolitter ~ CountryResponsible,
+  family = tweedie(link = "log"),
+  data = FlowData
+)
+
+summary(Float_Macro_model)
+```
+ 
+```{r}
+# Cálculo del valor de País
+
+# Modelo completo (con CountryResponsible)
+mod_full <- glmmTMB(FlowMacrolitter ~ CountryResponsible, family = tweedie(link = "log"), data = FlowData)
+
+# Modelo nulo (sin CountryResponsible)
+mod_null <- glmmTMB(FlowMacrolitter ~ 1, family = tweedie(link = "log"), data = FlowData)
+
+anova(mod_null, mod_full)
+```
+
+
+* Posthoc with multple comparisons
+
+```{r}
+emmeans_mod <- emmeans(Float_Macro_model, pairwise ~ CountryResponsible, type = "response")
+
+# Resultados de comparaciones ajustadas
+summary(emmeans_mod$contrasts, adjust = "tukey")
+```
+
